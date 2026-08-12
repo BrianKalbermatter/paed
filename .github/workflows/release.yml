@@ -1,0 +1,99 @@
+name: Release Linux
+
+# Se dispara al empujar un tag de version:
+#
+#     git tag v0.1.0 && git push origin v0.1.0
+#
+# Compila PAED, arma el paquete y publica el release. Nadie tiene que compilar
+# nada a mano ni acordarse de subir el binario.
+on:
+  push:
+    tags: [ "v*" ]
+
+permissions:
+  contents: write
+
+jobs:
+  release-linux:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout codigo
+        uses: actions/checkout@v4
+
+      - name: Instalar clang
+        run: sudo apt-get update && sudo apt-get install -y clang
+
+      - name: Compilar
+        run: make
+
+      - name: Correr los tests antes de publicar
+        # Si el lenguaje no pasa sus propios tests, no se publica. Un release
+        # roto es peor que ningun release: alguien lo baja y arranca creyendo
+        # que el problema es suyo.
+        run: make test
+
+      - name: Armar el paquete
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          PKG="paed-${VERSION}-linux-x86_64"
+
+          mkdir -p "$PKG/bin" "$PKG/share/paed"
+          cp build/paed                  "$PKG/bin/paed"
+          cp Frankly/data/sintaxis.json  "$PKG/share/paed/sintaxis.json"
+          cp instalar.sh README.md LICENSE "$PKG/"
+          chmod +x "$PKG/instalar.sh"
+
+          tar czf "$PKG.tar.gz" "$PKG"
+          echo "PKG=$PKG" >> "$GITHUB_ENV"
+
+      - name: Probar el paquete como lo usaria alguien que lo baja
+        # Se descomprime en otro lado y se corre desde ahi. Esto es lo que
+        # verifica que el binario encuentre sus datos por su cuenta: si buscara
+        # la ruta que le compilaron, aca fallaria.
+        run: |
+          mkdir -p /tmp/prueba && tar xzf "$PKG.tar.gz" -C /tmp/prueba
+          printf 'ACCION ok ES\n    PROCESO\n        ESCRIBIR("el paquete anda");\nFIN_ACCION\n' > /tmp/hola.paed
+          cd /tmp && "/tmp/prueba/$PKG/bin/paed" /tmp/hola.paed
+
+      - name: Publicar el release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" "$PKG.tar.gz" \
+            --title "PAED $GITHUB_REF_NAME" \
+            --notes "$(cat <<'NOTAS'
+PAED — el pseudocodigo AED de la catedra, ejecutable.
+
+## Instalar
+
+```bash
+curl -L https://github.com/BrianKalbermatter/paed/releases/latest/download/paed-linux-x86_64.tar.gz | tar xz
+cd paed-*-linux-x86_64 && ./instalar.sh
+```
+
+No hace falta compilador ni clonar el repo: el binario viene armado.
+
+## Usar
+
+```bash
+paed tu_programa.paed
+```
+
+Los datos de `LEER` entran por teclado, o por una tuberia:
+
+```bash
+printf '10\n20\n' | paed suma.paed
+```
+NOTAS
+)"
+
+      - name: Nombre estable para el link de "latest"
+        # El link .../latest/download/<archivo> necesita que el archivo se llame
+        # SIEMPRE igual, si no cambia en cada version y las instrucciones de
+        # instalacion quedan viejas al dia siguiente.
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp "$PKG.tar.gz" paed-linux-x86_64.tar.gz
+          gh release upload "$GITHUB_REF_NAME" paed-linux-x86_64.tar.gz --clobber

@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>   // readlink: encontrar los datos al lado del binario
 
 // ── Fuente unica de verdad: sintaxis.json ─────────────────────────────────────
 
@@ -48,13 +49,50 @@ static cJSON *cargar_json(const char *path, int obligatorio) {
 // los mensajes de error. Vacio si no se cargo ninguna.
 static char g_lib_nombre[64] = {0};
 
+// Los datos AL LADO DEL BINARIO: <donde-esta-paed>/../share/paed
+//
+// Es lo que hace que el paquete se pueda descomprimir en cualquier lado y
+// funcione. Sin esto, un binario compilado para /usr/local y descomprimido en
+// ~/.local busca sus datos donde no estan, y falla con "no encuentro
+// sintaxis.json" — que es exactamente lo que pasa si la ruta de instalacion se
+// decide al COMPILAR y el usuario elige otra al INSTALAR.
+//
+// /proc/self/exe es la forma de Linux de preguntar "¿donde estoy?". Devuelve el
+// ejecutable real, ya resueltos los enlaces simbolicos, asi que un `paed` que
+// en realidad es un symlink a otro lado igual encuentra sus datos.
+//
+// Deja el resultado en `out`. Devuelve 0 si pudo, -1 si no.
+static int datadir_junto_al_binario(char *out, size_t n) {
+    char exe[PAED_PATH_MAX];
+    ssize_t largo = readlink("/proc/self/exe", exe, sizeof(exe) - 1);
+    if (largo <= 0) return -1;
+    exe[largo] = '\0';
+
+    // De  /usr/local/bin/paed  a  /usr/local/bin
+    char *barra = strrchr(exe, '/');
+    if (!barra) return -1;
+    *barra = '\0';
+
+    // Y de ahi a  /usr/local/share/paed  — subir uno y bajar por share/
+    char *padre = strrchr(exe, '/');
+    if (!padre) return -1;
+    *padre = '\0';
+
+    snprintf(out, n, "%s/share/paed", exe);
+    return 0;
+}
+
 const char *paed_datadir(void) {
     static char elegido[PAED_PATH_MAX] = {0};
     if (elegido[0]) return elegido;
 
+    char junto[PAED_PATH_MAX] = {0};
+    datadir_junto_al_binario(junto, sizeof(junto));
+
     const char *home = getenv("PAED_HOME");
     const char *candidatos[] = {
         home ? home : "",
+        junto,                // el paquete descomprimido donde sea
         PAED_DATADIR,
         "Frankly/data",       // parado en el repo de PAED
         "paed/Frankly/data",  // parado en VimMon, que lo tiene adentro
