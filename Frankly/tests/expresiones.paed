@@ -1,0 +1,127 @@
+// Algoritmos clasicos y las trampas de prioridad del evaluador.
+//
+// Cada ESCRIBIR de la primera parte tiene el resultado correcto al lado. Si
+// alguno cambia, la tabla de prioridades de expr.c se rompio.
+
+ACCION expresiones ES
+    AMBIENTE
+        a: ENTERO;
+        b: ENTERO;
+        resto: ENTERO;
+        n: ENTERO;
+        i: ENTERO;
+        divisores: ENTERO;
+        primos: ENTERO;
+        ant: ENTERO;
+        act: ENTERO;
+        sig: ENTERO;
+        fact: ENTERO;
+    PROCESO
+        ESCRIBIR("-- prioridades --");
+
+        // El producto liga mas fuerte que la suma: 14, no 20.
+        ESCRIBIR("2 + 3 * 4 = ", 2 + 3 * 4);
+
+        // La potencia es asociativa a DERECHA: 2**(3**2) = 512, no (2**3)**2 = 64.
+        ESCRIBIR("2 ** 3 ** 2 = ", 2 ** 3 ** 2);
+
+        // Por la tabla de AED el menos unario liga MAS que la potencia:
+        // (-2)**2 = 4. En la mayoria de los lenguajes esto da -4.
+        ESCRIBIR("-2 ** 2 = ", -2 ** 2);
+
+        // Division real contra division entera: son operadores distintos.
+        ESCRIBIR("7 / 2 = ", 7 / 2);
+        ESCRIBIR("7 DIV 2 = ", 7 DIV 2);
+        ESCRIBIR("7 MOD 2 = ", 7 MOD 2);
+
+        // Los textos se comparan por ASCII, no por largo.
+        ESCRIBIR("'A' < 'K' es ", 'A' < 'K');
+        ESCRIBIR("'MARIA' < 'JUAN' es ", 'MARIA' < 'JUAN');
+
+        // El + tambien concatena cuando alguno de los lados es texto.
+        ESCRIBIR("pegado: ", "vim" + "mon" + 5);
+
+        ESCRIBIR("-- maximo comun divisor (Euclides) --");
+
+        // Se reemplaza el par (a,b) por (b, a MOD b) hasta que el resto da 0.
+        // El ultimo b distinto de cero es el MCD.
+        a := 1071;
+        b := 462;
+        MIENTRAS (b <> 0) HACER
+            resto := a MOD b;
+            a := b;
+            b := resto;
+        FIN_MIENTRAS
+        ESCRIBIR("mcd(1071, 462) = ", a);
+
+        ESCRIBIR("-- primos hasta 30 --");
+
+        primos := 0;
+        PARA n := 2 HASTA 30 HACER
+            divisores := 0;
+            // Alcanza con probar hasta la raiz: si n = p * q, uno de los dos
+            // es <= raiz(n). Sin funcion raiz, se compara i * i <= n.
+            i := 2;
+            MIENTRAS (i * i <= n) Y (divisores = 0) HACER
+                SI (n MOD i = 0) ENTONCES
+                    divisores := divisores + 1;
+                FIN_SI
+                i := i + 1;
+            FIN_MIENTRAS
+
+            SI (divisores = 0) ENTONCES
+                primos := primos + 1;
+            FIN_SI
+        FIN_PARA
+        ESCRIBIR("hay ", primos, " primos hasta 30");
+
+        ESCRIBIR("-- fibonacci --");
+
+        ant := 0;
+        act := 1;
+        PARA i := 1 HASTA 10 HACER
+            sig := ant + act;
+            ant := act;
+            act := sig;
+        FIN_PARA
+        ESCRIBIR("fibonacci(10) = ", ant);
+
+        ESCRIBIR("-- factorial y cuenta regresiva --");
+
+        fact := 1;
+        PARA i := 1 HASTA 10 HACER
+            fact := fact * i;
+        FIN_PARA
+        ESCRIBIR("10! = ", fact);
+
+        // PARA con paso negativo: sin mirar el signo del paso, este bucle no
+        // terminaria nunca.
+        PARA i := 5 HASTA 1; -1 HACER
+            ESCRIBIR("cuenta ", i);
+        FIN_PARA
+FIN_ACCION
+
+// ── SALIDA ESPERADA ─────────────────────────────────────────────────────────
+// -- prioridades --
+// 2 + 3 * 4 = 14
+// 2 ** 3 ** 2 = 512
+// -2 ** 2 = 4
+// 7 / 2 = 3.5
+// 7 DIV 2 = 3
+// 7 MOD 2 = 1
+// 'A' < 'K' es V
+// 'MARIA' < 'JUAN' es F
+// pegado: vimmon5
+// -- maximo comun divisor (Euclides) --
+// mcd(1071, 462) = 21
+// -- primos hasta 30 --
+// hay 10 primos hasta 30
+// -- fibonacci --
+// fibonacci(10) = 55
+// -- factorial y cuenta regresiva --
+// 10! = 3628800
+// cuenta 5
+// cuenta 4
+// cuenta 3
+// cuenta 2
+// cuenta 1

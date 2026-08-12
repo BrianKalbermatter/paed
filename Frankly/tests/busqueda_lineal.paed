@@ -1,0 +1,92 @@
+// Busqueda secuencial sobre un arreglo desordenado.
+//
+// El MIENTRAS de abajo es el caso que justifica el cortocircuito del Y:
+//
+//     MIENTRAS (i <= n) Y (A[i] <> buscado) HACER
+//
+// Cuando el elemento NO esta, i llega a n+1. Sin cortocircuito se evaluaria
+// A[n+1], que esta fuera de rango: el programa cortaria con un error en vez de
+// contestar "no esta". Con cortocircuito, (i <= n) da falso y el lado derecho
+// no se toca.
+
+ACCION busqueda_lineal ES
+    AMBIENTE
+        A: ARREGLO[1..8] DE ENTERO;
+        n: ENTERO;
+        i: ENTERO;
+        buscado: ENTERO;
+        pos: ENTERO;
+    PROCESO
+        n := 8;
+
+        A[1] := 34;
+        A[2] := 7;
+        A[3] := 91;
+        A[4] := 12;
+        A[5] := 55;
+        A[6] := 3;
+        A[7] := 68;
+        A[8] := 20;
+
+        ESCRIBIR("-- busqueda lineal --");
+
+        // Caso 1: el elemento esta en el medio
+        buscado := 55;
+        i := 1;
+        MIENTRAS (i <= n) Y (A[i] <> buscado) HACER
+            i := i + 1;
+        FIN_MIENTRAS
+
+        SI (i <= n) ENTONCES
+            pos := i;
+            ESCRIBIR("encontrado ", buscado, " en la posicion ", pos);
+        SINO
+            ESCRIBIR("no esta el ", buscado);
+        FIN_SI
+
+        // Caso 2: el elemento NO esta. Aca es donde el cortocircuito evita
+        // leer A[9] y reventar.
+        buscado := 77;
+        i := 1;
+        MIENTRAS (i <= n) Y (A[i] <> buscado) HACER
+            i := i + 1;
+        FIN_MIENTRAS
+
+        SI (i <= n) ENTONCES
+            ESCRIBIR("encontrado ", buscado, " en la posicion ", i);
+        SINO
+            ESCRIBIR("no esta el ", buscado);
+        FIN_SI
+
+        // Caso 3: primero y ultimo, los bordes que siempre se rompen
+        buscado := 34;
+        i := 1;
+        MIENTRAS (i <= n) Y (A[i] <> buscado) HACER
+            i := i + 1;
+        FIN_MIENTRAS
+        ESCRIBIR("el ", buscado, " esta en ", i);
+
+        buscado := 20;
+        i := 1;
+        MIENTRAS (i <= n) Y (A[i] <> buscado) HACER
+            i := i + 1;
+        FIN_MIENTRAS
+        ESCRIBIR("el ", buscado, " esta en ", i);
+
+        // Contar cuantos superan un umbral: recorrido completo, sin corte
+        pos := 0;
+        PARA i := 1 HASTA n HACER
+            SI (A[i] > 30) ENTONCES
+                pos := pos + 1;
+            FIN_SI
+        FIN_PARA
+        ESCRIBIR("hay ", pos, " numeros mayores a 30");
+FIN_ACCION
+
+// ── SALIDA ESPERADA ─────────────────────────────────────────────────────────
+// -- busqueda lineal --
+// encontrado 55 en la posicion 5
+// no esta el 77
+// el 34 esta en 1
+// el 20 esta en 8
+// hay 4 numeros mayores a 30

@@ -1,0 +1,347 @@
+// ============================================================
+// SIMULACRO PARCIAL 02 — Archivos, Corte de Control y Tipos
+// Redactado como ing. de plastico autentico
+// Respondé primero, despues fijate las respuestas al final.
+// ============================================================
+
+
+// ------------------------------------------------------------
+// PREGUNTA 1
+// ------------------------------------------------------------
+// ¿Cual es la diferencia entre un ciclo PRE-TEST y un POST-TEST?
+//
+// A) El pre-test siempre itera mas veces que el post-test
+// B) El post-test evalua la condicion antes de ejecutar el bloque
+// C) El pre-test puede ejecutarse 0 veces; el post-test minimo 1
+// D) No hay diferencia funcional entre ellos
+
+
+// ------------------------------------------------------------
+// PREGUNTA 2
+// ------------------------------------------------------------
+// En un algoritmo de CORTE DE CONTROL, ¿que ocurre cuando
+// cambia el valor de la clave de agrupacion?
+//
+// A) El programa termina
+// B) Se procesan los totales acumulados del grupo anterior
+// C) Se reinicia el contador principal
+// D) Se vuelve al inicio del archivo
+
+
+// ------------------------------------------------------------
+// PREGUNTA 3
+// ------------------------------------------------------------
+// ¿Que tipo de dato corresponde a una variable que puede almacenar
+// solo los valores VERDADERO o FALSO?
+//
+// A) Entero
+// B) Caracter
+// C) Booleano
+// D) Real
+
+
+// ------------------------------------------------------------
+// PREGUNTA 4
+// ------------------------------------------------------------
+// Una secuencia de datos que NO tiene una cantidad fija conocida
+// de antemano se llama:
+//
+// A) Secuencia pura
+// B) Secuencia definida
+// C) Secuencia indefinida
+// D) Subsecuencia relativa
+
+
+// ------------------------------------------------------------
+// PREGUNTA 5
+// ------------------------------------------------------------
+// ¿Cual de estas situaciones requiere un ciclo MIENTRAS y NO
+// un ciclo PARA?
+//
+// A) Procesar exactamente 10 alumnos
+// B) Leer datos hasta que el usuario ingrese -1
+// C) Imprimir los numeros del 1 al 100
+// D) Sumar los primeros 50 numeros pares
+
+
+// ------------------------------------------------------------
+// PREGUNTA 6
+// ------------------------------------------------------------
+// ¿Que afirmacion sobre la ORGANIZACION INDEXADA es VERDADERA?
+//
+// A) Solo permite acceso secuencial a los registros
+// B) Usa un indice separado que mapea claves a posiciones
+// C) Es identica a la organizacion relativa
+// D) No puede tener claves duplicadas por restriccion del sistema
+
+
+// ------------------------------------------------------------
+// PREGUNTA 7
+// ------------------------------------------------------------
+// ¿Cual estructura de control usarias para mostrar un mensaje
+// SOLO si la temperatura supera 30 grados?
+//
+// A) Ciclo MIENTRAS
+// B) Ciclo PARA
+// C) Estructura SI (condicional simple)
+// D) Estructura SI...SINO (condicional doble)
+
+
+// ------------------------------------------------------------
+// PREGUNTA 8
+// ------------------------------------------------------------
+// En un algoritmo con CORTE DE CONTROL JERARQUICO, los
+// acumuladores de nivel inferior:
+//
+// A) Se suman directamente al total general sin pasar por niveles intermedios
+// B) Se reinician despues de contribuir al nivel superior
+// C) No pueden usarse en el mismo algoritmo que los de nivel superior
+// D) Son opcionales y solo se usan si hay mas de 100 registros
+
+
+// ------------------------------------------------------------
+// PREGUNTA 9
+// ------------------------------------------------------------
+// ¿Cual es la afirmacion CORRECTA sobre variables en pseudocodigo?
+//
+// A) Todas las variables deben inicializarse con 0 antes de usarse
+// B) Una variable declarada y no usada genera un error fatal
+// C) El nombre de una variable puede cambiar durante la ejecucion
+// D) Una variable representa un espacio en memoria con un nombre
+
+
+// ------------------------------------------------------------
+// PREGUNTA 10
+// ------------------------------------------------------------
+// Las subsecuencias ENLAZADAS son aquellas que:
+//
+// A) Estan mezcladas aleatoriamente en el archivo
+// B) Se identifican una a continuacion de la otra en forma contigua
+// C) Se acceden mediante un indice compartido
+// D) Solo existen en archivos de organizacion relativa
+
+
+// ------------------------------------------------------------
+// PREGUNTA 11
+// ------------------------------------------------------------
+// ¿Que ocurre si en un ciclo MIENTRAS la condicion de entrada
+// es FALSA desde el principio?
+//
+// A) El bloque se ejecuta una sola vez y luego termina
+// B) El ciclo nunca ejecuta su bloque
+// C) Se produce un error de logica inevitable
+// D) La condicion se evalua al final de todas formas
+
+
+// ------------------------------------------------------------
+// PREGUNTA 12
+// ------------------------------------------------------------
+// Un archivo de ORGANIZACION SECUENCIAL:
+//
+// A) Permite acceso directo por numero de registro
+// B) Usa un indice para ubicar registros por clave
+// C) Almacena registros uno tras otro en orden de insercion
+// D) Es el tipo de mayor velocidad para busquedas por clave
+
+
+// ------------------------------------------------------------
+// PREGUNTA 13
+// ------------------------------------------------------------
+// ¿Cual de las siguientes afirmaciones sobre el SINO es CORRECTA?
+//
+// A) Un SINO sin SI previo es valido en pseudocodigo
+// B) El bloque SINO se ejecuta cuando la condicion del SI es VERDADERA
+// C) El SINO se ejecuta cuando la condicion del SI es FALSA
+// D) El SINO puede contener otro SINO dentro sin necesidad de un SI
+
+
+// ------------------------------------------------------------
+// PREGUNTA 14
+// ------------------------------------------------------------
+// ¿Para que se usa un ACUMULADOR en un algoritmo?
+//
+// A) Para contar cuantas veces se ejecuta un ciclo
+// B) Para sumar valores de forma progresiva durante el procesamiento
+// C) Para almacenar el valor maximo de una secuencia
+// D) Para inicializar variables al comienzo del programa
+
+
+// ------------------------------------------------------------
+// PREGUNTA 15
+// ------------------------------------------------------------
+// En pseudocodigo, ¿que representa una CONSTANTE?
+//
+// A) Una variable que puede cambiar solo dentro de un bucle
+// B) Un valor fijo que no cambia durante toda la ejecucion
+// C) El resultado de una operacion que se almacena temporalmente
+// D) Un tipo de dato exclusivo para valores numericos enteros
+
+
+// ------------------------------------------------------------
+// PREGUNTA 16
+// ------------------------------------------------------------
+// ¿Que afirmacion sobre ESTRUCTURAS ANIDADAS es INCORRECTA?
+//
+// A) Un MIENTRAS puede estar dentro de un PARA
+// B) Un SI puede contener otro SI en su bloque
+// C) Las estructuras anidadas aumentan la complejidad del algoritmo
+// D) Una estructura anidada es lo mismo que una funcion recursiva
+
+
+// ------------------------------------------------------------
+// PREGUNTA 17
+// ------------------------------------------------------------
+// ¿Cuantos bloques SINO puede tener una estructura SI en
+// pseudocodigo estandar?
+//
+// A) Ninguno, el SINO no existe en pseudocodigo
+// B) Exactamente dos, uno para verdadero y otro para falso
+// C) Como maximo uno por cada SI
+// D) Tantos como condiciones haya en el SI
+
+
+// ------------------------------------------------------------
+// PREGUNTA 18
+// ------------------------------------------------------------
+// La MEMORIA INTERNA se caracteriza por ser:
+//
+// A) Persistente y lenta
+// B) Volatil y de acceso rapido
+// C) Permanente y de gran capacidad
+// D) Externa al procesador principal
+
+
+// ------------------------------------------------------------
+// PREGUNTA 19
+// ------------------------------------------------------------
+// ¿Cual de los siguientes es un ejemplo de SECUENCIA IMPURA?
+//
+// A) 100 temperaturas medidas en grados
+// B) Los nombres de 50 empleados
+// C) Un archivo con nombre, edad y salario mezclados
+// D) Los primeros 200 numeros enteros
+
+
+// ------------------------------------------------------------
+// PREGUNTA 20
+// ------------------------------------------------------------
+// ¿Que diferencia hay entre un CONTADOR y un ACUMULADOR?
+//
+// A) No hay diferencia, son lo mismo con distinto nombre
+// B) El contador suma 1 en cada iteracion; el acumulador suma valores variables
+// C) El acumulador solo funciona en ciclos PARA
+// D) El contador almacena texto; el acumulador almacena numeros
+
+
+
+
+// ============================================================
+// ============================================================
+//                      R E S P U E S T A S
+// ============================================================
+// ============================================================
+
+
+// PREGUNTA 1 → C
+// Pre-test (MIENTRAS): evalua ANTES. Puede no ejecutarse nunca.
+// Post-test (REPETIR): evalua DESPUES. Minimo 1 ejecucion.
+// B dice lo contrario de lo real. A es inventado. D es falso.
+
+
+// PREGUNTA 2 → B
+// Cuando cambia la clave, se "cierra" el grupo → se procesan totales
+// acumulados del grupo que termino, luego se empieza el nuevo grupo.
+
+
+// PREGUNTA 3 → C
+// BOOLEANO: solo VERDADERO o FALSO.
+// Entero es numerico. Real es decimal. Caracter es un simbolo.
+
+
+// PREGUNTA 4 → C
+// Secuencia INDEFINIDA: no se sabe cuantos elementos hay → usa centinela.
+// Secuencia DEFINIDA: cantidad conocida → usa contador.
+
+
+// PREGUNTA 5 → B
+// Cuando no sabes cuantas veces vas a iterar (hasta que el usuario
+// ingrese -1), usas MIENTRAS. Las otras tres tienen cantidad CONOCIDA.
+
+
+// PREGUNTA 6 → B
+// Indexada: tiene un indice separado (como el indice de un libro)
+// que mapea cada clave a su posicion en el archivo.
+
+
+// PREGUNTA 7 → C
+// Un solo caso (temperatura > 30 → mostrar mensaje) sin caso contrario
+// es un condicional SIMPLE (SI sin SINO).
+// D seria si tambien hicieras algo cuando NO supera 30.
+
+
+// PREGUNTA 8 → B
+// En jerarquico: cada nivel inferior acumula, luego contribuye al superior
+// y SE REINICIA para el proximo grupo del mismo nivel.
+
+
+// PREGUNTA 9 → D
+// Una variable ES un espacio en memoria con un nombre que lo identifica.
+// A es falso (no hay default obligatorio). B es falso (no es error fatal).
+// C es absurdo (el nombre no cambia).
+
+
+// PREGUNTA 10 → B
+// Enlazadas = contiguas, una tras otra, identificadas en orden.
+// No son aleatorias ni requieren indice compartido.
+
+
+// PREGUNTA 11 → B
+// Pre-test: si la condicion es falsa al inicio, el bloque NO se ejecuta.
+// Cero iteraciones. No hay error — es comportamiento esperado y valido.
+
+
+// PREGUNTA 12 → C
+// Secuencial: registros uno tras otro en orden de insercion.
+// Es la mas lenta para busquedas por clave (hay que leer todo).
+
+
+// PREGUNTA 13 → C
+// El SINO se ejecuta cuando la condicion del SI es FALSA.
+// B esta al reves. A y D son inventados.
+
+
+// PREGUNTA 14 → B
+// ACUMULADOR: suma valores variables (ej: suma de ventas).
+// El CONTADOR suma siempre 1 (ej: cuantos registros procese).
+
+
+// PREGUNTA 15 → B
+// CONSTANTE: valor que se define una vez y NO cambia.
+// PI = 3.14159 es un ejemplo clasico.
+
+
+// PREGUNTA 16 → D
+// ANIDADO ≠ RECURSIVO.
+// Anidado = estructura dentro de estructura.
+// Recursivo = funcion que se llama a si misma. Son conceptos distintos.
+
+
+// PREGUNTA 17 → C
+// Un SI tiene como maximo UN SINO.
+// Si necesitas mas ramas usas SI...SINO SI...SINO.
+
+
+// PREGUNTA 18 → B
+// Memoria INTERNA (RAM): volatil (se pierde al apagar) y rapida.
+// Memoria EXTERNA (disco): persistente, mas lenta.
+
+
+// PREGUNTA 19 → C
+// Secuencia IMPURA: mezcla tipos distintos (nombre=texto, edad=entero,
+// salario=real). Las otras tres son homogeneas (mismo tipo).
+
+
+// PREGUNTA 20 → B
+// CONTADOR: siempre suma 1 (cuenta ocurrencias).
+// ACUMULADOR: suma valores que pueden variar (acumula totales).
+// Son conceptos distintos aunque ambos son variables numericas.

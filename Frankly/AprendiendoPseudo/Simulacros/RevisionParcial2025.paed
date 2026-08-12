@@ -1,0 +1,261 @@
+// ============================================================
+// REVISION PARCIAL 2025 — Todas las preguntas con explicacion
+// Marcadas con [OK] correcta / [MAL] incorrecta en el parcial
+// ============================================================
+
+
+// ------------------------------------------------------------
+// PREGUNTA 1 [OK] — Bucle infinito por condicion no actualizada
+// ------------------------------------------------------------
+// Si no se actualiza la condicion de control dentro de un MIENTRAS,
+// la condicion nunca cambia → el bucle se ejecuta para siempre.
+//
+// MIENTRAS contador < 10 HACER
+//     ESCRIBIR("hola")
+//     // sin actualizar contador → bucle infinito
+// FIN_MIENTRAS
+
+
+// ------------------------------------------------------------
+// PREGUNTA 2 [MAL] — Organizacion vs Acceso de Archivos
+// ------------------------------------------------------------
+// Indexado, Relativo, Secuencial → son tipos de ORGANIZACION
+// Define COMO estan estructurados los datos en disco.
+//
+// El ACCESO es distinto: define COMO los lees (secuencial o directo).
+//
+// Organizacion Secuencial  → registros uno tras otro en orden
+// Organizacion Relativa    → acceso por numero de registro
+// Organizacion Indexada    → tiene un indice para acceder por clave
+
+
+// ------------------------------------------------------------
+// PREGUNTA 3 [MAL] — Riesgo del Post-Test
+// ------------------------------------------------------------
+// En un Post-Test el bloque se ejecuta AL MENOS UNA VEZ antes
+// de evaluar la condicion.
+//
+// Si el dato es invalido desde el inicio, igual entra y lo procesa.
+// Eso es el riesgo: puede procesar datos invalidos.
+//
+// Pre-Test  (MIENTRAS)  → evalua ANTES  → puede no ejecutarse nunca
+// Post-Test (REPETIR)   → evalua DESPUES → ejecuta minimo una vez
+
+
+// ------------------------------------------------------------
+// PREGUNTA 4 [MAL] — Corte de control jerarquico
+// ------------------------------------------------------------
+// Se llama "jerarquico" porque tiene MULTIPLES NIVELES de agrupacion,
+// cada uno con sus propios acumuladores y totales.
+//
+// Ejemplo: agrupar ventas por → Pais → Provincia → Ciudad
+//   Total por Ciudad
+//   Total por Provincia (suma de ciudades)
+//   Total por Pais (suma de provincias)
+//
+// Cada nivel acumula por separado → eso es la jerarquia.
+
+
+// ------------------------------------------------------------
+// PREGUNTA 5 [MAL] — Memoria interna vs externa
+// ------------------------------------------------------------
+// Variables y datos elementales → MEMORIA INTERNA (RAM)
+// Archivos                      → MEMORIA EXTERNA (disco)
+//
+// La RAM es volatil, rapida y temporal.
+// El disco es persistente, mas lento y permanente.
+//
+// "Las secuencias de datos elementales se almacenan en memoria interna"
+// es INCORRECTA porque las VARIABLES se almacenan en RAM,
+// pero los ARCHIVOS (secuencias persistentes) van al disco.
+
+
+// ------------------------------------------------------------
+// PREGUNTA 6 [OK] — Secuencia pura
+// ------------------------------------------------------------
+// Secuencia de 100 codigos de 10 digitos numericos, termina en 0.
+// Todos los elementos son del MISMO tipo (codigos numericos).
+// Tiene un centinela (0) que marca el fin.
+//
+// Secuencia PURA → todos los elementos son del mismo tipo.
+// Secuencia IMPURA → mezcla tipos (ej: numero, luego texto, luego caracter).
+
+
+// ------------------------------------------------------------
+// PREGUNTA 7 [MAL] — Afirmacion FALSA sobre bucle por contador
+// ------------------------------------------------------------
+// La afirmacion FALSA es: "No permite modificar la variable de control"
+// En realidad SI se puede modificar tecnicamente, aunque es mala practica
+// porque rompe la logica esperada del contador.
+//
+// Lo que SI es verdad sobre un bucle por contador:
+//   - Itera un numero CONOCIDO de veces
+//   - Se pueden anidar
+//   - La condicion se evalua al principio de cada iteracion
+//
+// PARA i DESDE 1 HASTA 10 HACER
+//     i := i + 1  // tecnicamente posible, pero NO recomendado
+// FIN_PARA
+
+
+// ------------------------------------------------------------
+// PREGUNTA 8 [OK] — 30 empleados → bucle por contador
+// ------------------------------------------------------------
+// La cantidad es conocida (30 personas) → ciclo MANEJADO POR CONTADOR.
+// No necesitas centinela ni condicion externa: sabe exactamente
+// cuantas veces iterar.
+//
+// PARA i DESDE 1 HASTA 30 HACER
+//     LEER(horas_trabajadas)
+//     // procesar
+// FIN_PARA
+
+
+// ------------------------------------------------------------
+// PREGUNTA 9 [OK] — Temperatura > 30 → condicional simple
+// ------------------------------------------------------------
+// No hay repeticion. Es una sola evaluacion: si supera 30 grados
+// o no. Eso es una estructura condicional simple (SI...FIN_SI).
+//
+// SI temperatura > 30 ENTONCES
+//     encender_aire_acondicionado()
+// FIN_SI
+
+
+// ------------------------------------------------------------
+// PREGUNTA 10 [OK] — Pre-Test: condicion nunca falsa = bucle infinito
+// ------------------------------------------------------------
+// En un Pre-Test, si la condicion NUNCA se vuelve falsa,
+// el bucle se ejecuta indefinidamente.
+//
+// MIENTRAS verdadero HACER
+//     // esto nunca termina
+// FIN_MIENTRAS
+
+
+// ------------------------------------------------------------
+// PREGUNTA 11 [MAL] — Anidadas vs Recursivas
+// ------------------------------------------------------------
+// ANIDADA   → una estructura CONTIENE otra del mismo tipo
+//             Ejemplo: MIENTRAS dentro de MIENTRAS
+//
+// RECURSIVA → una FUNCION se llama a si misma (concepto diferente)
+//
+// MIENTRAS condicion1 HACER
+//     MIENTRAS condicion2 HACER   // esto es ANIDADO, no recursivo
+//         ...
+//     FIN_MIENTRAS
+// FIN_MIENTRAS
+
+
+// ------------------------------------------------------------
+// PREGUNTA 12 [MAL] — Relacion entre secuencia y subsecuencia
+// ------------------------------------------------------------
+// La relacion es UNIDIRECCIONAL:
+//
+// Toda SUBSECUENCIA es una SECUENCIA      ← VERDADERO
+// Toda SECUENCIA es una SUBSECUENCIA      ← FALSO
+//
+// Una subsecuencia es una secuencia que vive dentro de otra.
+// Pero la secuencia principal no es subsecuencia de nadie.
+
+
+// ------------------------------------------------------------
+// PREGUNTA 13 [MAL] — Afirmacion INCORRECTA sobre secuencias
+// ------------------------------------------------------------
+// La afirmacion INCORRECTA es: "Toda secuencia debe contener subsecuencias"
+// Una secuencia puede ser simple/atomica sin subdivision alguna.
+//
+// Lo que SI es correcto:
+//   - Toda secuencia esta compuesta por elementos del mismo tipo
+//   - Toda subsecuencia es una secuencia
+
+
+// ------------------------------------------------------------
+// PREGUNTA 14 [MAL] — 100 letras: Definida + contador
+// ------------------------------------------------------------
+// 100 letras = cantidad CONOCIDA de antemano = Secuencia DEFINIDA
+// → Ciclo manejado por CONTADOR
+//
+// Secuencia DEFINIDA   → sabe cuantos elementos hay antes de procesar
+// Secuencia INDEFINIDA → no sabe cuantos hay, termina con centinela
+//
+// PARA i DESDE 1 HASTA 100 HACER
+//     leer(letra)
+//     // convertir a mayuscula
+// FIN_PARA
+
+
+// ------------------------------------------------------------
+// PREGUNTA 15 [OK] — Variable no utilizada en pseudocodigo
+// ------------------------------------------------------------
+// No causa error de ejecucion, pero es MALA PRACTICA.
+// Ocupa espacio en memoria innecesariamente y confunde a quien lee.
+// En pseudocodigo correcto, todo lo que se declara debe usarse.
+
+
+// ------------------------------------------------------------
+// PREGUNTA 16 [MAL] — Evaluacion de condiciones compuestas
+// ------------------------------------------------------------
+// Si la condicion B DEPENDE de la condicion A, evaluar B antes
+// de A puede causar un error.
+//
+// Ejemplo del problema:
+//   SI (puntero <> NULO) Y (puntero.valor > 0) ENTONCES
+//       // Si evaluamos puntero.valor ANTES de verificar NULO → ERROR
+//
+// El orden importa cuando hay DEPENDENCIA entre condiciones.
+// No siempre se evaluan ambas (depende del lenguaje/motor).
+
+
+// ------------------------------------------------------------
+// PREGUNTA 17 [OK] — Registros
+// ------------------------------------------------------------
+// Un REGISTRO agrupa distintos tipos de datos bajo una misma entidad.
+// Es como una ficha con campos de diferentes tipos.
+//
+// Registro EMPLEADO:
+//   nombre:  TEXTO
+//   edad:    ENTERO
+//   salario: REAL
+//   activo:  BOOLEANO
+//
+// Distintos tipos, un solo concepto → eso es un registro.
+
+
+// ------------------------------------------------------------
+// PREGUNTA 18 [OK] — Subsecuencias enlazadas
+// ------------------------------------------------------------
+// Las subsecuencias ENLAZADAS estan identificadas una a continuacion
+// de la otra, con un elemento que marca el inicio/fin de cada una.
+//
+// Son contiguas: terminada una, empieza la siguiente.
+// Se recorren en orden, no se accede aleatoriamente.
+
+
+// ------------------------------------------------------------
+// PREGUNTA 19 [MAL] — Afirmacion INCORRECTA sobre condicionales
+// ------------------------------------------------------------
+// La afirmacion INCORRECTA es: "Toda estructura SI debe tener un SINO"
+// El SINO es OPCIONAL. Un SI puede existir sin SINO.
+//
+// SI temperatura > 30 ENTONCES   // sin SINO → valido
+//     encender_aire()
+// FIN_SI
+//
+// El SINO solo aparece cuando se necesita manejar el caso contrario.
+
+
+// ------------------------------------------------------------
+// PREGUNTA 20 [MAL] — Pre-Test: cuando se ejecuta el bloque
+// ------------------------------------------------------------
+// En un PRE-TEST la condicion se evalua PRIMERO.
+// El bloque se ejecuta SOLO SI la condicion es VERDADERA.
+// Puede ejecutarse 0 o mas veces.
+//
+// MIENTRAS condicion HACER   // evalua ANTES de entrar
+//     // bloque
+// FIN_MIENTRAS
+//
+// Si la condicion es falsa desde el inicio → no entra nunca.
+// Si la condicion nunca se vuelve falsa    → bucle infinito.

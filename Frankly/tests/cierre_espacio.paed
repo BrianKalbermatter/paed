@@ -1,0 +1,11 @@
+// 'FIN ACCION' partido en dos es la forma de la catedra
+// (AED_2021_UnI.pdf pagina 10), pero PAED lo quiere en una sola palabra.
+// Se reconoce solo para poder explicarlo: sin esto el error seria
+// "falta ';'", que manda a buscar el problema al lugar equivocado.
+ACCION cierre_espacio ES
+    PROCESO
+        ESCRIBIR("no deberia correr");
+FIN ACCION
+
+// ── SALIDA ESPERADA ─────────────────────────────────────────────────────────
+// Frankly/tests/cierre_espacio.paed:8: error: el apunte escribe 'FIN ACCION' con espacio, pero en PAED el cierre es una sola palabra: FIN_ACCION o FINACCION

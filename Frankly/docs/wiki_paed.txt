@@ -1,0 +1,725 @@
+WIKI - PAED (la sintaxis que quedo implementada en Frankly)
+Derivada de: data/sintaxis.json v3.0 + data/escena.json v1.0
+Fecha: 2026-08-07
+
+ESTA WIKI NO ES UN APUNTE DE LA CATEDRA.
+Es el espejo exacto de lo que hoy define Frankly. Se escribio para ponerla
+al lado de PseudoGames/data/wiki.txt y marcar, bloque por bloque, que
+coincide y que no.
+
+Cada bloque trae siempre los mismos cuatro campos:
+
+  FORMA          lo que Frankly declara como valido
+  DE DONDE SALE  corroborado / tomado de tus ejercicios / definido por mi
+  PARSER         si plugins/ide/parser.c lo entiende HOY
+  A COMPARAR     que hay que buscar en tu wiki para validar este bloque
+
+Las tres etiquetas de DE DONDE SALE significan:
+
+  [CORROBORADO]  la palabra aparece en data/wiki.txt, en
+                 solutions/AED_Teoria/TEORIA_COMPLETA.txt o en tus .paed.
+                 Se indica cuantas veces.
+  [DE TUS EJERCICIOS]  la FORMA (el orden de las palabras) la copie de como
+                 vos la escribis en AprendiendoPseudo/. No la invente, pero
+                 tampoco esta definida formalmente en sintaxis.json.
+  [DEFINIDO POR MI]  es una decision de diseño que tome yo al implementar.
+                 ESTE ES EL QUE HAY QUE MIRAR CON LUPA.
+
+
+=======================================================
+BLOQUE 1: Estructura del programa
+=======================================================
+
+  FORMA
+      ACCION nombre_algoritmo ES
+          AMBIENTE
+              declaraciones
+          PROCESO
+              instrucciones
+      FIN_ACCION
+
+  DE DONDE SALE
+      [CORROBORADO] ACCION, ES, AMBIENTE, PROCESO, FIN_ACCION aparecen en
+      todos tus .paed y en la wiki.
+
+  PARSER
+      SI. Es una maquina de estados plana:
+      FUERA -> CABECERA -> AMBIENTE -> PROCESO -> CERRADO
+      Al terminar el archivo verifica en que estado quedo y avisa si falta
+      ACCION, PROCESO o FIN_ACCION.
+
+  A COMPARAR
+      - AMBIENTE es opcional o obligatorio? Frankly lo tiene como OPCIONAL.
+      - Puede haber mas de una ACCION por archivo? Frankly dice NO.
+
+
+=======================================================
+BLOQUE 2: Nombre de la ACCION
+=======================================================
+
+  FORMA
+      ACCION ej_2.1.11 ES          <- una sola palabra
+
+  DE DONDE SALE
+      [DEFINIDO POR MI] El parser hace sscanf("ACCION %s %s") y exige que la
+      segunda palabra sea exactamente ES.
+
+  PARSER
+      NO soporta nombres con espacios. Tu EjercicioParcial.paed linea 32
+      dice:
+          ACCION Ejercicio de Parcial ES
+      Eso hoy da error, porque lee "Ejercicio" y despues "de", y "de" no
+      es "ES".
+
+  A COMPARAR
+      La catedra permite espacios en el nombre de la ACCION?
+      Si la respuesta es SI, el parser esta mal y hay que arreglarlo.
+      Este bloque es el mas probable candidato a estar equivocado.
+
+
+=======================================================
+BLOQUE 3: Comentarios
+=======================================================
+
+  FORMA
+      // comentario hasta el fin de linea
+
+  DE DONDE SALE
+      [CORROBORADO] Es lo que usas en todos tus .paed.
+
+  PARSER
+      SI. Y respeta las comillas: en
+          ESCRIBIR("http://algo");
+      no corta el string, porque lleva un flag de "estoy adentro de comillas".
+
+  A COMPARAR
+      Existe algun comentario de bloque en AED (tipo /* */)? Frankly no lo
+      tiene.
+
+
+=======================================================
+BLOQUE 4: Tipos de datos
+=======================================================
+
+  FORMA (lista completa de sintaxis.json, categoria "tipos")
+      ENTERO   ENTEROS   REAL   CARACTER   CARACTERES   BOOLEANO
+      SECUENCIA   VENTANA   SALIDA   ARREGLO   CONSTANTE   VAR   DE
+      AN   N
+
+      Compuestos, tal como los escribis:
+          SECUENCIA DE CARACTERES
+          VENTANA DE CARACTER
+          SECUENCIA DE SALIDA
+          AN(5)
+          N(3)
+
+  DE DONDE SALE
+      [CORROBORADO] ENTERO 59 · CARACTER 22 · REAL 9 · VENTANA 8 ·
+      SALIDA 8 · ARREGLO 5 · CONSTANTE 5 · BOOLEANO 3 · AN( 15 · N( 30
+
+  PARSER
+      PARCIAL. El tipo se guarda como texto y NO se valida. O sea:
+      "SECUENCIA DE CARACTERES" entra, pero tambien entraria
+      "SECUENCIA DE CUALQUIERCOSA". No hay chequeo.
+
+  A COMPARAR
+      - La lista esta completa? Falta algun tipo?
+      - SALIDA es un tipo o es parte de "SECUENCIA DE SALIDA"?
+        Frankly lo puso como palabra suelta.
+      - ENTEROS (plural) es un tipo real o es un error que quedo arrastrado?
+
+
+=======================================================
+BLOQUE 5: Declaraciones (dentro de AMBIENTE)
+=======================================================
+
+  FORMA
+      nombre: TIPO;
+
+  DE DONDE SALE
+      [CORROBORADO] Es como escribis en todos tus ejercicios:
+          cont_pal: ENTERO;
+          secCaracter: SECUENCIA DE CARACTERES;
+
+  PARSER
+      SI. Corta en el primer ':', valida que el nombre sea un identificador
+      valido, y exige el ';'. Guarda nombre y tipo.
+
+  A COMPARAR
+      - Se pueden declarar varias variables en una linea?
+        (a, b: ENTERO;)  Frankly dice NO.
+      - Se pueden inicializar en la declaracion? Frankly dice NO.
+
+
+=======================================================
+BLOQUE 6: Asignacion
+=======================================================
+
+  FORMA
+      variable := expresion;
+
+  DE DONDE SALE
+      [CORROBORADO] 278 apariciones de ":=" en tus apuntes y ejercicios.
+      Es el operador mas usado de todo AED.
+
+  PARSER
+      ANDA. El destino tiene que ser un identificador simple, y la expresion
+      de la derecha se evalua de verdad con expr.c
+      (ver docs/evaluador_expresiones.md).
+
+      LIMITACION CONOCIDA: no acepta acceso a campos de registro. 13
+      asignaciones del corpus fallan solo por esto:
+          pori.vx := 0;    -> error: destino de asignacion invalido
+      Es es_identificador() que no admite el punto. Ver bloque 16.
+
+  A COMPARAR
+      - El '=' solo tambien asigna, o siempre es ':='?
+        En tus ejercicios se ve "venCaracter = " "" dentro de una condicion,
+        o sea como COMPARACION. Hay que confirmar que '=' nunca asigna.
+
+
+=======================================================
+BLOQUE 7: Operadores
+=======================================================
+
+  FORMA (corregida contra TEORIA_COMPLETA.txt lineas 307-371)
+      Asignacion:    :=
+      Aritmeticos:   +   -   *   /   MOD   DIV   **
+      Relacionales:  =   <>   <   <=   >   >=
+      Logicos:       Y (AND)   O (OR)   NO
+      Booleanos:     V   F
+
+      PRIORIDAD, de mayor a menor (TEORIA_COMPLETA.txt:361-371):
+        1. + - NO        signo y negacion
+        2. **            potencia
+        3. * / DIV MOD
+        4. + -
+        5. +             concatenacion
+        6. < <= > >=
+        7. = <>
+        8. Y
+        9. O
+
+  DE DONDE SALE
+      [CORROBORADO] Tabla textual en TEORIA_COMPLETA.txt:307-371.
+
+  PARSER
+      ANDA. plugins/ide/expr.c evalua con descenso recursivo, y la prioridad
+      de arriba es el ORDEN EN QUE LAS FUNCIONES SE LLAMAN, no una tabla de
+      numeros. Los tres ejemplos de la teoria dan lo que la teoria dice:
+          (A-2) < (B-4)      -> F    (con A=4, B=3)
+          'A' < 'K'          -> V
+          'MARIA' < 'JUAN'   -> F
+      El cortocircuito de Y y O tambien esta, porque la teoria lo exige
+      textualmente. Ver docs/evaluador_expresiones.md.
+
+      OJO CON EL MENOS UNARIO: por esta tabla, -2 ** 2 da 4 y no -4, porque
+      los unarios estan ARRIBA de la potencia. En casi todos los lenguajes
+      da -4. Se siguio la tabla de la catedra; queda para confirmar.
+
+  RESUELTO EN LA COMPARACION
+      - FALTABAN '<' y '>' solos. AGREGADOS.
+      - FALTABA '**' (potencia). AGREGADO. El '^' que figura en
+        core/flags.sh esta MAL: la teoria dice '**'.
+      - FALTABA '=' como operador de igualdad. AGREGADO.
+      - '==' NO EXISTE EN AED. TEORIA_COMPLETA.txt:324 dice que la
+        igualdad es '='. Tus .paed lo usan 91 veces: es un error de
+        escritura arrastrado, no del lenguaje. Queda anotado en
+        sintaxis.json -> observaciones.conflictos.
+      - MOD y DIV son OPERADORES INFIJOS, no funciones. Los tenia mal
+        como funciones_builtin. Evidencia: TEORIA_COMPLETA.txt:707
+        "SI A MOD i = 0 ENTONCES". MOVIDOS a operadores.
+      - AND y OR son alias validos de Y y O (TEORIA_COMPLETA.txt:347-348).
+        AGREGADOS.
+      - V y F son los literales logicos (TEORIA_COMPLETA.txt:350-356).
+        AGREGADOS como categoria propia.
+
+
+=======================================================
+BLOQUE 8: Condicionales
+=======================================================
+
+  FORMA
+      SI (condicion) ENTONCES
+          ...
+      SINO
+          ...
+      FIN_SI
+
+  DE DONDE SALE
+      [DE TUS EJERCICIOS] Las palabras estan corroboradas en sintaxis.json
+      (categoria "condicionales": SI, FIN_SI, SINO, ENTONCES) pero la FORMA
+      la copie de como la escribis vos. No hay gramatica formal definida.
+
+  PARSER
+      ANDA. Hay pila de bloques: SI/SINO/FIN_SI se anidan con
+      MIENTRAS y entre si, y las cabeceras ya NO exigen ';'.
+
+      Los parentesis quedaron OPCIONALES, porque el corpus tiene las dos
+      formas: "SI (recorrido == P) ENTONCES" y "SI coord <> 0 ENTONCES".
+
+      La condicion se guarda cruda. Seguir los saltos necesita un evaluador
+      de expresiones, que todavia no existe.
+
+  A COMPARAR
+      - Existe "SINO SI" encadenado? Hoy hay que anidar un SI adentro del
+        SINO, que es como lo escribis en EjercicioParcial.paed.
+      - Existe "SINO SI" encadenado o siempre se anida un SI adentro del
+        SINO? En tu EjercicioParcial.paed anidas.
+
+
+=======================================================
+BLOQUE 9: SEGUN
+=======================================================
+
+  FORMA
+      SEGUN variable HACER
+          valor: instruccion;
+      FIN_SEGUN
+
+  DE DONDE SALE
+      [DE TUS EJERCICIOS] SEGUN 5 apariciones, FIN_SEGUN 3.
+      En EjercicioParcial.paed lo escribis como "Según c HACER" — con
+      acento y con mayuscula inicial nada mas.
+
+  PARSER
+      NO IMPLEMENTADO.
+
+  A COMPARAR
+      - Se escribe SEGUN o Según? Frankly lo tiene TODO EN MAYUSCULAS y
+        SIN acento. Tu ejercicio lo escribe distinto.
+        ESTE ES UN CONFLICTO REAL, hay que decidir cual gana.
+      - Existe un caso por defecto?
+
+
+=======================================================
+BLOQUE 10: Ciclos
+=======================================================
+
+  FORMA
+      MIENTRAS (condicion) HACER
+          ...
+      FIN_MIENTRAS
+
+      PARA <var> := <desde> HASTA <hasta> HACER              (paso = 1)
+          ...
+      FIN_PARA
+
+      PARA <var> := <desde> HASTA <hasta>; <paso> HACER      (paso explicito)
+          ...
+      FIN_PARA
+
+      REPETIR
+          ...
+      HASTA (condicion)
+
+  DE DONDE SALE
+      [DE TUS EJERCICIOS] Palabras corroboradas: PARA 50 · FIN_PARA 13 ·
+      REPETIR 8 · HASTA 7. La forma del MIENTRAS sale de tus ejercicios.
+
+  PARSER
+      MIENTRAS y PARA: ANDAN. Se parsean Y se ejecutan. Hay pila de bloques: se anidan
+      entre si y con SI, y las cabeceras ya no exigen ';'. La condicion del
+      MIENTRAS y los limites del PARA se guardan crudos: falta el evaluador
+      de expresiones.
+
+      La forma del PARA la CONFIRMO EL USUARIO (2026-08-08):
+          PARA coord := -4 HASTA 4 HACER
+      El separador es HASTA, no "a". recta.paed:47 tenia "a" y se corrigio.
+      El valor inicial va con ':=' y no con DESDE; los comentarios de
+      RevisionParcial2025.paed que dicen "PARA i DESDE 1 HASTA 10 HACER"
+      quedaron desactualizados.
+
+      EL PASO ES PARTE DEL LENGUAJE. [CORROBORADO]
+      TEORIA_COMPLETA.txt:565-571 dice textual:
+          "Si el incremento es distinto de 1, debe indicarse."
+          PARA contador := inicialización hasta fin; incremento HACER
+      O sea: el incremento es OPCIONAL, va despues de un ';' y por defecto
+      vale 1. ACA EL PARA DE AED SE SEPARA DEL for DE PASCAL, que no tiene
+      clausula de incremento. Ejemplos que hoy parsean:
+          PARA i := 1 HASTA 10 HACER          -> paso 1
+          PARA j := 1 HASTA 10; 2 HACER       -> paso 2
+          PARA k := 10 HASTA 1; -1 HACER      -> en reversa
+
+      No hay una palabra tipo "downto": para ir en reversa se usa un
+      incremento negativo. TEORIA_COMPLETA.txt:584 dice que el PARA "puede
+      no ejecutarse nunca SI (si Vi>Vf)", asi que por defecto es ascendente.
+
+      REPETIR/HASTA: NO IMPLEMENTADO, A PROPOSITO.
+
+      Ojo con los numeros de arriba: cuentan la PALABRA en cualquier lugar,
+      incluidos comentarios y prosa. Contando solo CABECERAS DE BUCLE reales
+      al principio de una linea en los *.paed, el corpus tiene:
+          PARA      1 cabecera
+          MIENTRAS  5 cabeceras, todas con parentesis
+          REPETIR   0 cabeceras
+      Por eso el PARA hubo que preguntarlo en vez de deducirlo, y por eso el
+      REPETIR sigue sin implementarse.
+
+  A COMPARAR
+      - El PARA tiene PASO/incremento, o siempre avanza de a 1?
+      - El PARA puede ir en reversa (desde mayor que hasta)?
+        ESTE BLOQUE ESTA INCOMPLETO A PROPOSITO. Hay que sacarlo de la wiki.
+      - El REPETIR/HASTA lleva ';' al final del HASTA?
+
+
+=======================================================
+BLOQUE 11: Llamadas a procedimiento
+=======================================================
+
+  FORMA
+      PROCEDIMIENTO(arg1, arg2);        <- POSICIONAL
+
+  DE DONDE SALE
+      [CORROBORADO] Asi llamas en todos tus ejercicios:
+          ARR(secCaracter);
+          AVZ(secCaracter, venCaracter);
+          ESCRIBIR("La cantidad es:", cont_pal);
+
+  PARSER
+      SI. Andan de verdad, probado.
+      Los argumentos se cortan solo en las comas de nivel 0, contando la
+      profundidad de parentesis.
+
+  A COMPARAR
+      - Alguna llamada de AED usa argumentos con nombre? Frankly dice que
+        NO, que eso es solo de la libreria de escena (bloque 17).
+
+
+=======================================================
+BLOQUE 12: Entrada y salida
+=======================================================
+
+  FORMA
+      ESCRIBIR(arg, arg, ...);
+      LEER(variable);
+
+  DE DONDE SALE
+      [CORROBORADO] ESCRIBIR y LEER estan en tu sintaxis.json original y en
+      todos los ejercicios.
+
+  PARSER
+      ESCRIBIR: SI, ejecuta. Imprime los argumentos uno atras del otro y
+      les saca las comillas a los literales.
+      LEER: parsea pero NO ejecuta.
+
+  A COMPARAR
+      - ESCRIBIR separa los argumentos con un espacio o los pega?
+        Frankly los PEGA sin separador.
+      - ESCRIBIR(secSalida(c)) — esa forma con parentesis anidados que usas
+        en EjercicioParcial.paed, que significa?
+
+
+=======================================================
+BLOQUE 13: Secuencias
+=======================================================
+
+  FORMA (declarados como procedimientos en sintaxis.json)
+      ARR(secuencia);
+      AVZ(secuencia, ventana);
+      CREAR(secuencia);
+      ABRIR(...);
+      CERRAR(secuencia, ventana);
+
+  FORMA (declarados como funciones, se usan dentro de expresiones)
+      NFDS(secuencia)      no fin de secuencia
+      FDS(secuencia)       fin de secuencia
+
+  DE DONDE SALE
+      [CORROBORADO] AVZ 59 · FDS 53 · NFDS 33 · CERRAR 29 · ARR 27 ·
+      ABRIR 15 · CREAR 10
+
+  PARSER
+      Parsean, NO ejecutan. Al correr avisan con numero de linea:
+          error: procedimiento reconocido por el parser pero no implementado
+
+  A COMPARAR
+      - CUANTOS argumentos lleva cada uno exactamente? Frankly los declaro
+        a TODOS como variadicos (acepta cualquier cantidad) porque no
+        confirme las firmas. ESTO ES UN ATAJO MIO, hay que cerrarlo.
+      - CREAR y ABRIR son lo mismo o cosas distintas?
+      - VENTANA aparece en la categoria "secuencias" Y en "tipos".
+        Esta duplicada. Cual corresponde?
+
+
+=======================================================
+BLOQUE 14: Funciones matematicas
+=======================================================
+
+  FORMA
+      MOD(a, b)      DIV(a, b)      TRUNC(x)      ABSO(x)      REDOND(x)
+
+  DE DONDE SALE
+      MOD [CORROBORADO] 15 apariciones
+      DIV [CORROBORADO] 6 apariciones
+      TRUNC, ABSO, REDOND: CERO apariciones en wiki.txt, en
+      TEORIA_COMPLETA.txt y en tus .paed. Vienen de tu sintaxis.json
+      original y estan implementadas en stdlib/matematica.sh.
+
+  PARSER
+      NO. Estan declaradas como funciones pero no hay evaluacion de
+      expresiones, asi que no se usan todavia.
+
+  A COMPARAR
+      - TRUNC, ABSO y REDOND existen en AED o son invento del proyecto?
+        SIN RESOLVER.
+      - MOD y DIV se escriben como funcion MOD(a,b) o como operador
+        infijo (a MOD b)? Frankly asume FUNCION. Unica pista en el repo:
+        stdlib/matematica.sh linea 5 comenta "MOD(a, b) -> resto de la
+        division entera  (a mod b)" — o sea usa las dos formas en la misma
+        linea. No alcanza para decidir. SIN RESOLVER.
+
+
+=======================================================
+BLOQUE 15: Funciones y procedimientos del usuario
+=======================================================
+
+  FORMA (tal como la escribis en EjercicioParcial.paed, dentro de AMBIENTE)
+      FUNCION car_a_num(c: caracter) ES: ENTERO
+          PROCESO
+              ...
+      FIN_FUNCION
+
+  DE DONDE SALE
+      [DE TUS EJERCICIOS] PROCEDIMIENTO 38 · FIN_PROCEDIMIENTO 14.
+      La forma exacta con "ES: TIPO" sale de tu ejercicio, no de una
+      definicion formal.
+
+  PARSER
+      NO IMPLEMENTADO, y ademas romperia: el parser veria el PROCESO
+      interno y creeria que arranco el PROCESO principal.
+
+  A COMPARAR
+      - El tipo del parametro va en minusculas (c: caracter) o mayusculas?
+        Tu ejercicio lo escribe en MINUSCULAS, contra la regla general.
+      - Como se declara un PROCEDIMIENTO (que no retorna)?
+      - RETORNAR existe? CERO apariciones en todo el material.
+
+
+=======================================================
+BLOQUE 16: Registros y archivos
+=======================================================
+
+  FORMA (tal como la escribis en AlgebraRectas/recta.paed)
+      vector2 = REGISTRO
+          vx: REAL;
+          vy: REAL;
+      FIN_REGISTRO
+
+  DE DONDE SALE
+      [DE TUS EJERCICIOS] REGISTRO 40 · FIN_REGISTRO 13.
+      Palabras de archivos en sintaxis.json: ABRIR, CERRAR, ARCHIVO.
+
+  PARSER
+      NO IMPLEMENTADO. Hoy el parser rechaza "vector2 = REGISTRO" porque
+      espera "nombre: TIPO;".
+
+  A COMPARAR
+      - El REGISTRO se declara con '=' o con ':'? Tu recta.paed usa '='.
+        Eso choca con la regla de declaracion del bloque 5.
+      - Como se accede a un campo? (punto? algo distinto?)
+      - Bloque de ARCHIVO: forma completa. Frankly no tiene NADA.
+
+
+=======================================================
+BLOQUE 17: Libreria escena  (ESTO NO ES AED)
+=======================================================
+
+  Vive en data/escena.json, NO en sintaxis.json. Es de VimMon, no de la
+  catedra. Se carga ADEMAS del lenguaje. Si borras el archivo, PAED sigue
+  siendo AED puro.
+
+  FORMA
+      PROCEDIMIENTO(clave = valor, clave = valor);     <- CON NOMBRE
+
+      CUBO  (nombre = <id>, posicion = (x,y,z), color = #hex, tamano = (x,y,z));
+      ESFERA(nombre = <id>, posicion = (x,y,z), color = #hex, radio = n);
+      PLANO (nombre = <id>, posicion = (x,y,z), color = #hex, tamano = (x,y,z));
+      LUZ   (nombre = <id>, posicion = (x,y,z), tipo = puntual|dir, intensidad = n);
+
+      MOVER  (nombre = <id>, posicion = (x,y,z));
+      ROTAR  (nombre = <id>, eje = x|y|z, angulo = grados);
+      ESCALAR(nombre = <id>, factor = n);
+      COLOR  (nombre = <id>, color = #hex);
+
+      GIRAR  (nombre = <id>, eje = x|y|z, velocidad = n);
+      OSCILAR(nombre = <id>, amplitud = n, frecuencia = n);
+
+      CAMARA(posicion = (x,y,z), mirar = (x,y,z));
+      FONDO (color = #hex);
+
+  DE DONDE SALE
+      [DEFINIDO POR MI] Todo. Los nombres, los parametros, la convencion de
+      argumentos con nombre y los vectores entre parentesis.
+
+  PARSER
+      SI, anda entero. Es lo unico que se ejecuta de punta a punta hoy.
+
+  A COMPARAR
+      Nada. Este bloque no tiene contraparte en tu wiki, y no deberia
+      tenerla. Esta aca solo para que quede claro que existe y que esta
+      afuera del lenguaje.
+
+
+=======================================================
+BLOQUE 18: Reglas de error
+=======================================================
+
+  FORMA
+      archivo.paed:12: error: falta ';' al final de la instruccion
+
+  REGLA
+      El parser NUNCA ignora en silencio. Analiza el archivo entero, junta
+      TODOS los errores y los reporta juntos. Si hay al menos uno, no
+      ejecuta nada.
+
+  DE DONDE SALE
+      [CORROBORADO] Es lo que vos mismo escribiste en Frankly/DOC.txt:
+      "Primero analiza TODO el archivo buscando errores de sintaxis. Solo
+      si no hay errores, ejecuta el codigo. Esto lo diferencia de un
+      interprete comun (como python) que explota en runtime."
+
+  A COMPARAR
+      Nada, esto es decision de diseño del proyecto, no de la catedra.
+
+
+=======================================================
+BLOQUE 19: Resumen — que anda hoy
+=======================================================
+
+  ANDA DE VERDAD
+      ACCION / AMBIENTE / PROCESO / FIN_ACCION
+      Declaraciones  nombre: TIPO;
+      Comentarios //  (respetando comillas)
+      Llamadas posicionales  PROC(a, b);
+      ESCRIBIR
+      El ';' obligatorio con error de linea
+      Toda la libreria de escena
+
+  PARSEA PERO NO EJECUTA
+      LEER, ARR, AVZ, CREAR, ABRIR, CERRAR
+
+  NO ENTIENDE NADA
+      :=
+      SI / SINO / FIN_SI
+      MIENTRAS / PARA / REPETIR / SEGUN
+      FUNCION y PROCEDIMIENTO del usuario
+      REGISTRO / ARCHIVO / ARREGLO
+      Expresiones y operadores de comparacion
+      Nombre de ACCION con espacios
+
+  Para que entre un ejercicio de parcial tal como lo escribis falta toda
+  la columna del medio y la de abajo. Y las estructuras de control
+  necesitan una PILA de bloques, no la maquina de estados plana de hoy,
+  porque un SI adentro de un MIENTRAS adentro de otro MIENTRAS es
+  anidacion.
+
+
+=======================================================
+BLOQUE 20: Resultado de la comparacion contra la wiki
+=======================================================
+
+  Comparado el 2026-08-07 contra data/wiki.txt (3442 lineas) y
+  solutions/AED_Teoria/TEORIA_COMPLETA.txt (1523 lineas).
+
+
+  ---- ARREGLADO EN sintaxis.json ----
+
+   1. Faltaban '<' y '>'.                      TEORIA:326-329
+   2. Faltaba '**' (potencia).                 TEORIA:364
+      El '^' de core/flags.sh esta mal.
+   3. Faltaba '=' como igualdad.               TEORIA:324
+   4. MOD y DIV estaban como funciones;        TEORIA:316-317, 707
+      son operadores infijos. Movidos.
+   5. Faltaban AND y OR como alias de Y y O.   TEORIA:347-348
+   6. Faltaban los literales logicos V y F.    TEORIA:350-356
+   7. Faltaba CONTRARIO como alternativa       TEORIA:719
+      de SINO.
+   8. Faltaban los strings con comilla         wiki.txt: 17 usos de
+      simple. En la wiki se usan MAS que       ESCRIBIR('...') contra
+      los de comilla doble.                    4 de ESCRIBIR("...")
+
+
+  ---- RESUELTO: yo estaba bien, el error estaba en tu ejercicio ----
+
+   9. ACCION con nombre de UNA palabra.
+      La wiki siempre escribe "ACCION nombre_del_algoritmo ES", en 12
+      ejemplos distintos (lineas 243, 276, 325, 366, 516, 565, 748,
+      790, 1194, 1205, 1766, 1796). Ninguno lleva espacios.
+      Tu EjercicioParcial.paed:32 dice "ACCION Ejercicio de Parcial ES".
+      ESO ESTA MAL ESCRITO EN TU EJERCICIO, no en el parser.
+
+  10. '==' no existe. La igualdad es '='. Ver bloque 7.
+      Tus ejercicios lo usan 91 veces. Error arrastrado.
+
+
+  ---- RESUELTO: la wiki me dio la forma que me faltaba ----
+
+  11. REGISTRO. Confirmado que se declara con '=' y que la definicion
+      del TIPO va ANTES del AMBIENTE, y despues se declara la variable
+      adentro (wiki.txt:1736-1774):
+
+          Alumno = REGISTRO
+              legajo: ENTERO;
+              nombre: AN(30);
+              nota:   REAL;
+          FIN_REGISTRO
+
+          ACCION cargar_alumno ES
+              AMBIENTE
+                  a: Alumno;
+              PROCESO
+                  LEER(a.legajo);
+
+      Los campos se acceden con PUNTO. Los arreglos con CORCHETES:
+      alumnos[i].legajo (wiki.txt:1802).
+
+  12. PARA. La forma dominante en la wiki es:
+
+          PARA i := 1 a 30 HACER
+              ...
+          FIN_PARA
+
+      (wiki.txt:1801, 1808, 1950, 2835, 2936 y TEORIA:706 con "hasta"
+      en minusculas). PERO wiki.txt:769 escribe otra:
+
+          PARA (i:= 1 HASTA 4) HACER
+
+      SON DOS FORMAS DISTINTAS EN TU PROPIA WIKI. Sin resolver: hay que
+      preguntar en la catedra cual es la buena.
+
+  13. FUNCION. Tambien hay dos formas:
+
+          FUNCION EsMultiploDe10(numero: entero): logico     TEORIA:715
+          FUNCION car_a_num(c: caracter) ES: ENTERO          tu ejercicio
+
+      Una usa ':' y la otra 'ES:'. SIN RESOLVER.
+      Las dos escriben el tipo del parametro en MINUSCULAS, contra la
+      regla general de mayusculas.
+
+
+  ---- SIGUE SIN RESOLVER ----
+
+  14. TRUNC, ABSO, REDOND: CERO apariciones en wiki.txt y en
+      TEORIA_COMPLETA.txt. Estan implementadas en stdlib/matematica.sh.
+      Existen en AED o son invento del proyecto?
+
+  15. RETORNAR: CERO apariciones en todo el material.
+
+  16. SEGUN como estructura de control: en wiki.txt solo aparece como
+      prosa ("SEGUN SU CONTENIDO", "SEGUN SU PROCEDIMIENTO"), nunca
+      como bloque. La forma SEGUN/FIN_SEGUN sale UNICAMENTE de tu
+      EjercicioParcial.paed, donde ademas la escribis "Según c HACER",
+      con acento y sin mayusculas.
+
+  17. ENTEROS en plural: 1 sola aparicion en toda la wiki.
+
+  18. VENTANA esta en la categoria "tipos" y en "secuencias".
+      Duplicada a proposito hasta confirmar cual corresponde.
+
+  19. Firmas exactas de ARR / AVZ / CREAR / ABRIR / CERRAR. Siguen
+      declaradas variadicas porque no encontre la firma formal.
+
+  Los puntos 14 a 19 estan anotados dentro de sintaxis.json, en
+  observaciones.sin_corroborar y observaciones.conflictos, para que no
+  se pierdan.

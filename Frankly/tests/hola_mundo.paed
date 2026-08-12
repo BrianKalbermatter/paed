@@ -1,0 +1,12 @@
+ACCION test ES
+      AMBIENTE
+          a: AN(5);
+          b: AN(5);
+      PROCESO
+          a := "Hola";
+          b := "Mundo";
+          ESCRIBIR("ei,",a,b);
+FIN_ACCION
+
+// ── SALIDA ESPERADA ─────────────────────────────────────────────────────────
+// ei,HolaMundo

@@ -1,0 +1,38 @@
+// Fixture de errores de archivos: cada linea del PROCESO tiene exactamente un
+// error, igual que errores.paed.
+//
+// Este programa NO IMPRIME NADA: si el parser encuentra un error, no se ejecuta
+// ni una instruccion. Analisis primero, ejecucion despues.
+//
+// El caso mas importante es el de ABRIR con un archivo sin declarar. LEER no
+// puede detectarlo: si el primer argumento no esta declarado, LEER lo trata
+// como consola A PROPOSITO, porque un escalar no necesita declararse
+// (`LEER(salario)` sin declarar `salario` es legitimo). Por eso la red que
+// atrapa el archivo olvidado es ABRIR, que si exige que exista.
+
+ACCION archivos_errores ES
+    AMBIENTE
+        venta = REGISTRO
+            monto: REAL;
+        FIN_REGISTRO
+
+        arch: ARCHIVO DE venta;
+        otro: ARCHIVO DE venta;
+        reg: venta;
+        cantidad: ENTERO;
+    PROCESO
+        ABRIR(fantasma, lectura);
+        ABRIR(cantidad, lectura);
+        LEER(arch);
+        ESCRIBIR(arch, reg, cantidad);
+        LEER(arch, otro);
+        LEER(Arch, reg);
+FIN_ACCION
+
+// ── SALIDA ESPERADA ─────────────────────────────────────────────────────────
+// Frankly/tests/archivos_errores.paed:24: error: ABRIR trabaja sobre un archivo y 'fantasma' no esta declarado en el AMBIENTE (falta 'fantasma: ARCHIVO DE <tipo>;')
+// Frankly/tests/archivos_errores.paed:25: error: ABRIR trabaja sobre un archivo, pero 'cantidad' se declaro en la linea 22 como ENTERO
+// Frankly/tests/archivos_errores.paed:26: error: LEER sobre el archivo 'arch' lleva exactamente 2 argumentos: LEER(arch, registro)
+// Frankly/tests/archivos_errores.paed:27: error: ESCRIBIR sobre el archivo 'arch' lleva exactamente 2 argumentos: ESCRIBIR(arch, registro)
+// Frankly/tests/archivos_errores.paed:28: error: el destino de LEER(arch, ...) no puede ser otro archivo: 'otro' (linea 20)
+// Frankly/tests/archivos_errores.paed:29: error: 'Arch' no esta declarado, pero si 'arch' (linea 19): los identificadores distinguen mayusculas

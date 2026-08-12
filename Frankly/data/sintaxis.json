@@ -1,0 +1,319 @@
+{
+  "lenguaje": "PAED",
+  "version": "3.0",
+  "extension": ".paed",
+  "descripcion": "Fuente unica de verdad del lenguaje PAED = pseudocodigo AED, tal como lo escribe la catedra. Nada de esto se copia a mano en otro lado: el resaltador de Neovim y el parser en C lo leen en runtime, y tools/generar.sh genera el resto. Las librerias que agregan procedimientos propios (escena 3D) NO van aca: van en su propio archivo, ver escena.json.",
+  "reglas": {
+    "comentario": "//",
+    "asignacion": ":=",
+    "terminador_declaracion": ";",
+    "terminador_instruccion": ";",
+    "palabras_clave": "MAYUSCULAS",
+    "identificadores": "minusculas",
+    "llamadas": "posicionales: PROCEDIMIENTO(arg1, arg2)",
+    "estructura": "ACCION <nombre> ES / AMBIENTE / PROCESO / FIN_ACCION (o FINACCION)",
+    "bloques_sin_terminador": [
+      "SI",
+      "SINO",
+      "FIN_SI",
+      "MIENTRAS",
+      "FIN_MIENTRAS",
+      "PARA",
+      "FIN_PARA",
+      "REPETIR",
+      "HASTA",
+      "SEGUN",
+      "FIN_SEGUN"
+    ]
+  },
+  "categorias": [
+    {
+      "nombre": "condicionales",
+      "color": "azul",
+      "scope": "keyword.control.condicional.paed",
+      "palabras": [
+        "SI",
+        "FIN_SI",
+        "SINO",
+        "CONTRARIO",
+        "ENTONCES"
+      ]
+    },
+    {
+      "nombre": "bucles",
+      "color": "naranja",
+      "scope": "keyword.control.bucle.paed",
+      "palabras": [
+        "MIENTRAS",
+        "FIN_MIENTRAS",
+        "PARA",
+        "FIN_PARA",
+        "REPETIR",
+        "HASTA",
+        "HACER"
+      ]
+    },
+    {
+      "nombre": "estructura",
+      "color": "dorado",
+      "scope": "keyword.other.estructura.paed",
+      "palabras": [
+        "ACCION",
+        "ES",
+        "FIN_ACCION",
+        "FINACCION",
+        "PROCESO",
+        "AMBIENTE",
+        "FUNCION",
+        "FIN_FUNCION",
+        "PROCEDIMIENTO",
+        "FIN_PROCEDIMIENTO",
+        "RETORNAR",
+        "SEGUN",
+        "FIN_SEGUN",
+        "ABRIR",
+        "CERRAR",
+        "ARCHIVO",
+        "REGISTRO",
+        "FIN_REGISTRO"
+      ]
+    },
+    {
+      "nombre": "salida",
+      "color": "violeta",
+      "scope": "support.function.salida.paed",
+      "palabras": [
+        "ESCRIBIR"
+      ]
+    },
+    {
+      "nombre": "entrada",
+      "color": "verde-teal",
+      "scope": "support.function.entrada.paed",
+      "palabras": [
+        "LEER"
+      ]
+    },
+    {
+      "nombre": "tipos",
+      "color": "azul-claro",
+      "scope": "storage.type.paed",
+      "palabras": [
+        "ENTEROS",
+        "ENTERO",
+        "REAL",
+        "CARACTER",
+        "CARACTERES",
+        "BOOLEANO",
+        "SECUENCIA",
+        "VENTANA",
+        "SALIDA",
+        "ARREGLO",
+        "CONSTANTE",
+        "VAR",
+        "DE",
+        "AN",
+        "N"
+      ]
+    },
+    {
+      "nombre": "operadores",
+      "color": "verde-lima",
+      "scope": "keyword.operator.logico.paed",
+      "palabras": [
+        "Y",
+        "O",
+        "NO",
+        "AND",
+        "OR",
+        "MOD",
+        "DIV",
+        "*",
+        "/",
+        "+",
+        "-",
+        "**",
+        ":=",
+        "=",
+        "<>",
+        "<",
+        ">",
+        "<=",
+        ">="
+      ]
+    },
+    {
+      "nombre": "funciones_builtin",
+      "color": "amarillo",
+      "scope": "support.function.builtin.paed",
+      "palabras": [
+        "TRUNC",
+        "ABSO",
+        "REDOND"
+      ]
+    },
+    {
+      "nombre": "secuencias",
+      "color": "aqua",
+      "scope": "support.function.secuencia.paed",
+      "palabras": [
+        "ARR",
+        "AVZ",
+        "CREAR",
+        "VENTANA",
+        "NFDS",
+        "FDS"
+      ]
+    },
+    {
+      "nombre": "booleanos",
+      "color": "verde-lima",
+      "scope": "constant.language.boolean.paed",
+      "palabras": [
+        "V",
+        "F"
+      ]
+    },
+    {
+      "nombre": "comentario",
+      "color": "gris",
+      "scope": "comment.line.double-slash.paed",
+      "patron": "//"
+    },
+    {
+      "nombre": "strings",
+      "color": "naranja",
+      "scope": "string.quoted.double.paed",
+      "patron": "\".*\""
+    },
+    {
+      "nombre": "strings_simples",
+      "color": "naranja",
+      "scope": "string.quoted.single.paed",
+      "patron": "'.*'"
+    },
+    {
+      "nombre": "numeros",
+      "color": "rosa-lila",
+      "scope": "constant.numeric.paed",
+      "patron": "[0-9]+"
+    },
+    {
+      "nombre": "variables",
+      "color": "blanco-crema",
+      "scope": "variable.other.paed",
+      "descripcion": "identificadores no reservados"
+    }
+  ],
+  "observaciones": {
+    "fuente_de_verdad": "TEORIA_COMPLETA.txt lineas 307-371 para operadores y prioridad; data/wiki.txt para formas de bloque",
+    "sin_corroborar": {
+      "TRUNC": "0 apariciones en wiki.txt y en TEORIA_COMPLETA.txt. Implementada en stdlib/matematica.sh.",
+      "ABSO": "0 apariciones. Implementada en stdlib/matematica.sh.",
+      "REDOND": "0 apariciones. Implementada en stdlib/matematica.sh.",
+      "RETORNAR": "0 apariciones en todo el material.",
+      "ENTEROS": "1 sola aparicion, en wiki.txt. Puede ser plural accidental de ENTERO."
+    },
+    "conflictos": {
+      "==": "NO existe en AED. TEORIA_COMPLETA.txt:324 declara '=' como el operador de igualdad. Los .paed del alumno usan '==' 91 veces: es un error de escritura arrastrado, no del lenguaje.",
+      "VENTANA": "aparece en la categoria 'tipos' y en 'secuencias'. Duplicada a proposito hasta confirmar cual corresponde.",
+      "SEGUN": "en wiki.txt solo aparece como prosa ('SEGUN SU CONTENIDO'), nunca como estructura de control. La forma SEGUN/FIN_SEGUN sale solo de EjercicioParcial.paed."
+    }
+  },
+  "procedimientos": [
+    {
+      "nombre": "ESCRIBIR",
+      "grupo": "io",
+      "efecto": "salida",
+      "variadico": true,
+      "params": [],
+      "forma_archivo": {
+        "efecto": "grabar",
+        "grupo": "archivos",
+        "args": 2,
+        "fuente": "OnlySintaxis.md:154-158; TEORIA_COMPLETA.txt:1112 ESC(Arch,Reg)"
+      }
+    },
+    {
+      "nombre": "LEER",
+      "grupo": "io",
+      "efecto": "entrada",
+      "variadico": true,
+      "params": [],
+      "forma_archivo": {
+        "efecto": "avanzar",
+        "grupo": "archivos",
+        "args": 2,
+        "fuente": "TEORIA_COMPLETA.txt:1107 equipara Leer(Arch,Reg) con Avanzar(Sec,v); OnlySintaxis.md:154-158"
+      }
+    },
+    {
+      "nombre": "ARR",
+      "grupo": "secuencias",
+      "efecto": "arrancar",
+      "variadico": true,
+      "params": []
+    },
+    {
+      "nombre": "AVZ",
+      "grupo": "secuencias",
+      "efecto": "avanzar",
+      "variadico": true,
+      "params": []
+    },
+    {
+      "nombre": "CREAR",
+      "grupo": "secuencias",
+      "efecto": "crear",
+      "variadico": true,
+      "params": []
+    },
+    {
+      "nombre": "ABRIR",
+      "grupo": "archivos",
+      "efecto": "abrir",
+      "variadico": true,
+      "params": [],
+      "primer_arg": "archivo"
+    },
+    {
+      "nombre": "CERRAR",
+      "grupo": "secuencias",
+      "efecto": "cerrar",
+      "variadico": true,
+      "params": []
+    }
+  ],
+  "funciones": [
+    {
+      "nombre": "NFDS",
+      "grupo": "secuencias",
+      "retorna": "BOOLEANO",
+      "descripcion": "no fin de secuencia"
+    },
+    {
+      "nombre": "FDS",
+      "grupo": "secuencias",
+      "retorna": "BOOLEANO",
+      "descripcion": "fin de secuencia"
+    },
+    {
+      "nombre": "TRUNC",
+      "grupo": "matematica",
+      "retorna": "ENTERO",
+      "descripcion": "parte entera"
+    },
+    {
+      "nombre": "ABSO",
+      "grupo": "matematica",
+      "retorna": "REAL",
+      "descripcion": "valor absoluto"
+    },
+    {
+      "nombre": "REDOND",
+      "grupo": "matematica",
+      "retorna": "ENTERO",
+      "descripcion": "redondeo al entero mas cercano"
+    }
+  ]
+}

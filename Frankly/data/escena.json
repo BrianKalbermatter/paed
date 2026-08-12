@@ -1,0 +1,124 @@
+{
+  "libreria": "escena",
+  "version": "1.0",
+  "descripcion": "Libreria de escena 3D para VimMon. NO es parte del lenguaje PAED: es un conjunto de procedimientos que el plugin ide carga ADEMAS de sintaxis.json, igual que stdlib/matematica.sh agrega funciones al interprete bash. El pseudocodigo AED de la catedra no conoce ninguno de estos nombres.",
+
+  "convencion": "A diferencia de AED, que llama posicional, esta libreria usa argumentos con nombre: PROCEDIMIENTO(clave = valor, ...). Es una convencion de la libreria, no una regla del lenguaje.",
+
+  "procedimientos": [
+    {
+      "nombre": "CUBO",
+      "efecto": "crear",
+      "clase": "cubo",
+      "params": [
+        { "nombre": "nombre",    "tipo": "ID",   "requerido": true },
+        { "nombre": "posicion",  "tipo": "VEC3" },
+        { "nombre": "color",     "tipo": "HEX"  },
+        { "nombre": "tamano",    "tipo": "VEC3", "alias": "tamaño" },
+        { "nombre": "grupo",     "tipo": "ID"   }
+      ]
+    },
+    {
+      "nombre": "ESFERA",
+      "efecto": "crear",
+      "clase": "esfera",
+      "params": [
+        { "nombre": "nombre",    "tipo": "ID",   "requerido": true },
+        { "nombre": "posicion",  "tipo": "VEC3" },
+        { "nombre": "color",     "tipo": "HEX"  },
+        { "nombre": "radio",     "tipo": "NUM"  },
+        { "nombre": "grupo",     "tipo": "ID"   }
+      ]
+    },
+    {
+      "nombre": "PLANO",
+      "efecto": "crear",
+      "clase": "plano",
+      "params": [
+        { "nombre": "nombre",    "tipo": "ID",   "requerido": true },
+        { "nombre": "posicion",  "tipo": "VEC3" },
+        { "nombre": "color",     "tipo": "HEX"  },
+        { "nombre": "tamano",    "tipo": "VEC3", "alias": "tamaño" },
+        { "nombre": "grupo",     "tipo": "ID"   }
+      ]
+    },
+    {
+      "nombre": "LUZ",
+      "efecto": "crear",
+      "clase": "luz",
+      "params": [
+        { "nombre": "nombre",     "tipo": "ID",   "requerido": true },
+        { "nombre": "posicion",   "tipo": "VEC3" },
+        { "nombre": "tipo",       "tipo": "ID"   },
+        { "nombre": "intensidad", "tipo": "NUM"  },
+        { "nombre": "grupo",      "tipo": "ID"   }
+      ]
+    },
+    {
+      "nombre": "MOVER",
+      "efecto": "modificar",
+      "params": [
+        { "nombre": "nombre",   "tipo": "ID",   "requerido": true },
+        { "nombre": "posicion", "tipo": "VEC3", "requerido": true }
+      ]
+    },
+    {
+      "nombre": "ROTAR",
+      "efecto": "modificar",
+      "params": [
+        { "nombre": "nombre", "tipo": "ID",  "requerido": true },
+        { "nombre": "eje",    "tipo": "ID",  "requerido": true },
+        { "nombre": "angulo", "tipo": "NUM", "requerido": true }
+      ]
+    },
+    {
+      "nombre": "ESCALAR",
+      "efecto": "modificar",
+      "params": [
+        { "nombre": "nombre", "tipo": "ID",  "requerido": true },
+        { "nombre": "factor", "tipo": "NUM", "requerido": true }
+      ]
+    },
+    {
+      "nombre": "COLOR",
+      "efecto": "modificar",
+      "params": [
+        { "nombre": "nombre", "tipo": "ID",  "requerido": true },
+        { "nombre": "color",  "tipo": "HEX", "requerido": true }
+      ]
+    },
+    {
+      "nombre": "GIRAR",
+      "efecto": "comportamiento",
+      "params": [
+        { "nombre": "nombre",    "tipo": "ID",  "requerido": true },
+        { "nombre": "eje",       "tipo": "ID",  "requerido": true },
+        { "nombre": "velocidad", "tipo": "NUM", "requerido": true }
+      ]
+    },
+    {
+      "nombre": "OSCILAR",
+      "efecto": "comportamiento",
+      "params": [
+        { "nombre": "nombre",     "tipo": "ID",  "requerido": true },
+        { "nombre": "amplitud",   "tipo": "NUM", "requerido": true },
+        { "nombre": "frecuencia", "tipo": "NUM", "requerido": true }
+      ]
+    },
+    {
+      "nombre": "CAMARA",
+      "efecto": "global",
+      "params": [
+        { "nombre": "posicion", "tipo": "VEC3" },
+        { "nombre": "mirar",    "tipo": "VEC3" }
+      ]
+    },
+    {
+      "nombre": "FONDO",
+      "efecto": "global",
+      "params": [
+        { "nombre": "color", "tipo": "HEX", "requerido": true }
+      ]
+    }
+  ]
+}

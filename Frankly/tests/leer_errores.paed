@@ -1,0 +1,55 @@
+// Los errores de LEER, con el texto exacto que tienen que decir.
+//
+// Un LEER que falla calladito es peor que uno que no existe: el programa sigue
+// con una variable sin valor y el error aparece tres instrucciones despues, en
+// un lugar que no tiene nada que ver.
+//
+// El programa NO se corta en el primer error a proposito: cada linea se reporta
+// y se sigue, asi una sola corrida muestra todos los problemas.
+//
+// Ojo con el orden: cada LEER que se ejecuta CONSUME lineas de la entrada,
+// incluso los que despues fallan al guardar. Por eso el ultimo caso — el de la
+// entrada agotada — va al final.
+
+ACCION leer_errores ES
+    AMBIENTE
+        A: ARREGLO[1..2] DE ENTERO;
+        p = REGISTRO
+            vx: REAL;
+        FIN_REGISTRO
+        q: p;
+        x: ENTERO;
+    PROCESO
+        ESCRIBIR("-- destinos que no son destinos --");
+        LEER("hola");
+        LEER(3);
+
+        ESCRIBIR("-- LEER sin destino --");
+        LEER();
+
+        ESCRIBIR("-- indice fuera de los limites del arreglo --");
+        LEER(A[9]);
+
+        ESCRIBIR("-- campo que el registro no tiene --");
+        LEER(q.vz);
+
+        ESCRIBIR("-- la entrada se termino --");
+        LEER(x);
+FIN_ACCION
+
+// ── ENTRADA ─────────────────────────────────────────────────────────────────
+// 7
+// 8
+
+// ── SALIDA ESPERADA ─────────────────────────────────────────────────────────
+// -- destinos que no son destinos --
+// Frankly/tests/leer_errores.paed:24: error: '"hola"' no sirve como destino de LEER: se espera una variable, un elemento A[i] o un campo p.campo
+// Frankly/tests/leer_errores.paed:25: error: '3' no sirve como destino de LEER: se espera una variable, un elemento A[i] o un campo p.campo
+// -- LEER sin destino --
+// Frankly/tests/leer_errores.paed:28: error: LEER necesita al menos un destino: LEER(x)
+// -- indice fuera de los limites del arreglo --
+// Frankly/tests/leer_errores.paed:31: error: indice 9 fuera de rango: 'A' va de 1 a 2
+// -- campo que el registro no tiene --
+// Frankly/tests/leer_errores.paed:34: error: 'q' no tiene un campo 'vz'
+// -- la entrada se termino --
+// Frankly/tests/leer_errores.paed:37: error: la entrada se termino antes de darle un valor a 'x'

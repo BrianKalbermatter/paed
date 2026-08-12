@@ -1,0 +1,358 @@
+// ============================================================
+// SIMULACRO PARCIAL 01 — Estructuras de Control y Secuencias
+// Redactado como ing. de plastico autentico
+// Respondé primero, despues fijate las respuestas al final.
+// ============================================================
+
+
+// ------------------------------------------------------------
+// PREGUNTA 1
+// ------------------------------------------------------------
+// ¿Cual de las siguientes opciones describe CORRECTAMENTE
+// el comportamiento de un ciclo MIENTRAS?
+//
+// A) Ejecuta el bloque siempre al menos una vez
+// B) Evalua la condicion al final de cada iteracion
+// C) Puede no ejecutar el bloque ninguna vez si la condicion es falsa
+// D) Requiere obligatoriamente una variable de tipo entero
+// RESPUESTA: C, porque dice Ejecuta el bloque SIEMPRE al menos una vez,
+//      esto seria un REPETIR si seria siempre, no el MIENTRAS porque no siempre
+//      se ejecuta una vez. Por eso la opcion correcta es la C.
+
+// ------------------------------------------------------------
+// PREGUNTA 2
+// ------------------------------------------------------------
+// Un algoritmo que lee datos hasta encontrar un valor especial
+// que indica el fin, utiliza:
+//
+// A) Un ciclo por contador
+// B) Un ciclo controlado por centinela
+// C) Una estructura condicional doble
+// D) Un registro de fin de archivo
+// RESPUESTA: El ciclo centinela existe exactamente para el caso donde no se
+//      sabe la cantidad. Esa es su razon de ser. Usar un PARA cuando no sabes
+//      cuantos elementos hay. Se usa este tipo de herramienta.
+
+// ------------------------------------------------------------
+// PREGUNTA 3
+// ------------------------------------------------------------
+// ¿Cual de las siguientes afirmaciones sobre los REGISTROS
+// es INCORRECTA?
+//
+// A) Un registro puede contener campos de distintos tipos
+// B) Un registro es una estructura de datos homogenea
+// C) Los campos de un registro tienen nombres propios
+// D) Un registro agrupa datos bajo una misma entidad logica
+
+
+// ------------------------------------------------------------
+// PREGUNTA 4
+// ------------------------------------------------------------
+// Si en un ciclo PARA la variable de control no se modifica
+// manualmente dentro del bloque, ¿que sucede?
+//
+// A) El ciclo se convierte en infinito
+// B) El ciclo funciona normalmente porque el PARA la gestiona solo
+// C) Se produce un error porque falta la actualizacion
+// D) El ciclo no entra nunca
+
+
+// ------------------------------------------------------------
+// PREGUNTA 5
+// ------------------------------------------------------------
+// ¿Que tipo de memoria almacena los archivos del sistema?
+//
+// A) Memoria interna volatil
+// B) Memoria de cache
+// C) Memoria externa persistente
+// D) Memoria de proceso
+
+
+// ------------------------------------------------------------
+// PREGUNTA 6
+// ------------------------------------------------------------
+// Una secuencia donde todos los elementos son del mismo tipo se
+// denomina:
+//
+// A) Secuencia indefinida
+// B) Secuencia impura
+// C) Secuencia pura
+// D) Subsecuencia definida
+
+
+// ------------------------------------------------------------
+// PREGUNTA 7
+// ------------------------------------------------------------
+// ¿Cuantas veces como MINIMO se ejecuta el bloque de un REPETIR
+// ...HASTA?
+//
+// A) 0 veces, depende de la condicion inicial
+// B) 1 vez siempre
+// C) 2 veces
+// D) Tantas veces como indique la condicion al inicio
+
+
+// ------------------------------------------------------------
+// PREGUNTA 8
+// ------------------------------------------------------------
+// ¿Cual de las siguientes NO es una organizacion de archivos?
+//
+// A) Secuencial
+// B) Indexada
+// C) Directa
+// D) Relativa
+
+
+// ------------------------------------------------------------
+// PREGUNTA 9
+// ------------------------------------------------------------
+// En pseudocodigo, si se declara una variable pero nunca se le
+// asigna un valor, ¿que ocurre al intentar usarla?
+//
+// A) Automaticamente toma el valor 0
+// B) El programa la ignora
+// C) Puede producir un resultado indeterminado
+// D) Genera un error de sintaxis siempre
+
+
+// ------------------------------------------------------------
+// PREGUNTA 10
+// ------------------------------------------------------------
+// ¿Cual es el principal RIESGO de usar un ciclo POST-TEST
+// con datos que pueden ser invalidos desde el inicio?
+//
+// A) Que el ciclo nunca termine
+// B) Que el bloque se ejecute con un dato invalido antes de validarlo
+// C) Que la condicion no se evalúe correctamente
+// D) Que el centinela no funcione
+
+
+// ------------------------------------------------------------
+// PREGUNTA 11
+// ------------------------------------------------------------
+// ¿Una estructura condicional SI siempre debe tener un bloque SINO?
+//
+// A) Si, es obligatorio para que la estructura sea completa
+// B) No, el SINO es opcional
+// C) Solo es obligatorio cuando hay condiciones compuestas
+// D) Depende del tipo de dato que se evalua
+
+
+// ------------------------------------------------------------
+// PREGUNTA 12
+// ------------------------------------------------------------
+// ¿Que relacion existe entre SECUENCIA y SUBSECUENCIA?
+//
+// A) Son exactamente lo mismo
+// B) Toda secuencia es subsecuencia de otra secuencia
+// C) Toda subsecuencia es una secuencia, pero no al reves
+// D) Una subsecuencia siempre es impura
+
+
+// ------------------------------------------------------------
+// PREGUNTA 13
+// ------------------------------------------------------------
+// Un algoritmo de CORTE DE CONTROL SIMPLE agrupa registros por:
+//
+// A) Multiples niveles de clave simultaneamente
+// B) Un solo campo o clave de agrupacion
+// C) Orden aleatorio sin clave definida
+// D) La cantidad de registros en el archivo
+
+
+// ------------------------------------------------------------
+// PREGUNTA 14
+// ------------------------------------------------------------
+// ¿Que estructura de control corresponde a este pseudocodigo?
+//
+//   MIENTRAS temperatura > 25 HACER
+//       encender_ventilador()
+//   FIN_MIENTRAS
+//
+// A) Ciclo post-test por contador
+// B) Ciclo pre-test por condicion
+// C) Estructura condicional doble
+// D) Ciclo post-test por centinela
+
+
+// ------------------------------------------------------------
+// PREGUNTA 15
+// ------------------------------------------------------------
+// ¿Cual afirmacion sobre condiciones compuestas con O (OR) es
+// VERDADERA?
+//
+// A) Si ambas condiciones son falsas el resultado es verdadero
+// B) Si al menos una condicion es verdadera el resultado es verdadero
+// C) Solo es verdadero si AMBAS condiciones son verdaderas
+// D) El O logico es equivalente al Y logico
+
+
+// ------------------------------------------------------------
+// PREGUNTA 16
+// ------------------------------------------------------------
+// Un archivo con ORGANIZACION RELATIVA permite:
+//
+// A) Acceder a un registro directamente por su numero de registro
+// B) Solo lectura secuencial de todos los registros
+// C) Busqueda por clave de texto unicamente
+// D) Almacenar registros de longitud variable
+
+
+// ------------------------------------------------------------
+// PREGUNTA 17
+// ------------------------------------------------------------
+// ¿Cual de estas estructuras es un ejemplo de estructuras ANIDADAS?
+//
+// A) Una funcion que se llama a si misma
+// B) Un SI dentro de otro SI
+// C) Dos MIENTRAS ejecutandose en paralelo
+// D) Una variable declarada dentro de un registro
+
+
+// ------------------------------------------------------------
+// PREGUNTA 18
+// ------------------------------------------------------------
+// ¿Para que sirve un CENTINELA en un algoritmo?
+//
+// A) Para contar cuantos elementos procesa el bucle
+// B) Para marcar el fin de una secuencia de datos
+// C) Para inicializar variables antes del bucle
+// D) Para verificar que los datos sean validos
+
+
+// ------------------------------------------------------------
+// PREGUNTA 19
+// ------------------------------------------------------------
+// Si necesitas procesar exactamente 200 facturas, ¿que ciclo
+// usarias?
+//
+// A) REPETIR...HASTA con centinela en 200
+// B) MIENTRAS con condicion de fin de archivo
+// C) PARA desde 1 hasta 200
+// D) Cualquiera de las anteriores, son equivalentes
+
+
+// ------------------------------------------------------------
+// PREGUNTA 20
+// ------------------------------------------------------------
+// ¿Cual de las siguientes afirmaciones sobre el PARA es FALSA?
+//
+// A) Itera una cantidad conocida de veces
+// B) Se pueden anidar varios PARA
+// C) La condicion se evalua al principio de cada iteracion
+// D) Solo puede usarse con condiciones compuestas
+
+
+
+
+// ============================================================
+// ============================================================
+//                      R E S P U E S T A S
+// ============================================================
+// ============================================================
+
+
+// PREGUNTA 1 → C
+// El MIENTRAS evalua la condicion ANTES de entrar.
+// Si es falsa desde el inicio, el bloque no se ejecuta nunca.
+// A describe el REPETIR (post-test). B esta al reves. D es inventado.
+
+
+// PREGUNTA 2 → B
+// Un centinela es un valor especial que marca el fin de la secuencia.
+// No es un contador (no sabe cuantos hay) ni una condicion doble.
+
+
+// PREGUNTA 3 → B
+// Un registro es HETEROGENEO (distintos tipos).
+// "Homogeneo" describe los arrays (todos del mismo tipo).
+// Las demas son verdaderas, por eso la INCORRECTA es B.
+
+
+// PREGUNTA 4 → B
+// El PARA gestiona su variable de control automaticamente.
+// No necesitas actualizar i dentro del bloque — eso es responsabilidad
+// del ciclo. Si lo modificas manualmente es mala practica pero no error.
+
+
+// PREGUNTA 5 → C
+// Los archivos se guardan en memoria EXTERNA (disco).
+// La RAM es interna y volatil — cuando se apaga, se pierde.
+
+
+// PREGUNTA 6 → C
+// Secuencia PURA: todos los elementos son del mismo tipo.
+// Secuencia IMPURA: mezcla de tipos distintos.
+
+
+// PREGUNTA 7 → B
+// El REPETIR...HASTA evalua la condicion AL FINAL.
+// Entonces el bloque se ejecuta SI O SI al menos una vez, sin excepcion.
+
+
+// PREGUNTA 8 → C
+// "Directa" es un tipo de ACCESO, no de ORGANIZACION.
+// Las organizaciones son: Secuencial, Relativa e Indexada.
+// Esta es la tipica pregunta trampa de ing. de plastico.
+
+
+// PREGUNTA 9 → C
+// En pseudocodigo no hay error garantizado — el valor es indeterminado.
+// En lenguajes reales depende del compilador. A es falso (no hay default).
+
+
+// PREGUNTA 10 → B
+// El post-test entra ANTES de validar. Si el dato es invalido,
+// igual se procesa. Ese es el riesgo concreto.
+
+
+// PREGUNTA 11 → B
+// El SINO es completamente OPCIONAL.
+// Un SI puede existir solo para actuar solo cuando algo es verdadero.
+
+
+// PREGUNTA 12 → C
+// Toda SUBSECUENCIA ES una secuencia (vive dentro de otra).
+// Pero no toda secuencia es subsecuencia — la principal no es de nadie.
+
+
+// PREGUNTA 13 → B
+// Corte de control SIMPLE: UN solo campo de agrupacion.
+// Corte JERARQUICO: multiples niveles (pais → provincia → ciudad).
+
+
+// PREGUNTA 14 → B
+// MIENTRAS = pre-test, evalua ANTES.
+// No es contador (no tiene variable fija), no es post-test.
+
+
+// PREGUNTA 15 → B
+// OR es verdadero si AL MENOS UNA condicion es verdadera.
+// A es lo contrario. C describe el AND. D es totalmente falso.
+
+
+// PREGUNTA 16 → A
+// Organizacion RELATIVA: acceso por numero de registro (posicion).
+// No requiere clave textual ni es solo secuencial.
+
+
+// PREGUNTA 17 → B
+// ANIDADO = una estructura contiene otra del mismo tipo.
+// A describe RECURSIVIDAD (concepto diferente).
+
+
+// PREGUNTA 18 → B
+// El centinela marca cuando termina la secuencia de datos.
+// No es un contador ni un validador.
+
+
+// PREGUNTA 19 → C
+// Cantidad CONOCIDA (200) = ciclo por CONTADOR (PARA).
+// D es trampa tipica: tecnicamente todas podrian funcionar,
+// pero la CORRECTA conceptualmente es C.
+
+
+// PREGUNTA 20 → D
+// El PARA NO requiere condiciones compuestas — puede tener
+// cualquier condicion o directamente un rango numerico.
+// Las otras tres afirmaciones son VERDADERAS.

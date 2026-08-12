@@ -1,0 +1,12 @@
+// FINACCION, sin guion bajo, es una forma valida de cerrar.
+// Decidido el 2026-08-10: el cierre puede escribirse FIN_ACCION o FINACCION.
+ACCION cierre_finaccion ES
+    AMBIENTE
+        n: ENTERO;
+    PROCESO
+        n := 7;
+        ESCRIBIR("cierra con FINACCION, n vale ", n);
+FINACCION
+
+// ── SALIDA ESPERADA ─────────────────────────────────────────────────────────
+// cierra con FINACCION, n vale 7

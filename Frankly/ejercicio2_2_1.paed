@@ -1,0 +1,10 @@
+//Dada una secuencia de caracteres de entrada, desarrollar un algoritmo que produzca una secuencia de salida de caracteres; la que contendrá solo los caracteres “numéricos” correspondientes a dígitos impares encontrados en la secuencia de entrada.
+// Ejemplo: Si en la entrada viniera A125EB% en la salida debería ir 15.
+// Al final del proceso informar:
+
+// 1.    Cuantos dígitos impares encontró
+// 2.    Cuantos dígitos pares
+// 3.    Total de caracteres “numéricos” (dígitos) y porcentaje de pares e impares
+
+
+ACCION

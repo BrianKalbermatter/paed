@@ -1,0 +1,89 @@
+// REGISTRO — el `struct` de C con otro nombre.
+//
+//     vector2 = REGISTRO        define un TIPO con dos campos
+//     pori: vector2;            declara una VARIABLE de ese tipo
+//     pori.vx                   accede a un CAMPO de esa variable
+//
+// Sin registros, un punto necesita dos variables sueltas (pori_x, pori_y) y
+// nada las une. Con registro, `pori` es UNA cosa que tiene dos partes.
+//
+// Por dentro se APLANA: `pori` de tipo vector2 se guarda como dos variables
+// llamadas "pori.vx" y "pori.vy". El entorno no sabe nada de registros; para
+// el son dos variables comunes que tienen un punto en el nombre.
+
+ACCION registros ES
+    AMBIENTE
+        vector2 = REGISTRO
+            vx: REAL;
+            vy: REAL;
+        FIN_REGISTRO
+
+        pori: vector2;
+        dir : vector2;
+        pini: vector2;
+        pfin: vector2;
+        tini: REAL;
+        tfin: REAL;
+        dommin: REAL;
+        dommax: REAL;
+    PROCESO
+        ESCRIBIR("-- campos como cualquier variable --");
+
+        pori.vx := 3;
+        pori.vy := 4;
+        ESCRIBIR("pori = (", pori.vx, ", ", pori.vy, ")");
+
+        // Un campo vale en cualquier expresion: 3² + 4² = 25, el 3-4-5 clasico
+        ESCRIBIR("modulo al cuadrado = ", pori.vx ** 2 + pori.vy ** 2);
+
+        // Y como destino, leyendo de otro campo
+        dir.vx := pori.vx * 2;
+        dir.vy := pori.vy + 1;
+        ESCRIBIR("dir = (", dir.vx, ", ", dir.vy, ")");
+
+        ESCRIBIR("-- recta parametrica P(t) = P0 + t * D --");
+
+        // El mismo calculo que AlgebraRectas/recta.paed, que es el ejercicio
+        // real que esto vino a desbloquear.
+        pori.vx := 0;
+        pori.vy := 0;
+        dir.vx  := 1;
+        dir.vy  := -4;
+        dommin  := -4;
+        dommax  := 4;
+
+        // Despejando x = P0.vx + t * D.vx  ->  t = (x - P0.vx) / D.vx
+        tini := (dommin - pori.vx) / dir.vx;
+        tfin := (dommax - pori.vx) / dir.vx;
+
+        pini.vx := pori.vx + tini * dir.vx;
+        pini.vy := pori.vy + tini * dir.vy;
+        pfin.vx := pori.vx + tfin * dir.vx;
+        pfin.vy := pori.vy + tfin * dir.vy;
+
+        // La recta y = -4x entre x=-4 y x=4: en -4 vale 16, en 4 vale -16
+        // En una sola linea: el parser lee linea por linea, asi que una
+        // instruccion no se puede partir en dos.
+        ESCRIBIR("segmento: (", pini.vx, ",", pini.vy, ") a (", pfin.vx, ",", pfin.vy, ")");
+
+        SI (pini.vy = 16 Y pfin.vy = -16) ENTONCES
+            ESCRIBIR("la recta da los valores esperados");
+        SINO
+            ESCRIBIR("ERROR en el calculo");
+        FIN_SI
+
+        ESCRIBIR("-- el punto decimal NO se confunde con el de campo --");
+        tini := 1.5 + 2.5;
+        ESCRIBIR("1.5 + 2.5 = ", tini);
+FIN_ACCION
+
+// ── SALIDA ESPERADA ─────────────────────────────────────────────────────────
+// -- campos como cualquier variable --
+// pori = (3, 4)
+// modulo al cuadrado = 25
+// dir = (6, 5)
+// -- recta parametrica P(t) = P0 + t * D --
+// segmento: (-4,16) a (4,-16)
+// la recta da los valores esperados
+// -- el punto decimal NO se confunde con el de campo --
+// 1.5 + 2.5 = 4

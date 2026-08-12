@@ -1,0 +1,49 @@
+// El patron de recorrido de un archivo, tal como esta en el apunte
+// (OnlySintaxis.md:160-168):
+//
+//     ABRIR(arch, lectura);
+//     LEER(arch, reg);
+//     MIENTRAS NO FDA(arch) HACER
+//         // procesar reg
+//         LEER(arch, reg);
+//     FIN_MIENTRAS
+//     CERRAR(arch);
+//
+// El LEER de antes del MIENTRAS no sobra: es la "lectura adelantada", y sin
+// ella FDA no sabe si el archivo estaba vacio desde el principio.
+//
+// Este programa TERMINA CON ERROR a proposito. Hoy es documentacion ejecutable
+// de lo que falta: cuando los archivos se implementen, este test es el que va a
+// mostrar el progreso.
+
+ACCION archivos_patron_fda ES
+    AMBIENTE
+        alumno = REGISTRO
+            legajo: ENTERO;
+            nota: REAL;
+        FIN_REGISTRO
+
+        arch: ARCHIVO DE alumno;
+        reg: alumno;
+        cant: ENTERO;
+    PROCESO
+        cant := 0;
+
+        ABRIR(arch, lectura);
+        LEER(arch, reg);
+
+        MIENTRAS (NO FDA(arch)) HACER
+            cant := cant + 1;
+            LEER(arch, reg);
+        FIN_MIENTRAS
+
+        CERRAR(arch);
+        ESCRIBIR("registros leidos: ", cant);
+FIN_ACCION
+
+// ── SALIDA ESPERADA ─────────────────────────────────────────────────────────
+// Frankly/tests/archivos_patron_fda.paed:32: error: ABRIR todavia no esta implementado: por ahora solo se valida la declaracion
+// Frankly/tests/archivos_patron_fda.paed:33: error: LEER(archivo, registro) todavia no avanza el archivo: falta el manejo de archivos en disco
+// Frankly/tests/archivos_patron_fda.paed:35: error: FDA() necesita archivos, que todavia no existen en el interprete
+// Frankly/tests/archivos_patron_fda.paed:40: error: CERRAR todavia no esta implementado: por ahora solo se valida la declaracion
+// registros leidos: 0

@@ -1,0 +1,20 @@
+// Se dispone de dos secuencias texto formadas por oraciones bimembre(sujeto y
+// predicado, separados por comas","). Se desea una secuencia texto de salida formada por oraciones bimembres, de la siguiente forma:
+// El sujeto, de la secuencia 1, y el predicado, de la secuencia 2.
+// Al finalizar informar cuantas oraciones tiene cada secuencia.
+
+
+ACCION ej2_1_20 ES
+    AMBIENTE
+        sec1: SECUENCIA DE CARACTERES;
+        sec2: SECUENCIA DE CARACTERES;
+        cont_v: ENTERO;
+        cont_pal: ENTERO; 
+    PROCESO
+        MIENTRAS ((NFDS(sec1))Y NFDS(sec2)) HACER
+            SI
+        FIN_MIENTRAS
+FIN_ACCION
+
+
+

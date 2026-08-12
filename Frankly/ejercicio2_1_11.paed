@@ -1,0 +1,35 @@
+// Dada una secuencia de caracteres, determinar la cantidad de palabras de 4 caracteres (letras)
+
+ACCION ej_2.1.11 ES
+    AMBIENTE
+        secCaracter: SECUENCIA DE CARACTERES;
+        venCaracter: VENTANA DE CARACTERES;
+        //cuatro = (1..4);
+        cont_pal: ENTERO;
+        cont_let: ENTERO;
+    PROCESO
+        ARR(secCaracter);
+        AVZ(secCaracter, venCaracter);
+        cont_pal:=0;
+        MIENTRAS (NFDS(secCaracter)) HACER
+            
+            cont_let:=0;
+            MIENTRAS (NFDS(secCaracter) Y (venCaracter = " ")) HACER // Tratando los blancos
+                cont_let:= cont_let + 1;
+                AVZ(secCaracter, venCaracter);
+                
+            FIN_MIENTRAS
+            
+            SI (cont_let = 4) ENTONCES
+                cont_pal:= cont_pal + 1;
+                AVZ(secCaracter, venCaracter); 
+            SINO 
+                AVZ(secCaracter, venCaracter);
+            FIN_SI
+        FIN_MIENTRAS
+        ESCRIBIR("La cantidad de palabras con 4 caracteres es de:", cont_pal);
+FIN_ACCION
+
+
+
+

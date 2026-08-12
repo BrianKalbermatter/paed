@@ -1,0 +1,66 @@
+// Las PALABRAS CLAVE no distinguen mayusculas de minusculas.
+// Los IDENTIFICADORES si: 'total' y 'Total' son dos variables distintas.
+//
+// La wiki escribe ARREGLO (wiki.txt:1791) y arreglo[ (:1798) para lo mismo, y
+// el unico ejemplo con autoridad de catedra (AED_2021_UnI.pdf:10) declara los
+// tipos en minuscula. Obligar a una sola forma seria inventar una regla que las
+// fuentes no tienen.
+//
+// Este archivo esta escrito a proposito con las keywords mezcladas.
+
+accion mayusculas ES
+    AmBiEnTe
+        A: arreglo[1..5] DE entero;
+        n: ENTERO;
+        i: entero;
+        suma: Entero;
+        total: ENTERO;
+        Total: ENTERO;
+    PrOcEsO
+        n := 5;
+
+        // 'para', 'hasta' y 'fin_para' en minuscula
+        para i := 1 hasta n hacer
+            A[i] := i * i;
+        fin_para
+
+        suma := 0;
+        i := 1;
+        // 'MiEnTrAs' mezclado
+        MiEnTrAs (i <= n) HaCeR
+            suma := suma + A[i];
+            i := i + 1;
+        FiN_mIeNtRaS
+
+        escribir("suma de cuadrados 1..5 = ", suma);
+
+        // 'si'/'sino'/'fin_si' en minuscula, y los operadores tambien
+        si (suma = 55 y suma mod 5 = 0) entonces
+            escribir("55 es correcto y divisible por 5");
+        sino
+            escribir("MAL");
+        fin_si
+
+        // Dos variables que solo difieren en la mayuscula inicial: son DOS.
+        total := 1;
+        Total := 2;
+        ESCRIBIR("total=", total, "  Total=", Total);
+
+        SI (total <> Total) ENTONCES
+            ESCRIBIR("los identificadores si distinguen mayusculas");
+        FIN_SI
+
+        // Paso negativo, con la keyword en minuscula
+        para i := 3 hasta 1; -1 hacer
+            escribir("cuenta ", i);
+        fin_para
+finaccion
+
+// ── SALIDA ESPERADA ─────────────────────────────────────────────────────────
+// suma de cuadrados 1..5 = 55
+// 55 es correcto y divisible por 5
+// total=1  Total=2
+// los identificadores si distinguen mayusculas
+// cuenta 3
+// cuenta 2
+// cuenta 1

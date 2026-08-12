@@ -1,0 +1,24 @@
+# Salida de compilacion
+build/
+build_o/
+aed
+PseudoGames.exe
+screenPJ/screenPJ
+learBash/*.out
+lib/
+
+# OJO: 'Frankly/paed' estuvo ignorado hasta el 2026-08-10 como si fuera un
+# binario. NO lo es: son 715 lineas de bash, el interprete de Frankly. Por estar
+# ignorado quedo solo en disco, sin ninguna copia en git, a un rm de perderse.
+# Un archivo sin extension no es un binario. Mirar antes de ignorar.
+
+# Binario temporal del generador de sintaxis
+Frankly/tools/gen_sintaxis
+
+# Resaltado de PAED para Helix: es configuracion del editor de cada uno, no
+# parte del proyecto. Si lo necesitas en otra maquina, copia la carpeta a mano y
+# corre ./instalar.sh — no viaja por git a proposito.
+helix/
+
+# Metadata de Windows
+*:Zone.Identifier

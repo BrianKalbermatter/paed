@@ -1,0 +1,20 @@
+// Un REGISTRO no puede tener un ARCHIVO adentro.
+//
+// El registro es el MOLDE de lo que se lee o se graba, y vive en memoria. Un
+// archivo adentro no significa nada. Este programa falla a proposito.
+
+ACCION archivo_en_registro ES
+    AMBIENTE
+        ficha = REGISTRO
+            legajo: ENTERO;
+            adjunto: ARCHIVO DE ENTERO;
+        FIN_REGISTRO
+
+        f: ficha;
+    PROCESO
+        f.legajo := 1;
+        ESCRIBIR(f.legajo);
+FIN_ACCION
+
+// ── SALIDA ESPERADA ─────────────────────────────────────────────────────────
+// Frankly/tests/archivo_en_registro.paed:10: error: un campo de registro no puede ser un archivo: 'adjunto' (un registro vive en memoria)

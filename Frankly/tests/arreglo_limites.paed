@@ -1,0 +1,31 @@
+// Los limites del arreglo se chequean EN SERIO.
+//
+// En C, A[99] sobre un arreglo de 10 escribe en memoria ajena y el programa
+// sigue como si nada, hasta que revienta en otro lado sin relacion. Un arreglo
+// de AED declara su rango, asi que se puede cortar en el momento y decir cual
+// fue el indice y cuales eran los limites.
+//
+// Este programa TERMINA CON ERROR a proposito: es lo que se esta probando.
+// El arreglo arranca en 5 y no en 1 para dejar claro que el limite inferior lo
+// elige el programador, no es siempre 0 ni siempre 1.
+
+ACCION arreglo_limites ES
+    AMBIENTE
+        A: ARREGLO[5..9] DE ENTERO;
+        i: ENTERO;
+    PROCESO
+        PARA i := 5 HASTA 9 HACER
+            A[i] := i * 10;
+        FIN_PARA
+
+        ESCRIBIR("A[5] = ", A[5]);
+        ESCRIBIR("A[9] = ", A[9]);
+
+        // Fuera de rango por abajo: 4 es uno menos que el limite inferior.
+        ESCRIBIR("ahora se va de rango: ", A[4]);
+FIN_ACCION
+
+// ── SALIDA ESPERADA ─────────────────────────────────────────────────────────
+// A[5] = 50
+// A[9] = 90
+// ahora se va de rango: Frankly/tests/arreglo_limites.paed:25: error: indice 4 fuera de rango: 'A' va de 5 a 9

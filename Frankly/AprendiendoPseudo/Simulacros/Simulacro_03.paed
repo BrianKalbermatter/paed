@@ -1,0 +1,368 @@
+// ============================================================
+// SIMULACRO PARCIAL 03 — El mas ambiguo de los tres
+// Maximo nivel de ing. de plastico: doble negacion, "todas las
+// anteriores", opciones que se pisan, trampas de concepto.
+// Respondé primero, despues fijate las respuestas al final.
+// ============================================================
+
+
+// ------------------------------------------------------------
+// PREGUNTA 1
+// ------------------------------------------------------------
+// ¿Cual de las siguientes NO es una afirmacion INCORRECTA
+// sobre los ciclos por CONTADOR?
+//
+// A) No permite modificar la variable de control internamente
+// B) Itera una cantidad conocida de veces
+// C) Solo puede usarse con variables de tipo entero
+// D) Requiere siempre un centinela para terminar
+
+
+// ------------------------------------------------------------
+// PREGUNTA 2
+// ------------------------------------------------------------
+// ¿En cual de los siguientes casos se utiliza un ciclo
+// controlado por CENTINELA?
+//
+// A) Procesar los 12 meses del anio
+// B) Leer numeros hasta que el usuario ingrese 0
+// C) Sumar exactamente 5 valores ingresados
+// D) Recorrer un array de 20 posiciones
+
+
+// ------------------------------------------------------------
+// PREGUNTA 3
+// ------------------------------------------------------------
+// Respecto a la organizacion y acceso de archivos, ¿cual
+// afirmacion es VERDADERA?
+//
+// A) Acceso y organizacion son sinonimos en el contexto de archivos
+// B) La organizacion define como se leen los datos; el acceso define como se almacenan
+// C) La organizacion define como se estructuran los datos; el acceso como se los lee
+// D) Solo los archivos indexados permiten acceso directo
+
+
+// ------------------------------------------------------------
+// PREGUNTA 4
+// ------------------------------------------------------------
+// ¿Que sucede cuando en un PRE-TEST se cumple la condicion
+// en la primera evaluacion?
+//
+// A) El bloque NO se ejecuta porque es la primera vez
+// B) El bloque se ejecuta y luego se vuelve a evaluar la condicion
+// C) El ciclo termina inmediatamente
+// D) Se produce un error por ser la primera iteracion
+
+
+// ------------------------------------------------------------
+// PREGUNTA 5
+// ------------------------------------------------------------
+// ¿Cual de las siguientes es la definicion MAS PRECISA de
+// un ALGORITMO?
+//
+// A) Un programa escrito en pseudocodigo
+// B) Una secuencia finita de pasos para resolver un problema
+// C) El codigo fuente de un software
+// D) Un conjunto de variables y estructuras de datos
+
+
+// ------------------------------------------------------------
+// PREGUNTA 6
+// ------------------------------------------------------------
+// En pseudocodigo, ¿que indica el simbolo := ?
+//
+// A) Comparacion de igualdad entre dos valores
+// B) Asignacion de un valor a una variable
+// C) Declaracion de una nueva variable
+// D) Operacion logica de equivalencia
+
+
+// ------------------------------------------------------------
+// PREGUNTA 7
+// ------------------------------------------------------------
+// ¿Cual de las siguientes afirmaciones sobre la RECURSIVIDAD
+// es CORRECTA?
+//
+// A) Una estructura MIENTRAS anidada es recursiva
+// B) La recursividad es cuando una funcion se llama a si misma
+// C) La recursividad y el anidamiento son equivalentes
+// D) Solo se puede usar recursividad en ciclos PARA
+
+
+// ------------------------------------------------------------
+// PREGUNTA 8
+// ------------------------------------------------------------
+// Si necesitas acumular el total de ventas de cada vendedor
+// dentro de cada region, y luego el total por region, ¿que
+// tipo de procesamiento corresponde?
+//
+// A) Corte de control simple con un acumulador
+// B) Ciclo por contador con centinela doble
+// C) Corte de control jerarquico con dos niveles
+// D) Secuencia indefinida con subcorte
+
+
+// ------------------------------------------------------------
+// PREGUNTA 9
+// ------------------------------------------------------------
+// ¿Cual de estas afirmaciones sobre ARCHIVOS es INCORRECTA?
+//
+// A) Los archivos se almacenan en memoria externa
+// B) Un archivo puede contener registros de distintos tipos
+// C) Los archivos son volatiles, como las variables
+// D) Un archivo persiste aunque el programa termine
+
+
+// ------------------------------------------------------------
+// PREGUNTA 10
+// ------------------------------------------------------------
+// ¿En que se diferencia una SECUENCIA DEFINIDA de una INDEFINIDA?
+//
+// A) La definida usa centinela; la indefinida usa contador
+// B) La definida tiene cantidad conocida antes de procesar; la indefinida no
+// C) La definida es siempre pura; la indefinida siempre impura
+// D) La definida solo existe en archivos secuenciales
+
+
+// ------------------------------------------------------------
+// PREGUNTA 11
+// ------------------------------------------------------------
+// ¿Cual de las siguientes opciones describe INCORRECTAMENTE
+// a una subsecuencia?
+//
+// A) Es una secuencia que forma parte de otra secuencia mayor
+// B) Toda subsecuencia es en si misma una secuencia
+// C) Toda secuencia principal es automaticamente una subsecuencia
+// D) Las subsecuencias pueden ser enlazadas o anidadas
+
+
+// ------------------------------------------------------------
+// PREGUNTA 12
+// ------------------------------------------------------------
+// En una condicion compuesta con Y (AND), ¿cuando el resultado
+// es VERDADERO?
+//
+// A) Cuando al menos una de las condiciones es verdadera
+// B) Cuando todas las condiciones son verdaderas
+// C) Cuando la primera condicion es verdadera, sin importar la segunda
+// D) Cuando ninguna condicion es falsa, excepto la ultima
+
+
+// ------------------------------------------------------------
+// PREGUNTA 13
+// ------------------------------------------------------------
+// ¿Que problema puede ocurrir si se evalua una condicion B que
+// DEPENDE de que A sea verdadera, pero se evalua B primero?
+//
+// A) El programa se optimiza y corre mas rapido
+// B) No hay ningun problema, el orden no importa
+// C) Puede producirse un error si B requiere que A sea verdadera antes
+// D) El compilador automaticamente reordena las condiciones
+
+
+// ------------------------------------------------------------
+// PREGUNTA 14
+// ------------------------------------------------------------
+// ¿Cual es el comportamiento esperado de este fragmento?
+//
+//   i := 1
+//   REPETIR
+//       ESCRIBIR(i)
+//       i := i + 1
+//   HASTA i > 5
+//
+// A) No imprime nada porque i comienza en 1 y la condicion es i > 5
+// B) Imprime del 1 al 5 y termina cuando i llega a 6
+// C) Produce un bucle infinito porque i siempre crece
+// D) Imprime solo el valor 1 y termina
+
+
+// ------------------------------------------------------------
+// PREGUNTA 15
+// ------------------------------------------------------------
+// ¿Cual de las siguientes afirmaciones es FALSA?
+//
+// A) Un MIENTRAS puede ejecutarse cero veces
+// B) Un REPETIR siempre se ejecuta al menos una vez
+// C) Un PARA siempre requiere una variable de control externa al ciclo
+// D) Un MIENTRAS evalua la condicion antes de ejecutar el bloque
+
+
+// ------------------------------------------------------------
+// PREGUNTA 16
+// ------------------------------------------------------------
+// Las variables de tipo REAL se diferencian de las ENTERO en que:
+//
+// A) Los reales solo almacenan valores negativos
+// B) Los reales pueden almacenar valores con parte decimal
+// C) Los enteros son mas lentos de procesar
+// D) Los reales no pueden compararse con operadores > o <
+
+
+// ------------------------------------------------------------
+// PREGUNTA 17
+// ------------------------------------------------------------
+// ¿Que nombre recibe el valor especial que se usa para indicar
+// el fin de una secuencia indefinida?
+//
+// A) Acumulador
+// B) Bandera
+// C) Centinela
+// D) Registro de cierre
+
+
+// ------------------------------------------------------------
+// PREGUNTA 18
+// ------------------------------------------------------------
+// ¿Cual de las siguientes situaciones describe mejor el uso
+// de una estructura CONDICIONAL DOBLE (SI...SINO)?
+//
+// A) Ejecutar una accion cuando una condicion es verdadera, sin caso contrario
+// B) Ejecutar una accion si la condicion es verdadera y otra distinta si es falsa
+// C) Repetir una accion hasta que una condicion sea verdadera
+// D) Ejecutar siempre ambas acciones independientemente de la condicion
+
+
+// ------------------------------------------------------------
+// PREGUNTA 19
+// ------------------------------------------------------------
+// En un algoritmo, ¿que se entiende por LECTURA DE DATOS?
+//
+// A) Escribir el resultado en pantalla
+// B) Obtener un valor externo y asignarlo a una variable
+// C) Declarar una variable sin asignarle valor
+// D) Calcular el resultado de una operacion matematica
+
+
+// ------------------------------------------------------------
+// PREGUNTA 20
+// ------------------------------------------------------------
+// ¿Cual de las siguientes opciones define correctamente una
+// ESTRUCTURA SECUENCIAL?
+//
+// A) Las instrucciones se ejecutan segun una condicion
+// B) Las instrucciones se repiten hasta cumplir una condicion
+// C) Las instrucciones se ejecutan una tras otra en orden
+// D) Las instrucciones se ejecutan en paralelo
+
+
+
+
+// ============================================================
+// ============================================================
+//                      R E S P U E S T A S
+// ============================================================
+// ============================================================
+
+
+// PREGUNTA 1 → B
+// OJO con la doble negacion: "NO es INCORRECTA" = es VERDADERA.
+// B dice "itera cantidad conocida" → eso es VERDADERO sobre el PARA.
+// A es FALSA (si se puede modificar, aunque es mala practica).
+// C y D son inventadas.
+
+
+// PREGUNTA 2 → B
+// Centinela = valor que marca el fin cuando no sabes cuantos hay.
+// En B no se sabe cuantos numeros va a ingresar el usuario → centinela.
+// A, C y D tienen cantidades CONOCIDAS → usan contador.
+
+
+// PREGUNTA 3 → C
+// Organizacion: COMO estan estructurados los datos en disco.
+// Acceso: COMO los lees (secuencial o directo).
+// B los invierte. A dice que son sinonimos (falso). D es incorrecto.
+
+
+// PREGUNTA 4 → B
+// Si la condicion es VERDADERA, el bloque SE EJECUTA.
+// Luego se vuelve a evaluar la condicion → eso es el ciclo normal.
+// No hay nada especial en la "primera vez".
+
+
+// PREGUNTA 5 → B
+// Algoritmo = secuencia FINITA y ORDENADA de pasos para resolver un problema.
+// No es exclusivamente pseudocodigo (A) ni codigo fuente (C).
+
+
+// PREGUNTA 6 → B
+// := es asignacion. Le das un valor a una variable.
+// Para comparar se usa = o == segun el lenguaje/notacion.
+
+
+// PREGUNTA 7 → B
+// Recursividad = funcion que se llama a si misma.
+// Anidamiento = estructura dentro de otra. Son cosas distintas.
+// C es la trampa clasica de mezclar estos conceptos.
+
+
+// PREGUNTA 8 → C
+// Vendedor dentro de Region = dos niveles de agrupacion.
+// Eso es CORTE DE CONTROL JERARQUICO: nivel vendedor y nivel region.
+
+
+// PREGUNTA 9 → C
+// Los archivos NO son volatiles — persisten en disco aunque el programa termine.
+// Las VARIABLES si son volatiles (viven en RAM).
+// B puede parecer rara pero tecnicamente un archivo puede tener registros
+// de distintos tipos (aunque es raro en pseudocodigo basico).
+
+
+// PREGUNTA 10 → B
+// Definida: cantidad CONOCIDA de antemano → usa contador.
+// Indefinida: cantidad DESCONOCIDA → usa centinela.
+// A los invierte. C y D son inventadas.
+
+
+// PREGUNTA 11 → C
+// La afirmacion INCORRECTA es C: la secuencia PRINCIPAL no es
+// subsecuencia de nadie. Solo las que estan dentro de otra lo son.
+
+
+// PREGUNTA 12 → B
+// AND: TODAS las condiciones deben ser verdaderas.
+// A describe el OR. C y D son inventados.
+
+
+// PREGUNTA 13 → C
+// Si B depende de que A sea verdadera (ej: verificar puntero no nulo
+// antes de acceder a su valor), evaluar B antes puede causar error.
+// El orden de evaluacion importa cuando hay DEPENDENCIA logica.
+
+
+// PREGUNTA 14 → B
+// REPETIR es post-test. Evalua al FINAL.
+// Imprime 1, 2, 3, 4, 5 (cuando i llega a 6, la condicion i > 5 es
+// verdadera y el ciclo termina). No es infinito porque i crece.
+
+
+// PREGUNTA 15 → C
+// La afirmacion FALSA es C: el PARA gestiona su propia variable de
+// control internamente. No necesita que sea "externa".
+// A, B y D son todas verdaderas.
+
+
+// PREGUNTA 16 → B
+// REAL: puede almacenar decimales (3.14, 2.71, 9.99).
+// ENTERO: solo numeros sin parte decimal.
+// A, C y D son inventadas.
+
+
+// PREGUNTA 17 → C
+// CENTINELA: valor especial que marca el fin de una secuencia indefinida.
+// Bandera es para estados logicos. Acumulador es para sumas.
+
+
+// PREGUNTA 18 → B
+// SI...SINO: verdadero → accion A / falso → accion B.
+// A describe el SI simple (sin SINO). C describe un ciclo. D es absurdo.
+
+
+// PREGUNTA 19 → B
+// LEER = obtener un valor externo (del teclado, archivo, etc.) y
+// asignarlo a una variable para usarlo en el algoritmo.
+
+
+// PREGUNTA 20 → C
+// Estructura SECUENCIAL: instrucciones en orden, una tras otra.
+// A describe condicional. B describe iteracion. D no existe en pseudocodigo basico.

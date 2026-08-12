@@ -1,0 +1,86 @@
+// LEER de consola — pedir datos en vez de dejarlos fijos en el codigo.
+//
+// Hasta ahora un parcial llevaba los valores escritos adentro del .paed y para
+// probar otro caso habia que editar el archivo y volver a correrlo. Con LEER,
+// los datos entran por afuera y el mismo programa sirve para todos los casos.
+//
+// Tres cosas que conviene tener claras:
+//
+//   1. UNA LINEA POR DESTINO. `LEER(A, B)` consume dos lineas, no una linea
+//      partida en dos. Asi un texto con espacios entra entero.
+//   2. El TIPO lo decide el dato: si la linea entera es un numero, es numero;
+//      si no, es texto. "12abc" es texto, no 12.
+//   3. El destino puede ser una variable, un elemento `A[i]` o un campo
+//      `p.campo` — los mismos tres lugares donde escribe una asignacion.
+//
+// Los datos viven en el bloque ENTRADA de mas abajo: un test es UN archivo.
+
+ACCION leer_consola ES
+    AMBIENTE
+        punto = REGISTRO
+            vx: REAL;
+            vy: REAL;
+        FIN_REGISTRO
+
+        p    : punto;
+        A    : ARREGLO[1..3] DE ENTERO;
+        i    : ENTERO;
+        edad : ENTERO;
+        alto : REAL;
+        nom  : CARACTER;
+        a    : ENTERO;
+        b    : ENTERO;
+    PROCESO
+        ESCRIBIR("-- un destino --");
+        ESCRIBIR("Ingrese su edad:");
+        LEER(edad);
+        ESCRIBIR("dentro de 10 anios va a tener ", edad + 10);
+
+        ESCRIBIR("-- varios destinos en un solo LEER --");
+        LEER(a, b);
+        ESCRIBIR(a, " + ", b, " = ", a + b);
+
+        ESCRIBIR("-- el tipo lo decide el dato --");
+        LEER(alto);
+        ESCRIBIR("alto por dos = ", alto * 2);
+        LEER(nom);
+        ESCRIBIR("hola, ", nom);
+
+        ESCRIBIR("-- destino con indice: el indice se evalua al leer --");
+        PARA i := 1 HASTA 3 HACER
+            LEER(A[i]);
+        FIN_PARA
+        ESCRIBIR("A = ", A[1], " ", A[2], " ", A[3]);
+        ESCRIBIR("suma = ", A[1] + A[2] + A[3]);
+
+        ESCRIBIR("-- destino que es un campo de registro --");
+        LEER(p.vx, p.vy);
+        ESCRIBIR("p = (", p.vx, ", ", p.vy, ")");
+FIN_ACCION
+
+// ── ENTRADA ─────────────────────────────────────────────────────────────────
+// 33
+// 7
+// 5
+// 1.75
+// Juan Perez
+// 10
+// 20
+// 30
+// 3
+// -4
+
+// ── SALIDA ESPERADA ─────────────────────────────────────────────────────────
+// -- un destino --
+// Ingrese su edad:
+// dentro de 10 anios va a tener 43
+// -- varios destinos en un solo LEER --
+// 7 + 5 = 12
+// -- el tipo lo decide el dato --
+// alto por dos = 3.5
+// hola, Juan Perez
+// -- destino con indice: el indice se evalua al leer --
+// A = 10 20 30
+// suma = 60
+// -- destino que es un campo de registro --
+// p = (3, -4)

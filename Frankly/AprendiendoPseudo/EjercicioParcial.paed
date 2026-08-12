@@ -1,0 +1,106 @@
+//En una empresa de monitoreo ambiental se utilizan sensores automáticos que envían datos codificados para registrar el estado del clima en distintas regiones.
+//Por cuestiones de seguridad y almacenamiento, la información llega encriptada dentro de una secuencia de caracteres.
+
+//Cada reporte se compone por:
+
+//1 número que puede tomar valores entre 1 y 5
+//Una descripción de longitud desconocida que finaliza con el símbolo &
+//Un carácter de estado que puede ser:
+//A → reporte analizado
+//P → reporte pendiente
+
+//La secuencia completa finaliza con el carácter *.
+
+//Para obtener la información legible deberá generarse una nueva secuencia aplicando las siguientes reglas de decodificación:
+
+//Los números del 1 al 5 deben reemplazarse por las siguientes vocales:
+//1 → a
+//2 → e
+//3 → i
+//4 → o
+//5 → u
+//Para desencriptar consonantes deberá utilizarse la función DECODI, que recibe un carácter y devuelve otro.
+//El símbolo $ representa un espacio en blanco.
+//Cualquier otro carácter debe ignorarse por considerarse un error de transmisión.
+
+//Además, informar:
+
+//Porcentaje de reportes analizados sobre el total de reportes recibidos.
+//Cantidad de palabras del reporte más corto.
+//Total de caracteres erróneos encontrados en toda la secuencia.
+
+ACCION Ejercicio de Parcial ES
+    AMBIENTE
+        // ENTRADA
+        sec1: SECUENCIA DE CARACTER;
+        recorrido: VENTANA DE CARACTER;
+
+        // CONTADORES
+        cont_palabras_reporte: ENTERO;
+        cont_min_palabras: ENTERO;
+        cont_reportesA: ENTERO;
+        cont_reportesP: ENTERO;
+
+        // SALIDA
+        secSalida: SECUENCIA DE SALIDA;
+
+        // Transcripcion de numero
+        FUNCION car_a_num(c: caracter) ES: ENTERO
+                    PROCESO
+                        Según c HACER
+                            1: car_a_num:= 'a';
+                            2: car_a_num:= 'e';
+                            3: car_a_num:= 'i';
+                            4: car_a_num:= 'o';
+                            5: car_a_num:= 'u';
+                        FIN_SEGUN
+        FIN_FUNCION
+
+    PROCESO
+        ARR(sec1);
+        AVZ(sec1, recorrido);
+        cont_min_palabras:= 0;
+        cont_reportesA:= 0;
+        cont_reportesP:= 0;
+        CREAR(secSalida);
+        MIENTRAS (NFDS(sec1) Y (recorrido <> '*')) HACER
+            cont_palabras_reporte:= 0;
+            MIENTRAS (recorrido <> &) HACER
+                ESCRIBIR(secSalida(c));
+                AVZ(sec1, recorrido);
+            FIN_MIENTRAS
+            AVZ(sec1, recorrido);
+
+            // Corroboro afuera del Mientras porque antes se que va a comenzar con un numero que debe ser transformado en una vocal
+            SI (recorrido == A) ENTONCES
+                cont_reportesA:= cont_reportesA + 1;
+            SINO
+                SI (recorrido == P) ENTONCES
+                    cont_reportesP:= cont_reportesP + 1;
+                FIN_SI
+            FIN_SI
+            cont_palabras_reporte:= cont_palabras_reporte + 1;
+            AVZ(sec1, recorrido);
+        FIN_MIENTRAS
+        CERRAR(sec1, recorrido);
+        CERRAR(secSalida);
+FIN_ACCION
+
+
+
+
+
+
+
+Dada una secuencia de 100 letras minúsculas se desea convertirlas en mayúsculas. ¿Que tipo de secuencia es y con que ciclo de control lo resolverías?
+Pregunta 14 Respuesta
+a.
+Secuencia Definida, Ciclo manejado por contador
+b.
+Secuencia Impura. Ciclo Post-test
+c.
+Secuencia Indefinida. Ciclo manejado por contador
+d.
+Secuencia pura. Ciclo pre-test
+e.
+Secuencia definida. Ciclo indefinido

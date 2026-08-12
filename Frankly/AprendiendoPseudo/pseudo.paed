@@ -1,0 +1,28 @@
+// Ejercicio 1
+
+ACCION 
+AMBIENTE
+    a: ENTERO;
+    b: ENTERO;
+PROCESO
+    a:= 1;
+    a:= 2;
+    b:= a;
+    c:= b; 
+    MIENTRAS
+
+// Teoria: 
+    - PRE-TEST: (MIENTRAS ... HACER) -> Evalua la condicion ANTES de entrar. Si la condicion es falsa desde el principio, el cuerpo se ejecuta CERO veces. 
+        -> Evalua antes de entrar al cuerpo si se cumple la condicion, si llega la
+        ventana en el MIENTRAS y ya tiene "*", el primer elemento era la marca, el bucle
+        no entra ni una sola vez. Cero iteraciones.
+
+    - POST-TEST: (REPETIR ... HASTA QUE) -> evalua la condicion DESPUES de ejecutar el
+    cuerpo. El cuerpo se ejecuta al MENOS UNA VEZ, siempre.
+        -> Evalua la condicion DESPUES de ejecutar el cuerpo
+
+REPETIR/HASTA que SIEMPRE entra al menos una vez al cuerpo (post-condicion). Mientras
+puede no entrar nunca si la primera ventana ya es la marca (pre-condicion).
+
+
+

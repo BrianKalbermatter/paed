@@ -1,0 +1,253 @@
+// ════════════════════════════════════════════════════════════════════════════
+//  PARCIAL SIMULADO Nº 1 — Algoritmos y Estructuras de Datos
+//  UTN FRRe
+//
+//  Cinco ejercicios tomados de la guia de la catedra. Los enunciados salen de
+//  data/niveles.json y de solutions/AlgoritmosSimples_Nivel*, no son
+//  inventados.
+//
+//  Se ejecuta con:   build/paedrun paed/Frankly/AprendiendoPseudo/ParcialSimulado_01.paed
+//
+//  NOTA SOBRE LOS DATOS: en un parcial de verdad los datos entran con LEER.
+//  El interprete todavia no lo implementa, asi que van fijos al principio de
+//  cada ejercicio, bien visibles, para poder cambiarlos y volver a correr.
+//  La logica es la misma: lo que se evalua es el algoritmo, no de donde
+//  salieron los numeros.
+// ════════════════════════════════════════════════════════════════════════════
+
+ACCION parcial_simulado_01 ES
+    AMBIENTE
+        // ── Ejercicio 5: registro para el resumen del curso ──
+        resumen = REGISTRO
+            aprobados: ENTERO;
+            desaprobados: ENTERO;
+            promedio: REAL;
+            maxima: REAL;
+        FIN_REGISTRO
+
+        // Ej 1 — Precio con inflacion
+        C: REAL;
+        R: REAL;
+        A: ENTERO;
+        N: ENTERO;
+        P: REAL;
+
+        // Ej 2 — Discriminante
+        a: REAL;
+        b: REAL;
+        c: REAL;
+        D: REAL;
+        x1: REAL;
+        x2: REAL;
+
+        // Ej 3 — Precio PC + impresora
+        cant_pc: ENTERO;
+        cant_imp: ENTERO;
+        precio_pc: REAL;
+        precio_imp: REAL;
+        desc: REAL;
+        subtotal_pc: REAL;
+        subtotal_imp: REAL;
+        total: REAL;
+
+        // Ej 4 — Notas de un alumno
+        n1: REAL;
+        n2: REAL;
+        n3: REAL;
+        prom: REAL;
+
+        // Ej 5 — Registro de notas del curso
+        notas: ARREGLO[1..12] DE REAL;
+        cant: ENTERO;
+        i: ENTERO;
+        suma: REAL;
+        curso: resumen;
+
+    PROCESO
+        ESCRIBIR("===== PARCIAL SIMULADO Nº 1 — AED =====");
+        ESCRIBIR("");
+
+        // ────────────────────────────────────────────────────────────────────
+        // EJERCICIO 1 (Guia 1.1.5.1) — Precio con inflacion
+        //
+        //   Calcular el precio de un articulo para un anio dado, sabiendo que
+        //   la inflacion es del 4% anual.        P = C * (1 + R) ** (N - A)
+        // ────────────────────────────────────────────────────────────────────
+        ESCRIBIR("── Ejercicio 1: precio con inflacion ──");
+
+        C := 1000;      // costo actual
+        R := 0.04;      // 4% anual
+        A := 2026;      // anio actual
+        N := 2031;      // anio a calcular
+
+        P := C * (1 + R) ** (N - A);
+
+        ESCRIBIR("costo hoy: $", C, "   inflacion: ", R * 100, "%");
+        ESCRIBIR("de ", A, " a ", N, " son ", N - A, " anios");
+        ESCRIBIR("precio en ", N, ": $", P);
+        ESCRIBIR("");
+
+        // ────────────────────────────────────────────────────────────────────
+        // EJERCICIO 2 (Guia 1.1.5.2) — Discriminante
+        //
+        //   Las raices de ax^2 + bx + c = 0 son reales si y solo si el
+        //   discriminante (b^2 - 4ac) no es negativo. Informar el resultado.
+        // ────────────────────────────────────────────────────────────────────
+        ESCRIBIR("── Ejercicio 2: discriminante ──");
+
+        a := 1;
+        b := -5;
+        c := 6;
+
+        D := b ** 2 - 4 * a * c;
+
+        ESCRIBIR("ecuacion: ", a, "x^2 + ", b, "x + ", c, " = 0");
+        ESCRIBIR("discriminante: ", D);
+
+        SI (D > 0) ENTONCES
+            // Sin funcion raiz en el lenguaje, se usa el exponente 1/2
+            x1 := (-b + D ** 0.5) / (2 * a);
+            x2 := (-b - D ** 0.5) / (2 * a);
+            ESCRIBIR("dos raices reales distintas: ", x1, " y ", x2);
+        SINO
+            SI (D = 0) ENTONCES
+                x1 := -b / (2 * a);
+                ESCRIBIR("una raiz real doble: ", x1);
+            SINO
+                ESCRIBIR("no tiene raices reales");
+            FIN_SI
+        FIN_SI
+        ESCRIBIR("");
+
+        // ────────────────────────────────────────────────────────────────────
+        // EJERCICIO 3 (Guia 1.1.5.3) — Precio PC + impresora
+        //
+        //   PC $500, impresora $200. Descuento por cantidad de PCs:
+        //   1 a 4 sin descuento, 5 a 9 el 5%, 10 o mas el 10%.
+        //   Si se compra al menos una PC, la impresora va al 50%.
+        //   Al total se le suma el 21% de IVA.
+        // ────────────────────────────────────────────────────────────────────
+        ESCRIBIR("── Ejercicio 3: precio PC + impresora ──");
+
+        cant_pc  := 7;
+        cant_imp := 2;
+        precio_pc  := 500;
+        precio_imp := 200;
+
+        SI (cant_pc >= 10) ENTONCES
+            desc := 0.10;
+        SINO
+            SI (cant_pc >= 5) ENTONCES
+                desc := 0.05;
+            SINO
+                desc := 0;
+            FIN_SI
+        FIN_SI
+
+        subtotal_pc := cant_pc * precio_pc * (1 - desc);
+
+        SI (cant_pc >= 1) ENTONCES
+            subtotal_imp := cant_imp * precio_imp * 0.5;
+        SINO
+            subtotal_imp := cant_imp * precio_imp;
+        FIN_SI
+
+        total := (subtotal_pc + subtotal_imp) * 1.21;
+
+        ESCRIBIR(cant_pc, " PCs con ", desc * 100, "% de descuento: $", subtotal_pc);
+        ESCRIBIR(cant_imp, " impresoras: $", subtotal_imp);
+        ESCRIBIR("total con IVA: $", total);
+        ESCRIBIR("");
+
+        // ────────────────────────────────────────────────────────────────────
+        // EJERCICIO 4 — Condicion de un alumno
+        //
+        //   Con tres notas, calcular el promedio e informar la condicion:
+        //   >= 6 aprobado, entre 4 y 5.99 recuperatorio, si no desaprobado.
+        // ────────────────────────────────────────────────────────────────────
+        ESCRIBIR("── Ejercicio 4: condicion del alumno ──");
+
+        n1 := 7;
+        n2 := 4;
+        n3 := 5;
+
+        prom := (n1 + n2 + n3) / 3;
+
+        ESCRIBIR("notas: ", n1, " ", n2, " ", n3);
+        ESCRIBIR("promedio: ", prom);
+
+        SI (prom >= 6) ENTONCES
+            ESCRIBIR("condicion: APROBADO");
+        SINO
+            SI (prom >= 4) ENTONCES
+                ESCRIBIR("condicion: RECUPERATORIO");
+            SINO
+                ESCRIBIR("condicion: DESAPROBADO");
+            FIN_SI
+        FIN_SI
+        ESCRIBIR("");
+
+        // ────────────────────────────────────────────────────────────────────
+        // EJERCICIO 5 (BOSS) — Registro de notas del curso
+        //
+        //   Sobre las notas del curso, calcular:
+        //     a) cuantos aprobados (>= 6) y cuantos desaprobados
+        //     b) el promedio general
+        //     c) la nota mas alta
+        //
+        //   El enunciado original lee hasta un centinela (-1). Sin LEER, las
+        //   notas van en un arreglo y `cant` hace de fin de datos.
+        // ────────────────────────────────────────────────────────────────────
+        ESCRIBIR("── Ejercicio 5 (BOSS): registro de notas ──");
+
+        cant := 12;
+        notas[1]  := 8;
+        notas[2]  := 4;
+        notas[3]  := 10;
+        notas[4]  := 6;
+        notas[5]  := 2;
+        notas[6]  := 7;
+        notas[7]  := 5;
+        notas[8]  := 9;
+        notas[9]  := 6;
+        notas[10] := 3;
+        notas[11] := 10;
+        notas[12] := 7;
+
+        curso.aprobados    := 0;
+        curso.desaprobados := 0;
+        curso.maxima       := notas[1];
+        suma := 0;
+
+        PARA i := 1 HASTA cant HACER
+            suma := suma + notas[i];
+
+            SI (notas[i] >= 6) ENTONCES
+                curso.aprobados := curso.aprobados + 1;
+            SINO
+                curso.desaprobados := curso.desaprobados + 1;
+            FIN_SI
+
+            SI (notas[i] > curso.maxima) ENTONCES
+                curso.maxima := notas[i];
+            FIN_SI
+        FIN_PARA
+
+        curso.promedio := suma / cant;
+
+        ESCRIBIR("alumnos: ", cant);
+        ESCRIBIR("a) aprobados: ", curso.aprobados, "   desaprobados: ", curso.desaprobados);
+        ESCRIBIR("b) promedio general: ", curso.promedio);
+        ESCRIBIR("c) nota maxima: ", curso.maxima);
+        ESCRIBIR("");
+
+        // ── Verificacion: los dos grupos tienen que sumar el total ──
+        SI (curso.aprobados + curso.desaprobados = cant) ENTONCES
+            ESCRIBIR("control: los ", cant, " alumnos estan contados");
+        SINO
+            ESCRIBIR("ERROR: faltan alumnos en la cuenta");
+        FIN_SI
+
+        ESCRIBIR("");
+        ESCRIBIR("===== fin del parcial =====");
+FIN_ACCION
