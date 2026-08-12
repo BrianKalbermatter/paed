@@ -1,0 +1,8 @@
+-Wall
+-Wextra
+-Ilang/include
+-Ilang/vendor/cjson
+-Isrc
+-I/usr/include/SDL2
+-D_GNU_SOURCE=1
+-D_REENTRANT

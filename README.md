@@ -65,16 +65,20 @@ Frankly/       la definicion del lenguaje, su documentacion y sus tests
   docs/PAED.md   la especificacion
   tests/         programas .paed que declaran su propia salida esperada
   core/          la implementacion en bash (anterior a la de C)
-src/           PseudoGames: el editor/IDE con SDL2 (`make` a secas)
 ```
+
+**El editor no esta aca.** PseudoGames es otro proyecto, con su propio repo: PAED
+corre sin ningun editor, y quien quiera solo el lenguaje no tiene por que
+llevarse assets, niveles y SDL2 de arrastre.
 
 ## Construir
 
 ```bash
-make lang     # libpaed.a + el binario `paed`   (no necesita SDL)
-make          # el editor PseudoGames (`aed`)   (necesita SDL2)
+make          # libpaed.a + el binario `paed`
 make test     # corre todos los .paed de Frankly/tests
 ```
+
+No necesita SDL ni nada mas que un compilador de C: cJSON viene adentro.
 
 ## Usarlo desde otro programa
 
