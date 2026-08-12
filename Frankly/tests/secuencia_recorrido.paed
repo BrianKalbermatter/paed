@@ -1,0 +1,49 @@
+// El recorrido de una secuencia: el bucle que aparece en TODOS los parciales.
+//
+//     arr(sec);              posiciona ANTES del primer elemento
+//     avz(sec, v);           trae el primero
+//     MIENTRAS NFDS(sec)     mientras la ventana no se paso del final
+//         ...usar v...
+//         avz(sec, v);       trae el siguiente
+//     FIN_MIENTRAS
+//
+// El `arr` seguido del primer `avz` no es una repeticion: `arr` no lee nada,
+// solo apunta. Sin ese primer `avz` la ventana estaria vacia al entrar al
+// bucle, y la primera vuelta usaria un valor que nadie cargo.
+
+ACCION secuencia_recorrido ES
+    AMBIENTE
+        secNotas: SECUENCIA DE ENTERO;
+        n: ENTERO;
+        suma: ENTERO;
+        cuantos: ENTERO;
+
+    PROCESO
+        // Las dos juntas en una linea, como las escribe la catedra.
+        ARR(secNotas); AVZ(secNotas, n);
+
+        suma := 0;
+        cuantos := 0;
+
+        MIENTRAS NFDS(secNotas) HACER
+            suma := suma + n;
+            cuantos := cuantos + 1;
+            AVZ(secNotas, n);
+        FIN_MIENTRAS
+
+        ESCRIBIR("elementos: ", cuantos);
+        ESCRIBIR("suma: ", suma);
+
+        // Despues del ultimo AVZ la ventana quedo en fin de secuencia.
+        SI FDS(secNotas) ENTONCES
+            ESCRIBIR("la secuencia se termino");
+        FIN_SI
+FIN_ACCION
+
+// ── SECUENCIA secNotas ──
+// 10 8 15 2 22 7
+
+// ── SALIDA ESPERADA ──
+// elementos: 6
+// suma: 64
+// la secuencia se termino

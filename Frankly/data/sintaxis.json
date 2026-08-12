@@ -232,6 +232,12 @@
         "grupo": "archivos",
         "args": 2,
         "fuente": "OnlySintaxis.md:154-158; TEORIA_COMPLETA.txt:1112 ESC(Arch,Reg)"
+      },
+      "forma_secuencia": {
+        "efecto": "grabar",
+        "grupo": "secuencias",
+        "args": 2,
+        "fuente": "Simulacro_04:242 esc(secSal, v) graba en la secuencia de salida"
       }
     },
     {
@@ -252,21 +258,32 @@
       "grupo": "secuencias",
       "efecto": "arrancar",
       "variadico": true,
-      "params": []
+      "params": [],
+      "primer_arg": "secuencia",
+      "fuente": "apuntes/AED/Simulacros/Simulacro_04:232 arr(secAlu); avz(secAlu, v); Parcialito1A.md:73-78 declaraciones"
     },
     {
       "nombre": "AVZ",
       "grupo": "secuencias",
       "efecto": "avanzar",
       "variadico": true,
-      "params": []
+      "params": [],
+      "primer_arg": "secuencia",
+      "fuente": "apuntes/AED/Simulacros/Simulacro_04:232 arr(secAlu); avz(secAlu, v); Parcialito1A.md:73-78 declaraciones",
+      "forma_secuencia": {
+        "efecto": "avanzar",
+        "args": 2,
+        "fuente": "Simulacro_04:243 avz(secAlu, v) deja el elemento actual en v"
+      }
     },
     {
       "nombre": "CREAR",
       "grupo": "secuencias",
       "efecto": "crear",
       "variadico": true,
-      "params": []
+      "params": [],
+      "primer_arg": "declarado",
+      "fuente": "sirve para secuencias y para archivos: los distingue la declaracion — act_Archivo/apunteArchivo.paed:186 CERRAR(ARCH_MAE), Simulacros/Simulacro_04:287 cerrar(secAlu)"
     },
     {
       "nombre": "ABRIR",
@@ -281,7 +298,9 @@
       "grupo": "secuencias",
       "efecto": "cerrar",
       "variadico": true,
-      "params": []
+      "params": [],
+      "primer_arg": "declarado",
+      "fuente": "sirve para secuencias y para archivos: los distingue la declaracion — act_Archivo/apunteArchivo.paed:186 CERRAR(ARCH_MAE), Simulacros/Simulacro_04:287 cerrar(secAlu)"
     }
   ],
   "funciones": [

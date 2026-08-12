@@ -1,0 +1,63 @@
+// Varias instrucciones en un solo renglon, separadas por ';'.
+//
+// La catedra las escribe asi cuando las dos son un solo gesto — arrancar una
+// secuencia y traer su primer elemento van SIEMPRE juntas, y separarlas en dos
+// renglones esconde que son una sola idea.
+//
+// El ';' sigue siendo TERMINADOR: cada instruccion trae el suyo. Lo que cambio
+// es que despues de uno puede venir otra instruccion en la misma linea, en vez
+// de tener que ser el final del renglon.
+//
+// El corte respeta las comillas y los parentesis: un ';' adentro de un texto
+// es parte del texto, y uno adentro de una llamada no parte nada.
+
+// Vale igual en el AMBIENTE que en el PROCESO: es la misma regla, no dos.
+// En el AMBIENTE importa MAS, porque ahi fallaba en silencio — el tipo de la
+// primera se comia todo el resto del renglon y la segunda no se declaraba
+// nunca. El programa arrancaba igual, porque un escalar nace en su primera
+// asignacion, y recien reventaba mucho despues culpando a otra cosa.
+
+ACCION sentencias_en_una_linea ES
+    AMBIENTE
+        a: ENTERO; b: ENTERO;
+        sec: SECUENCIA DE ENTERO; n: ENTERO;
+
+        punto = REGISTRO
+            x: REAL; y: REAL;
+        FIN_REGISTRO
+
+        p: punto;
+
+    PROCESO
+        a := 1; b := 2;
+        ESCRIBIR("a + b = ", a + b);
+
+        // El ';' de adentro del texto no corta nada
+        ESCRIBIR("uno; dos; tres");
+
+        // Ni el de adentro de los parentesis de una expresion
+        a := (b + 1) * 2; ESCRIBIR("a = ", a);
+
+        // El caso que motivo todo esto
+        ARR(sec); AVZ(sec, n);
+        ESCRIBIR("primero: ", n);
+
+        // Tres en una linea tambien
+        a := 10; b := 20; ESCRIBIR("suma: ", a + b);
+
+        // Los dos campos del registro se declararon en un solo renglon, asi
+        // que los dos tienen que existir.
+        p.x := 1.5; p.y := 2.5;
+        ESCRIBIR("p = ", p.x, " , ", p.y);
+FIN_ACCION
+
+// ── SECUENCIA sec ──
+// 42 43
+
+// ── SALIDA ESPERADA ──
+// a + b = 3
+// uno; dos; tres
+// a = 6
+// primero: 42
+// suma: 30
+// p = 1.5 , 2.5

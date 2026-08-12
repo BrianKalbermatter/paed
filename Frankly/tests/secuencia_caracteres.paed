@@ -1,0 +1,56 @@
+// Secuencia DE CARACTER y secuencia DE SALIDA: la forma exacta de los
+// parciales (apuntes/AED/Simulacros/Simulacro_04, ejercicio 2).
+//
+// Los datos vienen pegados, sin separadores entre campos: la ESTRUCTURA es la
+// que dice donde termina cada uno. El legajo son 2 caracteres y se cuentan con
+// un PARA; el nombre es de largo indefinido y termina en '#', asi que se
+// recorre con un MIENTRAS. Esas dos formas — cantidad conocida y cantidad
+// desconocida — son las unicas que hay, y de ahi sale el bucle que corresponde.
+//
+// En una secuencia DE CARACTER el '1' es el CARACTER '1', no el numero 1.
+// Por eso el legajo se copia tal cual y no se puede sumar: para eso existe la
+// funcion que convierte un caracter a numero.
+
+ACCION secuencia_caracteres ES
+    AMBIENTE
+        secAlu: SECUENCIA DE CARACTERES;
+        secSal: SECUENCIA DE SALIDA;
+        v: VENTANA DE CARACTER;
+        i: ENTERO;
+        alumnos: ENTERO;
+
+    PROCESO
+        ARR(secAlu); AVZ(secAlu, v);
+        CREAR(secSal);
+        alumnos := 0;
+
+        MIENTRAS NFDS(secAlu) HACER
+            // Legajo: cantidad CONOCIDA de caracteres
+            PARA i := 1 HASTA 2 HACER
+                ESCRIBIR(secSal, v);
+                AVZ(secAlu, v);
+            FIN_PARA
+
+            ESCRIBIR(secSal, "=");
+
+            // Nombre: cantidad DESCONOCIDA, termina en '#'
+            MIENTRAS v <> "#" HACER
+                ESCRIBIR(secSal, v);
+                AVZ(secAlu, v);
+            FIN_MIENTRAS
+
+            ESCRIBIR(secSal, ";");
+            AVZ(secAlu, v);            // pasar el '#'
+            alumnos := alumnos + 1;
+        FIN_MIENTRAS
+
+        ESCRIBIR("alumnos: ", alumnos);
+        CERRAR(secSal);
+FIN_ACCION
+
+// ── SECUENCIA secAlu ──
+// 12Ana#34Beto#
+
+// ── SALIDA ESPERADA ──
+// alumnos: 2
+// 12=Ana;34=Beto;

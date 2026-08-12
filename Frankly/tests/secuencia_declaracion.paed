@@ -1,0 +1,24 @@
+// Lo que caza el PARSER, antes de ejecutar: una secuencia que no existe.
+//
+// Es el mismo criterio que con los archivos. ARR y AVZ solo tienen sentido
+// sobre una secuencia, asi que un nombre que no se declaro como tal es un
+// error y no algo para degradar a otra cosa en silencio. Y como se resuelve
+// mirando el AMBIENTE, se puede avisar sin correr una sola instruccion.
+
+ACCION secuencia_declaracion ES
+    AMBIENTE
+        sec: SECUENCIA DE ENTERO;
+        n: ENTERO;
+
+    PROCESO
+        ARR(fantasma);       // no esta declarada
+        ARR(n);              // declarada, pero es un ENTERO
+        ARR(Sec);            // el nombre existe con otras mayusculas
+        AVZ(sec);            // le falta el destino
+FIN_ACCION
+
+// ── SALIDA ESPERADA ──
+// Frankly/tests/secuencia_declaracion.paed:14: error: ARR trabaja sobre una secuencia y 'fantasma' no esta declarado en el AMBIENTE (falta 'fantasma: SECUENCIA DE <tipo>;')
+// Frankly/tests/secuencia_declaracion.paed:15: error: ARR trabaja sobre una secuencia, pero 'n' se declaro en la linea 11 como ENTERO
+// Frankly/tests/secuencia_declaracion.paed:16: error: 'Sec' no esta declarado, pero si 'sec' (linea 10): los identificadores distinguen mayusculas
+// Frankly/tests/secuencia_declaracion.paed:17: error: AVZ sobre la secuencia 'sec' lleva exactamente 2 argumentos: AVZ(sec, dato)

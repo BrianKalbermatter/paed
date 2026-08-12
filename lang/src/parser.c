@@ -464,19 +464,37 @@ static const PAEDDecl *decl_parecida(const PAEDProgram *p, const char *nombre) {
 static int resolver_forma(PAEDProgram *p, PAEDInstr *instr, cJSON *def,
                           int lineno, const char *nombre) {
     cJSON *fa    = cJSON_GetObjectItem(def, "forma_archivo");
+    cJSON *fs    = cJSON_GetObjectItem(def, "forma_secuencia");
     cJSON *pa    = cJSON_GetObjectItem(def, "primer_arg");
-    int    exige = cJSON_IsString(pa) && strcmp(pa->valuestring, "archivo") == 0;
 
-    if (!cJSON_IsObject(fa) && !exige) {
+    // Que espera el procedimiento en su primer argumento. Lo dice
+    // sintaxis.json y no una lista en C, por la misma razon de siempre: la
+    // definicion del lenguaje vive en un solo lado.
+    //
+    //   "archivo"     ABRIR — sin un archivo declarado es error
+    //   "secuencia"   ARR, AVZ — idem con secuencias
+    //   "declarado"   CREAR, CERRAR — la declaracion DECIDE la forma, pero no
+    //                 se exige ninguna: las dos valen, y CERRAR(arch) y
+    //                 CERRAR(sec) son la misma palabra sobre cosas distintas
+    const char *quiere    = cJSON_IsString(pa) ? pa->valuestring : "";
+    int         exige_arc = strcmp(quiere, "archivo")   == 0;
+    int         exige_sec = strcmp(quiere, "secuencia") == 0;
+    int         exige     = exige_arc || exige_sec;
+    int         mira      = exige || strcmp(quiere, "declarado") == 0;
+
+    if (!cJSON_IsObject(fa) && !cJSON_IsObject(fs) && !mira) {
         instr->forma = PAED_FORMA_UNICA;
         return 0;
     }
 
+    // Como se nombra en los mensajes lo que este procedimiento espera.
+    const char *cosa = exige_sec ? "una secuencia" : "un archivo";
+
     instr->forma = PAED_FORMA_CONSOLA;
     if (instr->arg_count == 0) {
-        // ABRIR() sin nada es error; ESCRIBIR() vacio no.
+        // ABRIR() y ARR() sin nada son error; ESCRIBIR() vacio no.
         if (exige) {
-            add_error(p, lineno, "%s necesita un archivo como primer argumento", nombre);
+            add_error(p, lineno, "%s necesita %s como primer argumento", nombre, cosa);
             return -1;
         }
         return 0;
@@ -484,20 +502,47 @@ static int resolver_forma(PAEDProgram *p, PAEDInstr *instr, cJSON *def,
 
     const char *primero = instr->args[0].val;
 
-    // Lo que no es un nombre suelto no puede ser un archivo. Descarta gratis
-    // ESCRIBIR("hola"), LEER(A[i]) y ESCRIBIR(3*x). Se usa es_identificador y
-    // no es_campo porque 'p.campo' tampoco es nunca un archivo.
+    // Lo que no es un nombre suelto no puede ser un archivo ni una secuencia.
+    // Descarta gratis ESCRIBIR("hola"), LEER(A[i]) y ESCRIBIR(3*x). Se usa
+    // es_identificador y no es_campo porque 'p.campo' tampoco es ninguna de
+    // las dos cosas.
     if (!es_identificador(primero)) {
         if (exige) {
-            add_error(p, lineno,
-                      "%s trabaja sobre un archivo y '%s' no es el nombre de uno",
-                      nombre, primero);
+            add_error(p, lineno, "%s trabaja sobre %s y '%s' no es el nombre de una",
+                      nombre, cosa, primero);
             return -1;
         }
         return 0;
     }
 
     const PAEDDecl *d = decl_por_nombre(p, primero);
+
+    // Secuencia. Va ANTES de la rama de archivo porque las dos entran por el
+    // mismo camino y una secuencia nunca es un archivo: distinguirlas aca es
+    // lo que permite que ESCRIBIR(secSal, v) grabe en la secuencia mientras
+    // ESCRIBIR(arch, reg) sigue siendo la forma de archivo.
+    if (d && d->es_secuencia) {
+        instr->forma = PAED_FORMA_SECUENCIA;
+        snprintf(instr->args[0].key, PAED_KEY_MAX, "secuencia");
+
+        if (cJSON_IsObject(fs)) {
+            cJSON *n = cJSON_GetObjectItem(fs, "args");
+            if (cJSON_IsNumber(n) && instr->arg_count != n->valueint) {
+                add_error(p, lineno,
+                          "%s sobre la secuencia '%s' lleva exactamente %d argumentos: "
+                          "%s(%s, dato)", nombre, primero, n->valueint, nombre, primero);
+                return -1;
+            }
+        }
+        return 0;
+    }
+
+    if (d && exige_sec) {
+        add_error(p, lineno,
+                  "%s trabaja sobre una secuencia, pero '%s' se declaro en la linea %d como %s",
+                  nombre, primero, d->line, d->type[0] ? d->type : "otra cosa");
+        return -1;
+    }
 
     if (d && d->es_archivo) {
         instr->forma = PAED_FORMA_ARCHIVO;
@@ -542,7 +587,7 @@ static int resolver_forma(PAEDProgram *p, PAEDInstr *instr, cJSON *def,
     // trataria como consola sin avisar.
     if (!d) {
         const PAEDDecl *parecida = decl_parecida(p, primero);
-        if (parecida && parecida->es_archivo) {
+        if (parecida && (parecida->es_archivo || parecida->es_secuencia)) {
             add_error(p, lineno,
                       "'%s' no esta declarado, pero si '%s' (linea %d): "
                       "los identificadores distinguen mayusculas",
@@ -551,15 +596,17 @@ static int resolver_forma(PAEDProgram *p, PAEDInstr *instr, cJSON *def,
         }
         if (exige) {
             add_error(p, lineno,
-                      "%s trabaja sobre un archivo y '%s' no esta declarado en el AMBIENTE "
-                      "(falta '%s: ARCHIVO DE <tipo>;')", nombre, primero, primero);
+                      "%s trabaja sobre %s y '%s' no esta declarado en el AMBIENTE "
+                      "(falta '%s: %s;')", nombre, cosa, primero, primero,
+                      exige_sec ? "SECUENCIA DE <tipo>" : "ARCHIVO DE <tipo>");
             return -1;
         }
     }
 
     // Queda como consola. Es lo correcto: un escalar NO necesita declararse
     // (nace en su primera asignacion), asi que LEER(salario) sin declarar es
-    // legitimo. Al archivo sin declarar lo caza ABRIR, que si lo exige.
+    // legitimo. Al archivo y a la secuencia sin declarar los cazan ABRIR y
+    // ARR, que si los exigen.
     return 0;
 }
 
@@ -720,6 +767,88 @@ static void parse_instruction(PAEDProgram *p, char *linea, int lineno) {
     if (resolver_forma(p, instr, def, lineno, nombre) != 0) hubo_error = 1;
 
     if (!hubo_error) p->instr_count++;
+}
+
+// ── Varias sentencias en una sola linea ───────────────────────────────────────
+//
+//     arr(secAlu); avz(secAlu, v);      en el PROCESO
+//     a: ENTERO; b: ENTERO;             en el AMBIENTE
+//
+// Las dos cosas son la misma regla. El `;` es TERMINADOR (§11.1, resuelto el
+// 2026-08-12 con `wiki.txt`, donde toda sentencia lo lleva, incluida la ultima
+// del bloque), y lo que habilita es no tener que gastar un renglon por cada
+// una: si son un solo gesto — arrancar una secuencia y traer su primer
+// elemento — separarlas en dos lineas esconde que son una sola idea.
+//
+// Sin esto, el AMBIENTE fallaba EN SILENCIO, que es peor que fallar: en
+// `s: SECUENCIA DE ENTERO; n: ENTERO;` el tipo de `s` quedaba siendo el texto
+// "ENTERO; n: ENTERO" y `n` no se declaraba nunca. El programa arrancaba igual
+// — un escalar nace en su primera asignacion — y recien reventaba mucho
+// despues, en el primer ARR, culpando a otra cosa.
+//
+// El corte solo vale FUERA de comillas y de parentesis: en
+// ESCRIBIR('hola; chau') ese ';' es parte del texto. Y las cabeceras de bloque
+// nunca llegan aca — parse_bloque ya se las quedo — asi que el ';' que separa
+// el paso del PARA queda intacto.
+
+// Que hacer con cada pedazo. `ctx` es lo que necesite el que llama y le vuelve
+// tal cual: el AMBIENTE le pasa el REGISTRO que esta abierto, el PROCESO nada.
+typedef void (*ParteFn)(PAEDProgram *p, char *texto, int lineno, void *ctx);
+
+static void por_cada_sentencia(PAEDProgram *p, char *linea, int lineno,
+                               ParteFn fn, void *ctx) {
+    char   sent[PAED_LINEA_MAX + 2];   // +2: el ';' que se le devuelve, y el '\0'
+    size_t n       = 0;
+    char   comilla = 0;
+    int    nivel   = 0;
+    int    primero = 1;
+
+    for (char *c = linea; ; c++) {
+        int corta = (*c == '\0') || (*c == ';' && !comilla && nivel == 0);
+
+        if (!corta) {
+            if      (comilla)                 { if (*c == comilla) comilla = 0; }
+            else if (*c == '\'' || *c == '"')   comilla = *c;
+            else if (*c == '(')                 nivel++;
+            else if (*c == ')' && nivel > 0)    nivel--;
+
+            if (n < sizeof(sent) - 2) sent[n++] = *c;
+            continue;
+        }
+
+        sent[n] = '\0';
+        char *s = trim(sent);
+
+        if (*c == ';') {
+            if (!*s) {
+                add_error(p, lineno, "hay un ';' sin nada adelante");
+            } else {
+                size_t len = strlen(s);
+                s[len]     = ';';       // el que el parseo de abajo exige
+                s[len + 1] = '\0';
+                fn(p, s, lineno, ctx);
+            }
+            n = 0;
+            primero = 0;
+            continue;
+        }
+
+        // Fin de la linea. Lo que quedo colgando sin ';' se manda igual: el
+        // error que corresponde es "falta ';'", y lo da el que parsea. Una
+        // linea sin ningun ';' cae aca entera y en la primera vuelta, que es
+        // como llegaba antes de que esto existiera.
+        if (*s || primero) fn(p, s, lineno, ctx);
+        return;
+    }
+}
+
+static void una_instruccion(PAEDProgram *p, char *texto, int lineno, void *ctx) {
+    (void)ctx;
+    parse_instruction(p, texto, lineno);
+}
+
+static void parse_sentencias(PAEDProgram *p, char *linea, int lineno) {
+    por_cada_sentencia(p, linea, lineno, una_instruccion, NULL);
 }
 
 // ── La pila de bloques ────────────────────────────────────────────────────────
@@ -1128,6 +1257,53 @@ static void parse_decl(PAEDProgram *p, char *linea, int lineno) {
         return;
     }
 
+    // SECUENCIA DE TIPO   /   SECUENCIA DE SALIDA
+    //
+    // El isspace del final es el mismo recaudo que en ARCHIVO: sin el, un tipo
+    // llamado 'SECUENCIAL' entraria por esta rama.
+    if (strncasecmp(tipo, "SECUENCIA", 9) == 0 &&
+        (tipo[9] == '\0' || isspace((unsigned char)tipo[9]))) {
+
+        char *base_p = tipo_tras_DE(trim(tipo + 9));
+        if (!base_p) {
+            add_error(p, lineno, "a la secuencia '%s' le falta 'DE <tipo>'", nombre);
+            p->decl_count--;
+            return;
+        }
+        if (!*base_p) {
+            add_error(p, lineno, "a la secuencia '%s' le falta el tipo despues de 'DE'", nombre);
+            p->decl_count--;
+            return;
+        }
+
+        d->es_secuencia = 1;
+        // SALIDA no es un tipo de dato: es la direccion en la que va la
+        // secuencia. Por eso se guarda como bandera y no como `type`.
+        d->es_salida = (strcasecmp(base_p, "SALIDA") == 0);
+        strncpy(d->type, base_p, PAED_NAME_MAX - 1);
+        return;
+    }
+
+    // VENTANA DE TIPO
+    //
+    // La ventana es la variable donde AVZ deja el elemento actual. En el
+    // corpus se declara aparte (`vent: VENTANA DE CARACTER;`) pero se usa
+    // como una variable comun — `avz(sec, vent)` la llena y `vent <> '#'` la
+    // compara. Asi que se guarda como escalar del tipo de adentro, y no hace
+    // falta ningun tratamiento especial en el interprete.
+    if (strncasecmp(tipo, "VENTANA", 7) == 0 &&
+        (tipo[7] == '\0' || isspace((unsigned char)tipo[7]))) {
+
+        char *base_p = tipo_tras_DE(trim(tipo + 7));
+        if (!base_p || !*base_p) {
+            add_error(p, lineno, "a la ventana '%s' le falta 'DE <tipo>'", nombre);
+            p->decl_count--;
+            return;
+        }
+        strncpy(d->type, base_p, PAED_NAME_MAX - 1);
+        return;
+    }
+
     strncpy(d->type, tipo, PAED_NAME_MAX - 1);
 }
 
@@ -1158,7 +1334,10 @@ static int es_fin_accion(const char *linea) {
 //
 // `reg` apunta al registro que se esta llenando, o es NULL si no hay ninguno
 // abierto. El que llama lo mantiene entre lineas: es el sub-estado del bloque.
-static void parse_ambiente(PAEDProgram *p, char *linea, int lineno, PAEDRegistro **reg) {
+//
+// Esta funcion ve UNA declaracion. Varias en el mismo renglon las parte
+// por_cada_sentencia, que es el que llama — misma regla que en el PROCESO.
+static void parse_ambiente_una(PAEDProgram *p, char *linea, int lineno, PAEDRegistro **reg) {
     // ── Dentro de un REGISTRO ──
     if (*reg) {
         if (kw_es(linea, "FIN_REGISTRO") || kw_es(linea, "FINREGISTRO")) {
@@ -1234,6 +1413,21 @@ static void parse_ambiente(PAEDProgram *p, char *linea, int lineno, PAEDRegistro
     parse_decl(p, linea, lineno);
 }
 
+static void una_declaracion(PAEDProgram *p, char *texto, int lineno, void *ctx) {
+    parse_ambiente_una(p, texto, lineno, (PAEDRegistro **)ctx);
+}
+
+// El AMBIENTE, renglon completo. Puede traer mas de una declaracion:
+//
+//     a: ENTERO; b: ENTERO; c: ENTERO;
+//
+// El REGISTRO que este abierto viaja como contexto, porque el corte no cambia
+// quien es el destino de cada campo: sigue siendo el mismo registro para todas
+// las declaraciones del renglon.
+static void parse_ambiente(PAEDProgram *p, char *linea, int lineno, PAEDRegistro **reg) {
+    por_cada_sentencia(p, linea, lineno, una_declaracion, reg);
+}
+
 typedef enum { FUERA, CABECERA, AMBIENTE, PROCESO, CERRADO } Bloque;
 
 int paed_parse_file(const char *path, PAEDProgram *out) {
@@ -1251,7 +1445,7 @@ int paed_parse_file(const char *path, PAEDProgram *out) {
         return -1;
     }
 
-    char   buf[512];
+    char   buf[PAED_LINEA_MAX];
     int    lineno = 0;
     Bloque bloque = FUERA;
     Pila   pila   = { .tope = 0 };   // bloques abiertos dentro del PROCESO
@@ -1346,7 +1540,7 @@ int paed_parse_file(const char *path, PAEDProgram *out) {
                 // Primero los bloques: sus cabeceras NO llevan ';', asi que
                 // tienen que reconocerse antes de que parse_instruction lo exija.
                 if (!parse_bloque(out, linea, lineno, &pila))
-                    parse_instruction(out, linea, lineno);
+                    parse_sentencias(out, linea, lineno);
                 break;
             case FUERA:
                 add_error(out, lineno, "instruccion antes de ACCION");

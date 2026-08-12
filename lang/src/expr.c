@@ -1,4 +1,5 @@
 #include "paed/expr.h"
+#include "paed/secuencia.h"   // FDS y NFDS preguntan por el estado de una secuencia
 
 #include <ctype.h>
 #include <math.h>
@@ -6,6 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>   // strcasecmp
 
 // ── Entorno ───────────────────────────────────────────────────
 
@@ -312,8 +314,46 @@ static Valor primario(Ctx *c) {
             // El cursor igual tiene que avanzar hasta el ')', asi que se
             // recorre el argumento con el contexto marcado como fallado —
             // el mismo truco que usa el cortocircuito de Y y O.
+            // FDS(sec) y NFDS(sec) preguntan por el ESTADO de una secuencia, no
+            // por el valor de una variable. El argumento se lee como NOMBRE y
+            // no se evalua: 'secAlu' no tiene ningun valor que evaluar, y
+            // pasarlo por el evaluador daria "la variable 'secAlu' no tiene
+            // valor todavia" — un mensaje que manda a mirar al lugar equivocado.
+            if (strcasecmp(nombre, "FDS") == 0 || strcasecmp(nombre, "NFDS") == 0) {
+                int quiere_fin = (strcasecmp(nombre, "FDS") == 0);
+
+                espacios(c);
+                char sec[PAED_NAME_MAX];
+                size_t k = 0;
+                while (isalnum((unsigned char)*c->p) || *c->p == '_') {
+                    if (k < PAED_NAME_MAX - 1) sec[k++] = *c->p;
+                    c->p++;
+                }
+                sec[k] = '\0';
+                espacios(c);
+
+                if (*c->p != ')') {
+                    falla(c, "%s lleva el nombre de una secuencia: %s(sec)", nombre, nombre);
+                    return LOG(0);
+                }
+                c->p++;
+
+                if (!k) { falla(c, "%s necesita el nombre de una secuencia", nombre); return LOG(0); }
+
+                Secuencia *s = sec_buscar(sec);
+                if (!s) {
+                    falla(c, "'%s' no es una secuencia declarada en el AMBIENTE", sec);
+                    return LOG(0);
+                }
+                if (!s->abierta && !s->cerrada) {
+                    falla(c, "hay que arrancar '%s' antes de preguntarle por el fin: falta ARR(%s)",
+                          sec, sec);
+                    return LOG(0);
+                }
+                return LOG(quiere_fin ? s->fin : !s->fin);
+            }
+
             int sin_soporte =
-                strcmp(nombre, "FDS")  == 0 || strcmp(nombre, "NFDS") == 0 ||
                 strcmp(nombre, "FDA")  == 0 || strcmp(nombre, "NFDA") == 0;
 
             if (sin_soporte) {
@@ -327,9 +367,8 @@ static Valor primario(Ctx *c) {
                 espacios(c);
                 if (*c->p == ')') c->p++;
 
-                int de_archivo = strcmp(nombre, "FDA") == 0 || strcmp(nombre, "NFDA") == 0;
-                falla(c, "%s() necesita %s, que todavia no existen en el interprete",
-                      nombre, de_archivo ? "archivos" : "secuencias");
+                falla(c, "%s() necesita archivos en disco, que todavia no existen "
+                         "en el interprete", nombre);
                 return LOG(0);
             }
 

@@ -1,5 +1,6 @@
 #include "paed/interpreter.h"
 #include "paed/expr.h"
+#include "paed/secuencia.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -82,6 +83,15 @@ static void       *entrada_ud = NULL;
 void interp_set_entrada(PaedEntrada fn, void *ud) {
     entrada_fn = fn;
     entrada_ud = ud;
+}
+
+// ── Datos de las secuencias ──────────────────────────────────────────────────
+static PaedSecuenciaDatos secdatos_fn = NULL;
+static void              *secdatos_ud = NULL;
+
+void interp_set_secuencia(PaedSecuenciaDatos fn, void *ud) {
+    secdatos_fn = fn;
+    secdatos_ud = ud;
 }
 
 // ¿Sirve como destino de un LEER? Tiene que ser un nombre: 'x', o 'p.campo'.
@@ -275,8 +285,147 @@ static int leer_consola(const PAEDProgram *prog, const PAEDInstr *in) {
     return 0;
 }
 
+// ── Secuencias ───────────────────────────────────────────────────────────────
+//
+// El estado vive en secuencia.c, que tambien lo usa el evaluador para FDS y
+// NFDS. Aca queda solo el puente: buscar la secuencia que nombra la
+// instruccion, llamar a la operacion y traducir su fallo a un error con
+// archivo:linea.
+
+// La secuencia que nombra el primer argumento. El parser ya le puso la clave
+// "secuencia" al resolver la forma, asi que aca no se adivina nada.
+static Secuencia *secuencia_de(const PAEDProgram *prog, const PAEDInstr *in) {
+    const char *nombre = paed_get_arg(in, "secuencia");
+    if (!nombre) nombre = in->arg_count > 0 ? in->args[0].val : "";
+
+    Secuencia *s = sec_buscar(nombre);
+    if (!s) {
+        char msg[PAED_MSG_MAX];
+        snprintf(msg, sizeof(msg),
+                 "'%s' no es una secuencia declarada en el AMBIENTE", nombre);
+        runtime_error(prog, in, msg);
+    }
+    return s;
+}
+
+// Traduce el fallo de secuencia.c a un error del programa.
+static int sec_falla(const PAEDProgram *prog, const PAEDInstr *in) {
+    runtime_error(prog, in, sec_error());
+    return -1;
+}
+
+// AVZ(sec, destino) — trae el proximo elemento de la secuencia al destino.
+//
+// Cuando la secuencia se termino, el destino NO se toca: la ventana queda con
+// lo ultimo que trajo y FDS pasa a ser verdadero. Es el modelo de AED, y es lo
+// que hace que `MIENTRAS NFDS(sec)` corte donde tiene que cortar.
+static int avanzar_secuencia(const PAEDProgram *prog, const PAEDInstr *in) {
+    if (in->arg_count != 2) {
+        runtime_error(prog, in, "AVZ lleva dos argumentos: AVZ(secuencia, destino)");
+        return -1;
+    }
+
+    Secuencia *s = secuencia_de(prog, in);
+    if (!s) return -1;
+
+    char elem[PAED_VAL_MAX];
+    int  hay = 0;
+    if (sec_avanzar(s, elem, sizeof(elem), &hay) != 0) return sec_falla(prog, in);
+    if (!hay) return 0;   // llego al fin: no es error, es el ultimo avance
+
+    const char *destino = in->args[1].val;
+    char nombre[PAED_NAME_MAX];
+    char indice[PAED_VAL_MAX];
+    if (partir_destino(destino, nombre, sizeof(nombre), indice, sizeof(indice)) != 0) {
+        char msg[PAED_MSG_MAX];
+        snprintf(msg, sizeof(msg),
+                 "'%s' no sirve como destino de AVZ: se espera una variable, "
+                 "un elemento A[i] o un campo p.campo", destino);
+        runtime_error(prog, in, msg);
+        return -1;
+    }
+
+    // En una secuencia DE CARACTER el elemento es siempre un caracter, aunque
+    // se vea como un numero: el '5' de un legajo es el caracter '5' y no el
+    // numero 5. Por eso el tipo lo decide la DECLARACION y no el dato, al
+    // reves que en LEER — que no tiene ninguna declaracion de donde agarrarse.
+    Valor v;
+    if (s->de_caracteres) {
+        memset(&v, 0, sizeof(v));
+        v.tipo = VAL_TEXTO;
+        snprintf(v.texto, sizeof(v.texto), "%s", elem);
+    } else {
+        v = valor_desde_texto(elem);
+    }
+
+    return guardar_valor(prog, in, nombre, indice, v);
+}
+
+// ESCRIBIR(secSal, dato) — le agrega un elemento a la secuencia de salida.
+static int grabar_secuencia(const PAEDProgram *prog, const PAEDInstr *in) {
+    Secuencia *s = secuencia_de(prog, in);
+    if (!s) return -1;
+
+    for (int i = 1; i < in->arg_count; i++) {
+        const char *a = in->args[i].val;
+        size_t n = strlen(a);
+
+        char texto[PAED_VAL_MAX];
+        if (n >= 2 && (a[0] == '"' || a[0] == '\'') && a[n - 1] == a[0]) {
+            snprintf(texto, sizeof(texto), "%.*s", (int)(n - 2), a + 1);
+        } else {
+            Valor v;
+            if (expr_eval(a, &env, &v) != 0) {
+                runtime_error(prog, in, env.error);
+                return -1;
+            }
+            valor_a_texto(&v, texto, sizeof(texto));
+        }
+
+        if (sec_grabar(s, texto) != 0) return sec_falla(prog, in);
+    }
+    return 0;
+}
+
+// Las cuatro operaciones que abren y cierran. CERRAR de una secuencia de
+// salida es la que la IMPRIME: mientras esta abierta, la secuencia es un dato
+// que el programa esta armando; cerrarla es decir que ya esta.
+static int exec_secuencia(const PAEDProgram *prog, const PAEDInstr *in, const char *p) {
+    Secuencia *s = secuencia_de(prog, in);
+    if (!s) return -1;
+
+    if (strcasecmp(p, "ARR")   == 0) return sec_arrancar(s) != 0 ? sec_falla(prog, in) : 0;
+    if (strcasecmp(p, "CREAR") == 0) return sec_crear(s)    != 0 ? sec_falla(prog, in) : 0;
+
+    if (strcasecmp(p, "CERRAR") == 0) {
+        int salida = s->es_salida;
+        if (sec_cerrar(s) != 0) return sec_falla(prog, in);
+        if (salida) printf("%s\n", s->datos);
+        return 0;
+    }
+
+    if (strcasecmp(p, "AVZ") == 0) return avanzar_secuencia(prog, in);
+
+    return grabar_secuencia(prog, in);
+}
+
 static int exec_instr(const PAEDProgram *prog, const PAEDInstr *in) {
     const char *p = in->proc;
+
+    // ── Secuencias ───────────────────────────────────────────────────────────
+    //
+    // Va PRIMERO, antes que la rama de archivos: ARR y AVZ solo existen para
+    // secuencias, y CREAR/CERRAR valen para las dos — a esas las separa la
+    // forma que ya resolvio el parser mirando la declaracion.
+    if (in->forma == PAED_FORMA_SECUENCIA) return exec_secuencia(prog, in, p);
+
+    if (strcasecmp(p, "ARR") == 0 || strcasecmp(p, "AVZ") == 0) {
+        char msg[PAED_MSG_MAX];
+        snprintf(msg, sizeof(msg),
+                 "%s trabaja sobre una secuencia y esta no lo es", p);
+        runtime_error(prog, in, msg);
+        return -1;
+    }
 
     // ── Entrada y salida ─────────────────────────────────────────────────────
     //
@@ -290,7 +439,8 @@ static int exec_instr(const PAEDProgram *prog, const PAEDInstr *in) {
     // ABRIR y CERRAR van PRIMERO: tambien operan sobre un archivo, asi que el
     // parser les pone forma ARCHIVO, y si el chequeo de abajo fuera antes
     // dirian que "no graban" — que no es lo que hacen.
-    if (strcasecmp(p, "ABRIR") == 0 || strcasecmp(p, "CERRAR") == 0) {
+    if (strcasecmp(p, "ABRIR")  == 0 || strcasecmp(p, "CERRAR") == 0 ||
+        strcasecmp(p, "CREAR") == 0) {
         char msg[PAED_MSG_MAX];
         snprintf(msg, sizeof(msg),
                  "%s todavia no esta implementado: por ahora solo se valida la declaracion", p);
@@ -390,6 +540,33 @@ static int declarar_ambiente(const PAEDProgram *prog) {
     for (int i = 0; i < prog->decl_count; i++) {
         const PAEDDecl *d = &prog->decls[i];
 
+        // Una secuencia se anota y, si es de entrada, se le piden los datos AL
+        // HOST — una sola vez, aca. Que se pidan al arrancar y no de a un
+        // elemento por AVZ no es un detalle de implementacion: la secuencia es
+        // un dato fijo del enunciado, y pedirla entera permite que FDS pueda
+        // contestar sin tener que adivinar si viene algo mas.
+        if (d->es_secuencia) {
+            Secuencia *s = sec_declarar(d->name, d->type, d->es_salida);
+            if (!s) {
+                fprintf(stderr, "%s:%d: error: %s\n", prog->path, d->line, sec_error());
+                fallos++;
+                continue;
+            }
+            if (d->es_salida) continue;
+
+            char datos[PAED_SEC_MAX];
+            if (secdatos_fn && secdatos_fn(d->name, datos, sizeof(datos), secdatos_ud) == 0) {
+                if (sec_cargar(s, datos) != 0) {
+                    fprintf(stderr, "%s:%d: error: %s\n", prog->path, d->line, sec_error());
+                    fallos++;
+                }
+            }
+            // Sin datos la secuencia queda VACIA, no rota: el primer AVZ la da
+            // por terminada. Es lo correcto — un enunciado puede tener una
+            // secuencia sin ningun elemento, y eso no es un error del programa.
+            continue;
+        }
+
         if (d->es_arreglo) {
             if (env_declarar_arreglo(&env, d->name, d->desde, d->hasta) != 0) {
                 fprintf(stderr, "%s:%d: error: %s\n", prog->path, d->line, env.error);
@@ -438,6 +615,10 @@ static int asignar(const PAEDProgram *prog, const PAEDInstr *in) {
 
 int interp_exec(const PAEDProgram *prog) {
     env_init(&env);
+    // Dos corridas en el mismo proceso (el editor corre el .paed cada vez que
+    // se guarda) no pueden compartir la posicion de lectura de una secuencia:
+    // la segunda arrancaria donde quedo la primera.
+    sec_reset();
     int fallos_ambiente = declarar_ambiente(prog);
     if (fallos_ambiente > 0) return -1;   // sin sus arreglos, el programa no corre
 

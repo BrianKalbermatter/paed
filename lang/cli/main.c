@@ -58,6 +58,80 @@ static int leer_de_stdin(char *buf, size_t n, void *ud) {
     return 0;
 }
 
+// ── De donde salen los datos de una SECUENCIA ───────────────────────────────
+//
+// Del propio .paed, en un bloque de comentarios al final:
+//
+//     // ── SECUENCIA secAlu ──
+//     // 12345Perez Juan#0503
+//     // 67890Gomez Ana#1204
+//
+// Es la misma decision que la del bloque SALIDA ESPERADA y la del de ENTRADA:
+// un programa es UN archivo. Los datos de una secuencia son parte del
+// enunciado — sin ellos el algoritmo no significa nada — asi que guardarlos en
+// otro lado obliga a mantener dos archivos sincronizados a mano.
+//
+// El bloque se lee de nuevo por cada secuencia y no una vez para todas: son
+// tres o cuatro por programa, el archivo ya esta en el cache del sistema, y la
+// alternativa es una tabla que hay que llenar, ordenar y liberar.
+//
+// Las lineas del bloque se PEGAN sin separador. Asi una secuencia de
+// caracteres larga se puede partir en varios renglones para que se lea, sin que
+// aparezcan saltos de linea que no estan en los datos.
+static int datos_de_secuencia(const char *nombre, char *buf, size_t n, void *ud) {
+    const char *path = (const char *)ud;
+
+    FILE *f = fopen(path, "r");
+    if (!f) return -1;
+
+    // "// ── SECUENCIA <nombre>" — se compara el nombre entero para que
+    // 'secAlu' no matchee con el bloque de 'secAlumnos'.
+    char marca[128];
+    snprintf(marca, sizeof(marca), "SECUENCIA %s", nombre);
+
+    char linea[PAED_LINEA_MAX];
+    int  dentro = 0;
+    size_t usado = 0;
+    buf[0] = '\0';
+
+    while (fgets(linea, sizeof(linea), f)) {
+        // Solo miran los comentarios: un bloque de datos NO es codigo.
+        char *barra = strstr(linea, "//");
+        if (!barra) { if (dentro) break; else continue; }
+
+        char *cuerpo = barra + 2;
+        while (*cuerpo == ' ' || *cuerpo == '\t') cuerpo++;
+
+        // Cualquier otra marca '──' termina el bloque: asi los datos de una
+        // secuencia no se comen el bloque de SALIDA ESPERADA que viene abajo.
+        char *marcador = strstr(cuerpo, "\xe2\x94\x80\xe2\x94\x80");   // ──
+        if (marcador) {
+            if (dentro) break;
+            if (strstr(cuerpo, marca)) {
+                // Que el nombre termine ahi: 'SECUENCIA sec' no puede entrar
+                // por el bloque de 'SECUENCIA sec2'.
+                char *fin = strstr(cuerpo, marca) + strlen(marca);
+                if (*fin == '\0' || *fin == ' ' || *fin == '\t' ||
+                    (unsigned char)*fin == 0xe2 || *fin == '\n' || *fin == '\r')
+                    dentro = 1;
+            }
+            continue;
+        }
+
+        if (!dentro) continue;
+
+        linea[strcspn(linea, "\r\n")] = '\0';
+        size_t len = strlen(cuerpo);
+        if (usado + len >= n) break;
+        memcpy(buf + usado, cuerpo, len);
+        usado += len;
+        buf[usado] = '\0';
+    }
+
+    fclose(f);
+    return dentro ? 0 : -1;
+}
+
 // ── paed install ────────────────────────────────────────────────────────────
 
 static int copiar(const char *desde, const char *hasta, int modo) {
@@ -358,6 +432,9 @@ int main(int argc, char **argv) {
     }
 
     interp_set_entrada(leer_de_stdin, NULL);
+    // Los datos de las secuencias salen del mismo .paed, asi que el host le
+    // pasa la ruta y la funcion los busca ahi.
+    interp_set_secuencia(datos_de_secuencia, (void *)path);
     int rc = interp_exec(&prog);
 
     paed_syntax_free();

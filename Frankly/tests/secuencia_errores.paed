@@ -1,0 +1,55 @@
+// Lo que el interprete NO deja pasar en silencio con las secuencias.
+//
+// Cada uno de estos es un error real de parcial, y todos comparten la misma
+// forma: si se los deja pasar, el programa sigue andando y da un resultado
+// equivocado tres instrucciones mas abajo, donde ya no se ve la causa.
+//
+// El mas importante es avanzar despues del fin. En AED el bucle se corta con
+// NFDS, asi que un AVZ de mas significa que el corte esta mal escrito — y sin
+// este chequeo devolveria un dato inventado y el bucle seguiria como si nada.
+
+ACCION secuencia_errores ES
+    AMBIENTE
+        sec: SECUENCIA DE ENTERO;
+        secSal: SECUENCIA DE SALIDA;
+        n: ENTERO;
+
+    PROCESO
+        // 1. Avanzar sin haber arrancado
+        AVZ(sec, n);
+
+        // 2. Arrancar una secuencia de salida
+        ARR(secSal);
+
+        // 3. Crear una secuencia de entrada
+        CREAR(sec);
+
+        // 4. Grabar en una secuencia que no se creo
+        ESCRIBIR(secSal, 1);
+
+        // 5. Preguntar por el fin de una que no arranco
+        SI FDS(sec) ENTONCES
+            ESCRIBIR("nunca llega");
+        FIN_SI
+
+        // Ahora si, bien: dos elementos y el avance que la deja en FDS.
+        ARR(sec); AVZ(sec, n);
+        AVZ(sec, n);
+        AVZ(sec, n);
+        ESCRIBIR("ultimo leido: ", n);
+
+        // 6. Uno mas, despues del fin
+        AVZ(sec, n);
+FIN_ACCION
+
+// ── SECUENCIA sec ──
+// 7 9
+
+// ── SALIDA ESPERADA ──
+// Frankly/tests/secuencia_errores.paed:19: error: hay que arrancar 'sec' antes de avanzarla: falta ARR(sec)
+// Frankly/tests/secuencia_errores.paed:22: error: 'secSal' es una SECUENCIA DE SALIDA: se abre con CREAR, no con ARR
+// Frankly/tests/secuencia_errores.paed:25: error: CREAR es para una SECUENCIA DE SALIDA, y 'sec' es de entrada: para recorrerla va ARR(sec)
+// Frankly/tests/secuencia_errores.paed:28: error: hay que crear 'secSal' antes de grabarle: falta CREAR(secSal)
+// Frankly/tests/secuencia_errores.paed:31: error: hay que arrancar 'sec' antes de preguntarle por el fin: falta ARR(sec)
+// ultimo leido: 9
+// Frankly/tests/secuencia_errores.paed:42: error: 'sec' ya llego al fin de secuencia: NFDS(sec) era falso antes de este AVZ

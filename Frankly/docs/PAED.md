@@ -93,9 +93,9 @@ FIN_ACCION
 | `AN(n)` | `a: AN(5);` | implementado |
 | `N(n)` | | implementado |
 | `ARREGLO[d..h] DE <tipo>` | `A: ARREGLO[1..10] DE ENTERO;` | implementado |
-| `SECUENCIA DE <tipo>` | `sec1: SECUENCIA DE CARACTER;` | ❌ |
-| `VENTANA DE <tipo>` | `recorrido: VENTANA DE CARACTER;` | ❌ |
-| `SECUENCIA DE SALIDA` | `secSalida: SECUENCIA DE SALIDA;` | ❌ |
+| `SECUENCIA DE <tipo>` | `sec1: SECUENCIA DE CARACTER;` | implementado |
+| `VENTANA DE <tipo>` | `recorrido: VENTANA DE CARACTER;` | implementado (es una variable comun) |
+| `SECUENCIA DE SALIDA` | `secSalida: SECUENCIA DE SALIDA;` | implementado |
 | `REGISTRO` / `FIN_REGISTRO` | `vector2 = REGISTRO ... FIN_REGISTRO` | implementado |
 | `ARCHIVO DE <tipo>` | `arch: ARCHIVO DE venta;` | se declara y se valida; no lee disco |
 | `CONSTANTE`, `PUNTERO` | | ❌ |
@@ -177,7 +177,78 @@ inventado, y declarar el tipo no impediría absolutamente nada.
 dígito lo hace parte del número, una letra lo hace acceso a campo. Un número
 nunca llega al lector de identificadores, porque empieza con dígito.
 
-### 2.3 Archivos y las dos formas de `LEER`
+### 2.3 Secuencias
+
+**Es la estructura que toman los parciales.** Medido sobre `apuntes/AED` el
+2026-08-12: `SECUENCIA DE` aparece 41 veces y `avz(` 38, mientras que
+`ARREGLO[` no aparece **ninguna**. Los arreglos entraron a PAED desde la wiki y
+la teoría; las secuencias son las que toma la cátedra.
+
+Una secuencia es una tira de elementos que se recorre **hacia adelante y de a
+uno**. No se indexa y no se vuelve atrás — eso es exactamente lo que la
+distingue de un arreglo, y por qué su recorrido es siempre el mismo bucle:
+
+```paed
+AMBIENTE
+    secAlu: SECUENCIA DE CARACTERES;
+    v: VENTANA DE CARACTER;
+
+PROCESO
+    ARR(secAlu); AVZ(secAlu, v);
+    MIENTRAS NFDS(secAlu) HACER
+        ...usar v...
+        AVZ(secAlu, v);
+    FIN_MIENTRAS
+```
+
+| Operación | Qué hace |
+|---|---|
+| `ARR(sec)` | posiciona **antes** del primer elemento; no lee nada |
+| `AVZ(sec, v)` | trae el próximo elemento a `v` y avanza |
+| `NFDS(sec)` / `FDS(sec)` | si la ventana **no** se pasó del último / si se pasó |
+| `CREAR(sec)` | abre una `SECUENCIA DE SALIDA` para escribirla |
+| `ESCRIBIR(sec, v)` | le agrega un elemento a la de salida |
+| `CERRAR(sec)` | la termina — y la de salida se **imprime** al cerrarla |
+
+`ARR` seguido del primer `AVZ` no es una repetición: `ARR` no lee, solo apunta.
+Sin ese primer `AVZ` la ventana entra vacía al bucle y la primera vuelta usa un
+valor que nadie cargó. Por eso el corpus las escribe juntas, en una línea.
+
+**El tipo lo decide la declaración, no el dato.** En `SECUENCIA DE CARACTER` el
+elemento `5` es el **carácter** `'5'` y no el número 5. Es al revés que en
+`LEER`, que no tiene ninguna declaración de dónde agarrarse (§5.1) — y la
+diferencia importa: `ConvertiraNumero('5')` existe justamente porque no son lo
+mismo.
+
+**Avanzar después del fin es un error.** El bucle corta con `NFDS`, así que un
+`AVZ` de más significa que el corte está mal escrito:
+
+```
+'sec' ya llego al fin de secuencia: NFDS(sec) era falso antes de este AVZ
+```
+
+Dejarlo pasar devolvería un dato inventado y el síntoma aparecería mucho
+después, sin relación aparente con la causa.
+
+**De dónde salen los datos lo decide el HOST**, igual que en `LEER`
+(`interp_set_secuencia`, en `lang/include/paed/interpreter.h`). Se piden
+**enteros y una sola vez**, al arrancar: la secuencia es un dato fijo del
+enunciado, no algo que alguien tipea mientras el programa corre, y pedirla
+entera es lo que permite que `FDS` conteste sin adivinar si viene algo más.
+
+La CLI los busca en el propio `.paed`, en un bloque de comentarios:
+
+```paed
+// ── SECUENCIA secAlu ──
+// 12Ana#34Beto#
+```
+
+Las líneas del bloque se **pegan sin separador**, así una secuencia larga se
+puede partir en varios renglones sin meter saltos de línea que no están en los
+datos. Es la misma decisión que la del bloque `ENTRADA` (§13): un programa es
+UN archivo.
+
+### 2.4 Archivos y las dos formas de `LEER`
 
 ```paed
 AMBIENTE
@@ -530,6 +601,35 @@ Rango          ..                        OnlySintaxis.md:121  (arreglo[1..30])
 - **Espacios y saltos de línea:** no significativos. La indentación es estética.
 - **Keywords:** case-insensitive (§10.1). Los identificadores no.
 
+### 7.1 El `;` y las sentencias por línea
+
+El `;` es **terminador**: cada sentencia trae el suyo, incluida la última del
+bloque (§10.8). Lo que vale es poner **varias en el mismo renglón**, y vale
+igual en los dos bloques:
+
+```paed
+AMBIENTE
+    a: ENTERO; b: ENTERO;
+PROCESO
+    ARR(secAlu); AVZ(secAlu, v);
+```
+
+En el `PROCESO` sirve para no esconder que dos instrucciones son un solo gesto:
+arrancar una secuencia y traer su primer elemento van siempre juntas (§2.3).
+
+En el `AMBIENTE` importa más, porque antes **fallaba en silencio**. En
+`s: SECUENCIA DE ENTERO; n: ENTERO;` el tipo de `s` quedaba siendo el texto
+`"ENTERO; n: ENTERO"` y `n` no se declaraba nunca. El programa arrancaba lo
+mismo — un escalar nace en su primera asignación (§2) — y recién reventaba
+mucho después, en el primer `ARR`, culpando a otra cosa.
+
+El corte respeta comillas y paréntesis: en `ESCRIBIR('uno; dos')` ese `;` es
+parte del texto. Y las cabeceras de bloque no se parten nunca, así que el `;`
+que separa el paso del `PARA` (§4.1) sigue intacto.
+
+**Lo que NO cambió**: una sentencia sin `;` sigue siendo error, y una sentencia
+partida en dos líneas sigue sin andar — el parser lee línea por línea.
+
 ## 8. Gramática
 
 Solo las construcciones en alcance. Las diferidas no figuran.
@@ -683,6 +783,26 @@ En cualquier otro caso `.` es un token propio.
 Caso a testear cuando lleguen los registros: `arreglo[1..30]` — tras el `1`
 viene `.` y después otro `.`, que no es dígito, así que el número corta.
 
+### 10.8 El `;` es TERMINADOR — RESUELTO 2026-08-12
+
+Toda sentencia lleva su `;`, **incluida la última del bloque**. Y varias
+sentencias pueden compartir un renglón (§7.1).
+
+| Fuente | Dice |
+|---|---|
+| `wiki.txt:278-283` | terminador — `ESCRIBIR(b);` es la última antes de `FIN_ACCION` y lo lleva |
+| `wiki.txt:368-375` | terminador — mismo caso, otro algoritmo |
+| `AED_2021_UnI.pdf:10` | separador — la última no lo lleva |
+
+**Gana el terminador.** La wiki lo sostiene en todos sus ejemplos completos; el
+PDF es UNA captura de Sublime Text, y es la misma que muestra `FIN ACCION` con
+espacio — la forma que §10.7 ya descartó. Una fuente que falla en un punto no
+puede ganarle a la otra en el punto de al lado sin más evidencia.
+
+Lo que se agregó no fue volver el `;` opcional, sino dejar de gastar un renglón
+por sentencia: `a: ENTERO; b: ENTERO;` y `ARR(sec); AVZ(sec, v);` valen, y el
+`;` de cada una sigue siendo obligatorio.
+
 ### 10.7 El cierre de la `ACCION` — RESUELTO 2026-08-10
 
 Era el único punto **bloqueante** que le quedaba a la spec. Las fuentes se
@@ -718,16 +838,6 @@ Es la forma que uno copia del apunte sin pensar. Sin ese caso el error sería
 "falta `;`", que manda a buscar el problema al lugar equivocado.
 
 ## 11. Pendiente de revisión con la cátedra
-
-### 11.1 El `;`: ¿separador o terminador?
-
-| Fuente | Dice |
-|---|---|
-| `AED_2021_UnI.pdf:10` | **separador** — la última sentencia no lo lleva |
-| Implementación | **terminador obligatorio** en toda instrucción |
-
-La cátedra gana en el papel, pero cambiarlo ahora rompe todos los `.paed` del
-repo. Sin decidir.
 
 ### 11.2 Puntos abiertos del ejemplo de cátedra
 
@@ -822,13 +932,16 @@ de línea — nunca se ignora.
 | `REGISTRO` / `FIN_REGISTRO` y acceso `pori.vx` | ✅ §2.2 |
 | Un campo que el registro no declara | ❌ rechazado, §2.2 |
 | Instrucción partida en dos líneas | ❌ el parser lee línea por línea |
-| `ARCHIVO` / `CONSTANTE` | ❌ |
-| `SECUENCIA`, y por lo tanto `NFDS` / `FDS` | ❌ |
-| `ARCHIVO DE <tipo>` en el AMBIENTE | ✅ §2.3 |
-| `LEER`/`ESCRIBIR`: consola vs archivo, distinguidos | ✅ §2.3 |
+| Varias instrucciones en una línea: `a := 1; b := 2;` | ✅ §7.1 |
+| `CONSTANTE` | ❌ |
+| `SECUENCIA DE <tipo>` / `DE SALIDA`, `VENTANA DE <tipo>` | ✅ §2.3 |
+| `ARR` / `AVZ` / `NFDS` / `FDS` | ✅ §2.3 |
+| `CREAR` / `ESCRIBIR(sec,v)` / `CERRAR` sobre secuencias | ✅ §2.3 |
+| `ARCHIVO DE <tipo>` en el AMBIENTE | ✅ §2.4 |
+| `LEER`/`ESCRIBIR`: consola vs archivo, distinguidos | ✅ §2.4 |
 | `FDA` / `NFDA` reconocidas (avisan que faltan archivos) | ✅ |
 | `LEER` de consola: escalar, `A[i]` y `p.campo` | ✅ §5.1 |
-| `ARR` / `AVZ` / `CREAR` / `CERRAR` / `ABRIR` / `LEER` de archivo | parsean, no ejecutan |
+| `ABRIR` / `CREAR` / `CERRAR` / `LEER` sobre ARCHIVOS en disco | parsean, no ejecutan |
 
 Lo que falta está en el KANBAN con su ticket. Esta tabla y el KANBAN se
 actualizan juntos.
@@ -880,6 +993,11 @@ es exactamente cómo un test deja de proteger: "arregla" el test en vez del bug.
 | `arreglo_limites.paed` | índice fuera de rango — **termina con error a propósito** |
 | `errores.paed` | que el parser nunca ignore en silencio |
 | `hola_mundo.paed` | concatenación y `AN(n)` |
+| `secuencia_recorrido.paed` | `ARR`/`AVZ`/`NFDS` — el bucle de todos los parciales |
+| `secuencia_caracteres.paed` | secuencia de caracteres y de salida, campo fijo y campo hasta `#` |
+| `secuencia_errores.paed` | avanzar sin arrancar, y avanzar **después** del fin |
+| `secuencia_declaracion.paed` | secuencia que no existe — lo caza el parser |
+| `sentencias_en_una_linea.paed` | varias instrucciones por renglón, y el `;` dentro de un texto |
 
 **Regla de oro:** ninguna construcción entra a esta spec sin un `.paed` que la
 ejercite y corra. La v1 se rompió justamente por eso —

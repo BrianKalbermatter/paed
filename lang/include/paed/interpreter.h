@@ -49,6 +49,22 @@ typedef int (*PaedEntrada)(char *buf, size_t n, void *ud);
 // claro en vez de colgarse esperando algo que nunca va a llegar.
 void interp_set_entrada(PaedEntrada fn, void *ud);
 
+// ── De donde salen los datos de una SECUENCIA ────────────────────────────────
+//
+// Misma decision que con LEER, y por la misma razon: el interprete no sabe ni
+// tiene por que saber donde viven los datos. Lo que cambia es la forma — una
+// secuencia no se pide de a un dato por vez, se pide ENTERA y una sola vez, al
+// arrancar el programa. Es lo que corresponde: la secuencia es un dato fijo del
+// enunciado, no algo que alguien tipea mientras el programa corre.
+//
+// Deja el contenido de la secuencia `nombre` en `buf`. Devuelve 0 si la
+// encontro, -1 si no hay datos para esa secuencia.
+typedef int (*PaedSecuenciaDatos)(const char *nombre, char *buf, size_t n, void *ud);
+
+// Engancha la fuente. Sin fuente, una secuencia de entrada queda vacia: el
+// primer AVZ la da por terminada y el programa avisa, en vez de inventar datos.
+void interp_set_secuencia(PaedSecuenciaDatos fn, void *ud);
+
 // Ejecuta el programa. Devuelve 0 si se ejecuto entero.
 // Los errores en runtime se reportan con archivo:linea, igual que el parser.
 int  interp_exec (const PAEDProgram *prog);

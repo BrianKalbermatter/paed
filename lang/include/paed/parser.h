@@ -17,6 +17,9 @@
 #define PAED_MSG_MAX      192
 #define PAED_PATH_MAX     256
 #define PAED_COND_MAX     192
+// Lo mas largo que puede medir una linea de codigo. El parser lee linea por
+// linea, asi que este es tambien el limite de una instruccion.
+#define PAED_LINEA_MAX    512
 // Cuantos bloques se pueden anidar. 32 niveles de SI dentro de MIENTRAS dentro
 // de SI es mucho mas de lo que aguanta leer un humano.
 #define PAED_MAX_BLOQUES   32
@@ -53,6 +56,17 @@ typedef struct {
     // dos argumentos, asi que lo unico que las separa es esta declaracion.
     int  es_archivo;
 
+    // Secuencia: `sec: SECUENCIA DE CARACTER;`. Cumple el mismo papel que
+    // es_archivo — es la declaracion, y solo ella, la que hace que
+    // `ESCRIBIR(secSal, v)` grabe en la secuencia en vez de imprimir dos cosas
+    // por consola.
+    int  es_secuencia;
+
+    // `secSal: SECUENCIA DE SALIDA;` — la que se escribe en vez de leerse.
+    // Va aparte de es_secuencia y no como un `type` mas porque cambia QUE
+    // operaciones valen: CREAR y ESCRIBIR si, ARR y AVZ no.
+    int  es_salida;
+
     int  line;
 } PAEDDecl;
 
@@ -88,6 +102,7 @@ typedef enum {
     PAED_FORMA_UNICA = 0,   // el procedimiento tiene una sola forma
     PAED_FORMA_CONSOLA,     // LEER(x)       ESCRIBIR("hola")
     PAED_FORMA_ARCHIVO,     // LEER(arch,r)  ESCRIBIR(arch,r)
+    PAED_FORMA_SECUENCIA,   // AVZ(sec,v)    ESCRIBIR(secSal,v)
 } PAEDForma;
 
 // Instruccion del bloque PROCESO.
