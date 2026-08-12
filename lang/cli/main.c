@@ -21,11 +21,27 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/stat.h>
-#include <unistd.h>
 
 #include <paed/parser.h>
 #include <paed/interpreter.h>
+#include <paed/plataforma.h>
+
+// Lo que en Linux vive en unistd.h, en Windows vive en io.h con otro nombre.
+#ifdef _WIN32
+  #include <io.h>        // _access, _unlink
+  #include <direct.h>    // _rmdir
+  #define ACCESO(p, m)  _access(p, m)
+  #define BORRAR(p)     _unlink(p)
+  #define BORRAR_DIR(p) _rmdir(p)
+  #define F_OK 0
+  #define W_OK 2
+#else
+  #include <sys/stat.h>
+  #include <unistd.h>
+  #define ACCESO(p, m)  access(p, m)
+  #define BORRAR(p)     unlink(p)
+  #define BORRAR_DIR(p) rmdir(p)
+#endif
 
 // De aca saca LEER sus datos. El interprete no abre stdin solo (ver el
 // comentario de interp_set_entrada): en la ventana SDL eso congelaria el game
@@ -51,7 +67,7 @@ static int copiar(const char *desde, const char *hasta, int modo) {
     // Se borra primero: si el destino es un binario EN USO, escribirle encima da
     // "Text file busy". Borrarlo y crearlo de nuevo no molesta a quien lo este
     // ejecutando, porque el proceso viejo sigue con el archivo que ya abrio.
-    unlink(hasta);
+    BORRAR(hasta);
 
     FILE *d = fopen(hasta, "wb");
     if (!d) {
@@ -71,13 +87,24 @@ static int copiar(const char *desde, const char *hasta, int modo) {
     }
     fclose(o);
     fclose(d);
+
+    // En Windows lo que hace ejecutable a un archivo es la extension .exe, no
+    // un permiso, asi que no hay nada que marcar.
+#ifndef _WIN32
     chmod(hasta, (mode_t)modo);
+#else
+    (void)modo;
+#endif
     return 0;
 }
 
+// Solo la usa el camino de Linux, para decidir entre /usr/local y ~/.local.
+// En Windows cada usuario tiene su carpeta y no hay nada que decidir.
+#ifndef _WIN32
 static int se_puede_escribir(const char *dir) {
-    return access(dir, W_OK) == 0;
+    return ACCESO(dir, W_OK) == 0;
 }
+#endif
 
 // Se copia a si mismo y escribe la definicion del lenguaje que lleva adentro.
 // No necesita ningun paquete ni ningun archivo al lado: por eso alcanza con
@@ -87,33 +114,47 @@ static int instalar(const char *destino) {
 
     if (destino) {
         snprintf(prefix, sizeof(prefix), "%s", destino);
-    } else if (se_puede_escribir("/usr/local/bin")) {
-        // Se mira si SE PUEDE ESCRIBIR, no si el usuario "es" root: en un
-        // contenedor sos root sin sudo, y con `sudo -E` sos root sin serlo.
-        snprintf(prefix, sizeof(prefix), "/usr/local");
     } else {
-        const char *home = getenv("HOME");
-        if (!home) { fprintf(stderr, "paed: no se donde instalar (no hay $HOME)\n"); return 4; }
-        snprintf(prefix, sizeof(prefix), "%s/.local", home);
+#ifdef _WIN32
+        // En Windows no hay /usr/local ni permisos de root: cada usuario tiene
+        // su carpeta. LOCALAPPDATA es donde van los programas de un solo
+        // usuario, que es lo que corresponde para algo que se instala sin
+        // pedirle nada a nadie.
+        const char *base = getenv("LOCALAPPDATA");
+        if (!base) base = getenv("USERPROFILE");
+        if (!base) { fprintf(stderr, "paed: no se donde instalar (no hay LOCALAPPDATA ni USERPROFILE)\n"); return 4; }
+        snprintf(prefix, sizeof(prefix), "%s\\paed", base);
+#else
+        if (se_puede_escribir("/usr/local/bin")) {
+            // Se mira si SE PUEDE ESCRIBIR, no si el usuario "es" root: en un
+            // contenedor sos root sin sudo, y con `sudo -E` sos root sin serlo.
+            snprintf(prefix, sizeof(prefix), "/usr/local");
+        } else {
+            const char *home = getenv("HOME");
+            if (!home) { fprintf(stderr, "paed: no se donde instalar (no hay $HOME)\n"); return 4; }
+            snprintf(prefix, sizeof(prefix), "%s/.local", home);
+        }
+#endif
     }
 
     char bindir[600], datadir[600], bin[700], json[700];
-    snprintf(bindir,  sizeof(bindir),  "%s/bin", prefix);
-    snprintf(datadir, sizeof(datadir), "%s/share/paed", prefix);
-    snprintf(bin,     sizeof(bin),     "%s/paed", bindir);
-    snprintf(json,    sizeof(json),    "%s/sintaxis.json", datadir);
+    snprintf(bindir,  sizeof(bindir),  "%s" PAED_SEP "bin", prefix);
+    snprintf(datadir, sizeof(datadir), "%s" PAED_SEP "share" PAED_SEP "paed", prefix);
+    snprintf(bin,     sizeof(bin),     "%s" PAED_SEP "paed" PAED_EXE, bindir);
+    snprintf(json,    sizeof(json),    "%s" PAED_SEP "sintaxis.json", datadir);
 
     // mkdir -p a mano, un nivel por vez. Los errores distintos de "ya existe"
     // se ignoran aca y los caza el fopen de abajo, con un mensaje que dice cual
     // fue el archivo.
     char tmp[600];
-    snprintf(tmp, sizeof(tmp), "%s/share", prefix);
-    mkdir(prefix, 0755); mkdir(bindir, 0755); mkdir(tmp, 0755); mkdir(datadir, 0755);
+    snprintf(tmp, sizeof(tmp), "%s" PAED_SEP "share", prefix);
+    paed_mkdir(prefix); paed_mkdir(bindir); paed_mkdir(tmp); paed_mkdir(datadir);
 
     char yo[512];
-    ssize_t largo = readlink("/proc/self/exe", yo, sizeof(yo) - 1);
-    if (largo <= 0) { fprintf(stderr, "paed: no puedo saber donde estoy\n"); return 4; }
-    yo[largo] = '\0';
+    if (paed_ruta_ejecutable(yo, sizeof(yo)) != 0) {
+        fprintf(stderr, "paed: no puedo saber donde estoy\n");
+        return 4;
+    }
 
     printf("Instalando PAED %s en %s\n", PAED_VERSION, prefix);
 
@@ -135,9 +176,16 @@ static int instalar(const char *destino) {
     if (ruta && strstr(ruta, bindir)) {
         printf("Listo. Probalo:\n    paed tu_programa.paed\n");
     } else {
-        printf("OJO: %s no esta en tu PATH, asi que el comando 'paed' todavia no existe.\n", bindir);
+        printf("%s no esta en tu PATH, asi que el comando 'paed' todavia no existe.\n", bindir);
         printf("Agregalo una sola vez:\n\n");
+#ifdef _WIN32
+        // setx escribe el PATH del usuario en el registro, y recien lo ve una
+        // consola NUEVA: la que corre este comando sigue con el viejo.
+        printf("    setx PATH \"%%PATH%%;%s\"\n\n", bindir);
+        printf("(y despues abri una consola nueva)\n\n");
+#else
         printf("    echo 'export PATH=\"%s:$PATH\"' >> ~/.bashrc && source ~/.bashrc\n\n", bindir);
+#endif
         printf("Mientras tanto anda por ruta completa:  %s tu_programa.paed\n", bin);
     }
     return 0;
@@ -151,17 +199,10 @@ static int instalar(const char *destino) {
 // Devuelve 0 si pudo, -1 si no.
 static int prefijo_de_este_binario(char *out, size_t n) {
     char exe[512];
-    ssize_t largo = readlink("/proc/self/exe", exe, sizeof(exe) - 1);
-    if (largo <= 0) return -1;
-    exe[largo] = '\0';
+    if (paed_ruta_ejecutable(exe, sizeof(exe)) != 0) return -1;
 
-    char *barra = strrchr(exe, '/');      // .../bin/paed -> .../bin
-    if (!barra) return -1;
-    *barra = '\0';
-
-    char *padre = strrchr(exe, '/');      // .../bin -> ...
-    if (!padre) return -1;
-    *padre = '\0';
+    if (paed_dirname(exe) != 0) return -1;   // .../bin/paed -> .../bin
+    if (paed_dirname(exe) != 0) return -1;   // .../bin      -> ...
 
     snprintf(out, n, "%s", exe);
     return 0;
@@ -183,13 +224,13 @@ static int desinstalar(const char *destino) {
     }
 
     char bin[700], json[700], datadir[600];
-    snprintf(bin,     sizeof(bin),     "%s/bin/paed", prefix);
-    snprintf(datadir, sizeof(datadir), "%s/share/paed", prefix);
-    snprintf(json,    sizeof(json),    "%s/sintaxis.json", datadir);
+    snprintf(bin,     sizeof(bin),     "%s" PAED_SEP "bin" PAED_SEP "paed" PAED_EXE, prefix);
+    snprintf(datadir, sizeof(datadir), "%s" PAED_SEP "share" PAED_SEP "paed", prefix);
+    snprintf(json,    sizeof(json),    "%s" PAED_SEP "sintaxis.json", datadir);
 
     // Si no esta el binario, ahi no hay una instalacion. Se avisa en vez de
     // borrar a ciegas y decir "listo" sin haber hecho nada.
-    if (access(bin, F_OK) != 0) {
+    if (ACCESO(bin, F_OK) != 0) {
         fprintf(stderr, "paed: no encuentro una instalacion en %s\n", prefix);
         fprintf(stderr, "      (buscaba %s)\n", bin);
         return 4;
@@ -199,20 +240,20 @@ static int desinstalar(const char *destino) {
 
     // Borrar el binario que se esta ejecutando ES legal en Linux: el proceso
     // sigue con el archivo que ya tiene abierto, y el nombre desaparece.
-    if (unlink(bin) != 0) {
+    if (BORRAR(bin) != 0) {
         fprintf(stderr, "paed: no puedo borrar %s: %s\n", bin, strerror(errno));
         return 4;
     }
     printf("  borrado %s\n", bin);
 
-    if (unlink(json) == 0) printf("  borrado %s\n", json);
+    if (BORRAR(json) == 0) printf("  borrado %s\n", json);
 
     // rmdir y no rm -rf: solo se va si quedo VACIO. Si el directorio de datos
     // tiene otras librerias (escena.json, por ejemplo), no son de PAED y no se
     // tocan — se avisa que quedaron.
-    if (rmdir(datadir) == 0) {
+    if (BORRAR_DIR(datadir) == 0) {
         printf("  borrado %s\n", datadir);
-    } else if (access(datadir, F_OK) == 0) {
+    } else if (ACCESO(datadir, F_OK) == 0) {
         printf("\n %s no quedo vacio, asi que no se borro.\n", datadir);
         printf("     Adentro hay librerias que no son del lenguaje. Mirá que son antes de borrarlas.\n");
     }

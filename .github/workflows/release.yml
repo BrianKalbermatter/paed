@@ -104,3 +104,42 @@ jobs:
           #     curl -L .../latest/download/paed -o paed && chmod +x paed
           #     ./paed install
           gh release upload "$GITHUB_REF_NAME" build/paed --clobber
+
+  # Windows va en un JOB APARTE, no como un paso mas del de Linux. Dos razones:
+  # corre en paralelo (el release no tarda el doble), y si el cross-compile se
+  # rompe, el paquete de Linux se publica igual en vez de caerse con el.
+  release-windows:
+    runs-on: ubuntu-latest
+    needs: release-linux
+
+    steps:
+      - name: Checkout codigo
+        uses: actions/checkout@v4
+
+      - name: Instalar el cross-compiler
+        run: sudo apt-get update && sudo apt-get install -y mingw-w64
+
+      - name: Compilar el .exe
+        run: make windows
+
+      - name: Que sea un ejecutable de Windows de verdad
+        # `file` tiene que decir PE32+. Si el Makefile se equivoca de compilador
+        # esto sale ELF y el que lo baja se encuentra un archivo que no abre.
+        run: |
+          file build/windows/paed.exe
+          file build/windows/paed.exe | grep -q "PE32+ executable" || {
+            echo "no es un ejecutable de Windows" >&2; exit 1; }
+
+      - name: Que el lenguaje viaje adentro
+        # El .exe no lleva sintaxis.json al lado: va embebido. Si no estuviera,
+        # el que lo baja tendria un interprete que no sabe que es FIN_ACCION.
+        run: |
+          strings build/windows/paed.exe | grep -q "FIN_ACCION" || {
+            echo "el .exe no tiene la definicion del lenguaje adentro" >&2; exit 1; }
+
+      - name: Publicar el .exe
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp build/windows/paed.exe paed.exe
+          gh release upload "$GITHUB_REF_NAME" paed.exe --clobber

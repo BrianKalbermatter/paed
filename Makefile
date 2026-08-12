@@ -55,7 +55,7 @@ $(LANG_GEN): Frankly/data/sintaxis.json
 	@echo ';' >> $@
 
 LANG_SRC = lang/src/parser.c lang/src/expr.c lang/src/interpreter.c \
-           $(LANG_GEN) lang/vendor/cjson/cJSON.c
+           lang/src/plataforma.c $(LANG_GEN) lang/vendor/cjson/cJSON.c
 LANG_OBJ = $(LANG_SRC:%.c=$(BUILDDIR)/lang/%.o)
 
 LIB      = $(BUILDDIR)/libpaed.a
@@ -97,6 +97,36 @@ $(BUILDDIR)/lang/%.o: %.c $(SELLO)
 	@mkdir -p $(dir $@)
 	$(CC) $(LANG_CFLAGS) -c $< -o $@
 
+# ── Windows (cross-compile con mingw-w64) ──────────────────────────────────
+#
+#   make windows    ->  build/windows/paed.exe
+#
+# Va a un BUILDDIR aparte a proposito: los .o de Linux y los de Windows tienen
+# el mismo nombre y distinto formato, asi que compartir carpeta significa que un
+# `make windows` te deja el build de Linux roto — y el error aparece despues, al
+# linkear, culpando a otra cosa.
+#
+# El .exe no necesita nada al lado: la definicion del lenguaje viaja adentro.
+# Por eso alcanza con pasarle el .exe a alguien, sin instalador ni carpetas.
+WIN_CC      = x86_64-w64-mingw32-gcc
+WIN_BUILD   = $(BUILDDIR)/windows
+WIN_CFLAGS  = -Wall -Wextra -Ilang/include -Ilang/vendor/cjson \
+              -DPAED_DATADIR='"C:\\\\paed"' -DPAED_VERSION='"$(VERSION)"'
+WIN_OBJ     = $(LANG_SRC:%.c=$(WIN_BUILD)/%.o) $(WIN_BUILD)/lang/cli/main.o
+WIN_TARGET  = $(WIN_BUILD)/paed.exe
+
+windows: $(WIN_TARGET)
+
+$(WIN_TARGET): $(WIN_OBJ)
+	@mkdir -p $(dir $@)
+	$(WIN_CC) $(WIN_OBJ) -o $@
+	@echo
+	@echo "listo: $@"
+
+$(WIN_BUILD)/%.o: %.c $(SELLO)
+	@mkdir -p $(dir $@)
+	$(WIN_CC) $(WIN_CFLAGS) -c $< -o $@
+
 # Corre toda la bateria de programas PAED contra la salida que cada uno declara.
 test: $(CLI)
 	@bash Frankly/tests/correr.sh
@@ -126,4 +156,4 @@ uninstall:
 clean clean-lang:
 	rm -rf $(BUILDDIR)
 
-.PHONY: all lang test install uninstall clean clean-lang FORCE_SELLO
+.PHONY: all lang windows test install uninstall clean clean-lang FORCE_SELLO

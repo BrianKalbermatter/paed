@@ -22,6 +22,17 @@ curl -L https://github.com/BrianKalbermatter/paed/releases/latest/download/paed-
 cd paed-*-linux-x86_64 && ./bin/paed install
 ```
 
+## Windows
+
+```
+paed.exe programa.paed
+```
+
+Un solo archivo, sin instalador: el `.exe` lleva la definición del lenguaje
+adentro. Bajalo del listado de abajo y ponelo donde quieras. Si querés
+escribir `paed` sin la ruta, `paed.exe install` lo copia a tu carpeta de
+usuario y te dice cómo agregarlo al PATH.
+
 ## Usar
 
 ```bash

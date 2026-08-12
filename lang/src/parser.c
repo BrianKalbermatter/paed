@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>   // readlink: encontrar los datos al lado del binario
+#include "paed/plataforma.h"   // saber donde esta el binario, sin #ifdef aca
 
 // ── Fuente unica de verdad: sintaxis.json ─────────────────────────────────────
 
@@ -62,28 +62,18 @@ static char g_lib_nombre[64] = {0};
 // sintaxis.json" — que es exactamente lo que pasa si la ruta de instalacion se
 // decide al COMPILAR y el usuario elige otra al INSTALAR.
 //
-// /proc/self/exe es la forma de Linux de preguntar "¿donde estoy?". Devuelve el
-// ejecutable real, ya resueltos los enlaces simbolicos, asi que un `paed` que
-// en realidad es un symlink a otro lado igual encuentra sus datos.
+// Como se pregunta "¿donde estoy?" lo resuelve plataforma.c, que es lo unico
+// que cambia entre Linux y Windows.
 //
 // Deja el resultado en `out`. Devuelve 0 si pudo, -1 si no.
 static int datadir_junto_al_binario(char *out, size_t n) {
     char exe[PAED_PATH_MAX];
-    ssize_t largo = readlink("/proc/self/exe", exe, sizeof(exe) - 1);
-    if (largo <= 0) return -1;
-    exe[largo] = '\0';
+    if (paed_ruta_ejecutable(exe, sizeof(exe)) != 0) return -1;
 
-    // De  /usr/local/bin/paed  a  /usr/local/bin
-    char *barra = strrchr(exe, '/');
-    if (!barra) return -1;
-    *barra = '\0';
+    if (paed_dirname(exe) != 0) return -1;   // .../bin/paed  ->  .../bin
+    if (paed_dirname(exe) != 0) return -1;   // .../bin       ->  ...
 
-    // Y de ahi a  /usr/local/share/paed  — subir uno y bajar por share/
-    char *padre = strrchr(exe, '/');
-    if (!padre) return -1;
-    *padre = '\0';
-
-    snprintf(out, n, "%s/share/paed", exe);
+    snprintf(out, n, "%s" PAED_SEP "share" PAED_SEP "paed", exe);
     return 0;
 }
 
@@ -776,9 +766,9 @@ static const char *nombre_kind(PAEDKind k) {
 // se confunda con la palabra HASTA.
 static char *palabra_en(char *s, const char *kw) {
     size_t n = strlen(kw);
-    // strcasestr y no strstr: las palabras clave no distinguen mayusculas
+    // Sin distinguir mayusculas y no strstr: las palabras clave no distinguen
     // (ver kw_es, mas abajo), asi que 'PARA i := 1 hasta 5 HACER' tambien vale.
-    for (char *c = s; (c = strcasestr(c, kw)) != NULL; c += n) {
+    for (char *c = s; (c = paed_strcasestr(c, kw)) != NULL; c += n) {
         int izq = (c == s) || (!isalnum((unsigned char)c[-1]) && c[-1] != '_');
         int der = !isalnum((unsigned char)c[n]) && c[n] != '_';
         if (izq && der) return c;
