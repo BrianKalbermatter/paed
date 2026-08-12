@@ -39,7 +39,12 @@ Otros comandos:
 ```bash
 paed --version      # que version es
 paed --help         # todo lo que sabe hacer
+paed uninstall      # se borra a si mismo de donde este instalado
 ```
+
+`uninstall` sin argumentos deduce de dónde sacarse: el binario que corre **es**
+el instalado. Borra solo lo que puso `install` — si en el directorio de datos
+hay librerías de otro, las deja y avisa.
 
 ## Qué corre hoy
 

@@ -72,22 +72,24 @@ $(CLI): $(BUILDDIR)/lang/lang/cli/main.o $(LIB)
 	@mkdir -p $(dir $@)
 	$(CC) $< $(LIB) -lm -o $@
 
-# La ruta de datos se compila ADENTRO del binario, asi que cambiar PREFIX obliga
-# a recompilar. Make no puede darse cuenta solo: mira fechas de ARCHIVOS, y una
-# flag de linea de comandos no es un archivo. Se deja la ruta escrita en un
-# sello y los objetos dependen de el.
+# Todo lo que se compila ADENTRO del binario y NO viene de un archivo .c va en
+# este sello: la ruta de datos y la version. Make mira fechas de ARCHIVOS, y una
+# flag de linea de comandos no es un archivo, asi que sin esto no se entera de
+# que cambiaron y no recompila.
 #
-# El sello se reescribe SOLO si el valor cambio (por eso el cmp): si se
+# El sello se reescribe SOLO si el contenido cambio (por eso el cmp): si se
 # reescribiera siempre, su fecha cambiaria en cada `make` y recompilaria todo al
 # pedo.
 #
-# Sin esto: `make install PREFIX=~/.local` copiaba un binario que seguia
-# buscando en /usr/local/share/paed y fallaba con "no encuentro sintaxis.json".
-SELLO = $(BUILDDIR)/lang/.datadir
+# Ya mordio dos veces:
+#   - `make install PREFIX=~/.local` copiaba un binario que seguia buscando en
+#     /usr/local/share/paed
+#   - subir VERSION a 0.1.2 dejaba un `paed --version` que seguia diciendo 0.1.1
+SELLO = $(BUILDDIR)/lang/.sello
 
 $(SELLO): FORCE_SELLO
 	@mkdir -p $(dir $@)
-	@echo '$(DATADIR)' | cmp -s - $@ || echo '$(DATADIR)' > $@
+	@echo '$(DATADIR) $(VERSION)' | cmp -s - $@ || echo '$(DATADIR) $(VERSION)' > $@
 
 FORCE_SELLO:
 

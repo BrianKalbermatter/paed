@@ -2,6 +2,7 @@
 //
 //   paed programa.paed          corre un programa
 //   paed install [destino]      se instala solo, copiandose a si mismo
+//   paed uninstall [destino]    se borra
 //   paed --version              que version es
 //
 // El binario se basta solo: lleva la definicion del lenguaje adentro, asi que
@@ -142,10 +143,89 @@ static int instalar(const char *destino) {
     return 0;
 }
 
+// Saca el prefijo de instalacion a partir de donde esta ESTE ejecutable:
+// de  <prefijo>/bin/paed  devuelve  <prefijo>.
+//
+// Es lo que permite que `paed uninstall` a secas funcione sin decirle donde:
+// el binario que corre ES el instalado, asi que sabe de donde sacarse.
+// Devuelve 0 si pudo, -1 si no.
+static int prefijo_de_este_binario(char *out, size_t n) {
+    char exe[512];
+    ssize_t largo = readlink("/proc/self/exe", exe, sizeof(exe) - 1);
+    if (largo <= 0) return -1;
+    exe[largo] = '\0';
+
+    char *barra = strrchr(exe, '/');      // .../bin/paed -> .../bin
+    if (!barra) return -1;
+    *barra = '\0';
+
+    char *padre = strrchr(exe, '/');      // .../bin -> ...
+    if (!padre) return -1;
+    *padre = '\0';
+
+    snprintf(out, n, "%s", exe);
+    return 0;
+}
+
+// Borra lo que puso `install`, y NADA MAS. Se nombran los dos archivos uno por
+// uno en vez de borrar carpetas enteras: un `rm -rf` sobre un prefijo mal
+// escrito se lleva puesto lo que haya ahi, y esto corre con permisos de root
+// cuando se instalo en /usr/local.
+static int desinstalar(const char *destino) {
+    char prefix[512];
+
+    if (destino) {
+        snprintf(prefix, sizeof(prefix), "%s", destino);
+    } else if (prefijo_de_este_binario(prefix, sizeof(prefix)) != 0) {
+        fprintf(stderr, "paed: no puedo saber donde estoy instalado, decime el destino:\n");
+        fprintf(stderr, "    paed uninstall /usr/local\n");
+        return 4;
+    }
+
+    char bin[700], json[700], datadir[600];
+    snprintf(bin,     sizeof(bin),     "%s/bin/paed", prefix);
+    snprintf(datadir, sizeof(datadir), "%s/share/paed", prefix);
+    snprintf(json,    sizeof(json),    "%s/sintaxis.json", datadir);
+
+    // Si no esta el binario, ahi no hay una instalacion. Se avisa en vez de
+    // borrar a ciegas y decir "listo" sin haber hecho nada.
+    if (access(bin, F_OK) != 0) {
+        fprintf(stderr, "paed: no encuentro una instalacion en %s\n", prefix);
+        fprintf(stderr, "      (buscaba %s)\n", bin);
+        return 4;
+    }
+
+    printf("Desinstalando PAED de %s\n", prefix);
+
+    // Borrar el binario que se esta ejecutando ES legal en Linux: el proceso
+    // sigue con el archivo que ya tiene abierto, y el nombre desaparece.
+    if (unlink(bin) != 0) {
+        fprintf(stderr, "paed: no puedo borrar %s: %s\n", bin, strerror(errno));
+        return 4;
+    }
+    printf("  borrado %s\n", bin);
+
+    if (unlink(json) == 0) printf("  borrado %s\n", json);
+
+    // rmdir y no rm -rf: solo se va si quedo VACIO. Si el directorio de datos
+    // tiene otras librerias (escena.json, por ejemplo), no son de PAED y no se
+    // tocan — se avisa que quedaron.
+    if (rmdir(datadir) == 0) {
+        printf("  borrado %s\n", datadir);
+    } else if (access(datadir, F_OK) == 0) {
+        printf("\nOJO: %s no quedo vacio, asi que no se borro.\n", datadir);
+        printf("     Adentro hay librerias que no son del lenguaje. Mirá que son antes de borrarlas.\n");
+    }
+
+    printf("\nListo. PAED ya no esta en %s\n", prefix);
+    return 0;
+}
+
 static void ayuda(void) {
     printf("paed %s — el pseudocodigo AED de la catedra, ejecutable\n\n", PAED_VERSION);
     printf("  paed <archivo.paed>        corre un programa\n");
     printf("  paed install [destino]     se instala (por defecto /usr/local o ~/.local)\n");
+    printf("  paed uninstall [destino]   se borra (por defecto de donde se esta corriendo)\n");
     printf("  paed --version             la version\n");
     printf("  paed --help                esto\n\n");
     printf("  --lib <nombre>             carga una libreria que no es del lenguaje\n\n");
@@ -163,6 +243,9 @@ int main(int argc, char **argv) {
     if (argc >= 2) {
         if (strcmp(argv[1], "install") == 0)
             return instalar(argc >= 3 ? argv[2] : NULL);
+
+        if (strcmp(argv[1], "uninstall") == 0)
+            return desinstalar(argc >= 3 ? argv[2] : NULL);
 
         if (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-v") == 0 ||
             strcmp(argv[1], "-version") == 0 || strcmp(argv[1], "version") == 0) {
