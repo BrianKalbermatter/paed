@@ -36,7 +36,7 @@ errores, y de hecho los contiene:
 |---|---|---|
 | `Frankly/paed` (715 líneas bash) | Implementación | Acepta `PARA ... a ...` y comillas dobles — ninguna es de cátedra |
 | `Frankly/DOC.txt` | Notas de aprendizaje | Desactualizado seguido; redirige a este documento |
-| `paed/AlgebraRectas/recta.paed` | Ejercicio propio | Sintaxis incorrecta (ver §12.1) |
+| `recta.paed` (VimMon, `programas/AlgebraRectas/`) | Ejercicio propio | Sintaxis incorrecta (ver §12.1) |
 | `Frankly/data/sintaxis.json` | Lista de keywords | Incompleta |
 | `Frankly/syntaxes/paed.tmLanguage.json` | Resaltador | Incompleta, comillas dobles |
 | `paed/src/editorText.c` | Resaltador | Incompleta, desincronizada |
@@ -892,7 +892,7 @@ documentados pero nunca implementados.
 Fueron escritos contra Frankly, no contra la cátedra. Frankly es permisivo:
 que un archivo corra ahí **no lo hace correcto**.
 
-`paed/AlgebraRectas/recta.paed` corre en Frankly e imprime la salida completa
+`programas/AlgebraRectas/recta.paed` (en VimMon) corre entero e imprime la salida completa
 sin errores, y aun así tiene sintaxis inválida:
 
 | Línea | Escrito | Correcto | Fuente |
