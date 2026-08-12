@@ -1,23 +1,27 @@
-// paedrun — corre un programa PAED desde la terminal, sin abrir la ventana.
+// paed — el interprete de PAED en la terminal.
 //
-// El interprete vive dentro del game loop, asi que hasta ahora la unica forma
-// de probar un .paed era abrir SDL y mirar. Eso no se puede automatizar ni
-// meter en un script: un test que hay que mirar no es un test.
+//   paed programa.paed          corre un programa
+//   paed install [destino]      se instala solo, copiandose a si mismo
+//   paed --version              que version es
 //
-// Este arnes linkea SOLO el parser, el evaluador y el interprete. No toca SDL
-// ni el bus. ESCRIBIR ya imprime por stdout, asi que la salida se puede
-// comparar contra un archivo esperado.
-//
-//   build/paedrun paed/Frankly/tests/busqueda_lineal.paed
+// El binario se basta solo: lleva la definicion del lenguaje adentro, asi que
+// se puede bajar suelto y funciona sin nada al lado. Por eso `install` no
+// necesita un paquete: se copia el ejecutable y escribe el sintaxis.json que ya
+// tiene puesto.
 //
 // Codigos de salida, para poder encadenarlo con && en la shell:
 //   0  el programa corrio entero
 //   1  error de parseo o de ejecucion
 //   2  mal uso
-//   3  no se pudo cargar sintaxis.json
+//   3  no se pudo cargar la definicion del lenguaje
+//   4  fallo la instalacion
 
+#include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 #include <paed/parser.h>
 #include <paed/interpreter.h>
@@ -37,8 +41,141 @@ static int leer_de_stdin(char *buf, size_t n, void *ud) {
     return 0;
 }
 
+// ── paed install ────────────────────────────────────────────────────────────
+
+static int copiar(const char *desde, const char *hasta, int modo) {
+    FILE *o = fopen(desde, "rb");
+    if (!o) { fprintf(stderr, "paed: no puedo leer %s: %s\n", desde, strerror(errno)); return -1; }
+
+    // Se borra primero: si el destino es un binario EN USO, escribirle encima da
+    // "Text file busy". Borrarlo y crearlo de nuevo no molesta a quien lo este
+    // ejecutando, porque el proceso viejo sigue con el archivo que ya abrio.
+    unlink(hasta);
+
+    FILE *d = fopen(hasta, "wb");
+    if (!d) {
+        fprintf(stderr, "paed: no puedo escribir %s: %s\n", hasta, strerror(errno));
+        fclose(o);
+        return -1;
+    }
+
+    char buf[65536];
+    size_t n;
+    while ((n = fread(buf, 1, sizeof(buf), o)) > 0) {
+        if (fwrite(buf, 1, n, d) != n) {
+            fprintf(stderr, "paed: se corto la copia de %s\n", hasta);
+            fclose(o); fclose(d);
+            return -1;
+        }
+    }
+    fclose(o);
+    fclose(d);
+    chmod(hasta, (mode_t)modo);
+    return 0;
+}
+
+static int se_puede_escribir(const char *dir) {
+    return access(dir, W_OK) == 0;
+}
+
+// Se copia a si mismo y escribe la definicion del lenguaje que lleva adentro.
+// No necesita ningun paquete ni ningun archivo al lado: por eso alcanza con
+// bajar el binario suelto y correr `paed install`.
+static int instalar(const char *destino) {
+    char prefix[512];
+
+    if (destino) {
+        snprintf(prefix, sizeof(prefix), "%s", destino);
+    } else if (se_puede_escribir("/usr/local/bin")) {
+        // Se mira si SE PUEDE ESCRIBIR, no si el usuario "es" root: en un
+        // contenedor sos root sin sudo, y con `sudo -E` sos root sin serlo.
+        snprintf(prefix, sizeof(prefix), "/usr/local");
+    } else {
+        const char *home = getenv("HOME");
+        if (!home) { fprintf(stderr, "paed: no se donde instalar (no hay $HOME)\n"); return 4; }
+        snprintf(prefix, sizeof(prefix), "%s/.local", home);
+    }
+
+    char bindir[600], datadir[600], bin[700], json[700];
+    snprintf(bindir,  sizeof(bindir),  "%s/bin", prefix);
+    snprintf(datadir, sizeof(datadir), "%s/share/paed", prefix);
+    snprintf(bin,     sizeof(bin),     "%s/paed", bindir);
+    snprintf(json,    sizeof(json),    "%s/sintaxis.json", datadir);
+
+    // mkdir -p a mano, un nivel por vez. Los errores distintos de "ya existe"
+    // se ignoran aca y los caza el fopen de abajo, con un mensaje que dice cual
+    // fue el archivo.
+    char tmp[600];
+    snprintf(tmp, sizeof(tmp), "%s/share", prefix);
+    mkdir(prefix, 0755); mkdir(bindir, 0755); mkdir(tmp, 0755); mkdir(datadir, 0755);
+
+    char yo[512];
+    ssize_t largo = readlink("/proc/self/exe", yo, sizeof(yo) - 1);
+    if (largo <= 0) { fprintf(stderr, "paed: no puedo saber donde estoy\n"); return 4; }
+    yo[largo] = '\0';
+
+    printf("Instalando PAED %s en %s\n", PAED_VERSION, prefix);
+
+    if (copiar(yo, bin, 0755) != 0) return 4;
+
+    FILE *f = fopen(json, "w");
+    if (!f) {
+        fprintf(stderr, "paed: no puedo escribir %s: %s\n", json, strerror(errno));
+        return 4;
+    }
+    fputs(paed_sintaxis_embebida(), f);
+    fclose(f);
+
+    printf("  %s\n  %s\n\n", bin, json);
+
+    // Instalar y que el comando no exista es la forma mas comun de que esto
+    // parezca roto. Se avisa ANTES de que pase, con la linea para arreglarlo.
+    const char *ruta = getenv("PATH");
+    if (ruta && strstr(ruta, bindir)) {
+        printf("Listo. Probalo:\n    paed tu_programa.paed\n");
+    } else {
+        printf("OJO: %s no esta en tu PATH, asi que el comando 'paed' todavia no existe.\n", bindir);
+        printf("Agregalo una sola vez:\n\n");
+        printf("    echo 'export PATH=\"%s:$PATH\"' >> ~/.bashrc && source ~/.bashrc\n\n", bindir);
+        printf("Mientras tanto anda por ruta completa:  %s tu_programa.paed\n", bin);
+    }
+    return 0;
+}
+
+static void ayuda(void) {
+    printf("paed %s — el pseudocodigo AED de la catedra, ejecutable\n\n", PAED_VERSION);
+    printf("  paed <archivo.paed>        corre un programa\n");
+    printf("  paed install [destino]     se instala (por defecto /usr/local o ~/.local)\n");
+    printf("  paed --version             la version\n");
+    printf("  paed --help                esto\n\n");
+    printf("  --lib <nombre>             carga una libreria que no es del lenguaje\n\n");
+    printf("Los datos de LEER entran por teclado, o por una tuberia:\n");
+    printf("    printf '10\\n20\\n' | paed suma.paed\n");
+}
+
 int main(int argc, char **argv) {
     const char *path = NULL;
+
+    // ── Subcomandos ─────────────────────────────────────────────────────────
+    // Van antes que todo lo demas y no pasan por el parseo de argumentos de
+    // abajo: `install` no abre ningun .paed, asi que tratarlo como un archivo
+    // daria "no se pudo abrir install".
+    if (argc >= 2) {
+        if (strcmp(argv[1], "install") == 0)
+            return instalar(argc >= 3 ? argv[2] : NULL);
+
+        if (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-v") == 0 ||
+            strcmp(argv[1], "-version") == 0 || strcmp(argv[1], "version") == 0) {
+            printf("paed %s\n", PAED_VERSION);
+            return 0;
+        }
+
+        if (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-h") == 0 ||
+            strcmp(argv[1], "help") == 0) {
+            ayuda();
+            return 0;
+        }
+    }
 
     // ESCRIBIR va a stdout y los errores a stderr. Cuando la salida es una
     // tuberia y no la terminal, stdout pasa a tener buffer y stderr no: los

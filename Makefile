@@ -14,6 +14,11 @@
 CC       = clang
 BUILDDIR = build
 
+# El default es `all`, explicito. Sin esto make toma el PRIMER target del
+# archivo, y alcanza con agregar una regla mas arriba para que `make` a secas
+# deje de compilar sin avisar.
+.DEFAULT_GOAL := all
+
 # ── El lenguaje: libpaed.a + el binario `paed` ─────────────────────────────
 #
 # PREFIX es donde se instala. /usr/local es lo estandar para lo que uno compila
@@ -25,11 +30,32 @@ DATADIR  = $(PREFIX)/share/paed
 # La ruta de instalacion se COMPILA adentro del binario: asi `paed` encuentra
 # sintaxis.json desde cualquier carpeta, sin variables de entorno. $(PAED_HOME)
 # la sigue pisando para desarrollo.
+# La version sale de un archivo y no del codigo: el tag de git, el `paed -v` y
+# el nombre del paquete tienen que decir lo mismo, y con tres lugares distintos
+# tarde o temprano no lo dicen.
+VERSION := $(shell cat VERSION)
+
 LANG_CFLAGS = -Wall -Wextra -Ilang/include -Ilang/vendor/cjson \
-              -DPAED_DATADIR='"$(DATADIR)"'
+              -DPAED_DATADIR='"$(DATADIR)"' -DPAED_VERSION='"$(VERSION)"'
+
+# sintaxis.json va EMBEBIDO adentro del binario. Es lo que hace que `paed` sea
+# un solo archivo que se puede bajar suelto y ya funcione: sin esto, el binario
+# sin su .json al lado no sabe ni que es una palabra clave.
+#
+# El archivo del disco SIGUE GANANDO cuando existe (ver paed_datadir): asi se
+# puede tocar la definicion del lenguaje sin recompilar, que es como venimos
+# trabajando. Lo embebido es la ultima red.
+LANG_GEN = lang/src/sintaxis_embebida.c
+
+$(LANG_GEN): Frankly/data/sintaxis.json
+	@mkdir -p $(dir $@)
+	@echo '// GENERADO por el Makefile desde Frankly/data/sintaxis.json — NO EDITAR' > $@
+	@echo 'const char PAED_SINTAXIS_EMBEBIDA[] =' >> $@
+	@sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' -e 's/^/"/' -e 's/$$/\\n"/' $< >> $@
+	@echo ';' >> $@
 
 LANG_SRC = lang/src/parser.c lang/src/expr.c lang/src/interpreter.c \
-           lang/vendor/cjson/cJSON.c
+           $(LANG_GEN) lang/vendor/cjson/cJSON.c
 LANG_OBJ = $(LANG_SRC:%.c=$(BUILDDIR)/lang/%.o)
 
 LIB      = $(BUILDDIR)/libpaed.a

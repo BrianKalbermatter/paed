@@ -25,21 +25,21 @@ $ paed promedio.paed
 
 ## Instalación
 
-**Sin compilar nada** — bajás el binario ya armado (41 KB):
+**Un solo archivo, desde cualquier carpeta:**
 
 ```bash
-curl -L https://github.com/BrianKalbermatter/paed/releases/latest/download/paed-linux-x86_64.tar.gz | tar xz
-cd paed-*-linux-x86_64 && ./instalar.sh
+curl -L https://github.com/BrianKalbermatter/paed/releases/latest/download/paed -o paed
+chmod +x paed
+./paed install
 ```
 
-`instalar.sh` va a `/usr/local` si puede escribir ahí, y si no a `~/.local`. Se
-le puede decir el destino: `./instalar.sh /opt/paed`.
-
-También anda **sin instalarlo**, desde la carpeta descomprimida — el binario
-busca sus datos al lado suyo:
+El binario **lleva la definición del lenguaje adentro**, así que anda sin nada
+al lado, y `install` se copia a sí mismo a `/usr/local` — o a `~/.local` si no
+puede escribir ahí. Para elegir destino: `./paed install /opt/paed`.
 
 ```bash
-./paed-*-linux-x86_64/bin/paed tu_programa.paed
+paed --version      # que version es
+paed --help         # todo lo que sabe hacer
 ```
 
 **Desde el código**, si querés compilarlo vos:

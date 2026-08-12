@@ -184,6 +184,16 @@ int  paed_syntax_load_lib(const char *nombre);
 
 void paed_syntax_free(void);
 
+// La definicion del lenguaje que viene adentro del binario, como texto JSON.
+// Sirve para escribirla al instalar: `paed install` no necesita tener el
+// sintaxis.json al lado porque lo lleva puesto.
+const char *paed_sintaxis_embebida(void);
+
+// La version, tal como la reporta `paed --version`.
+#ifndef PAED_VERSION
+#define PAED_VERSION "0.0.0-dev"
+#endif
+
 // Analiza el archivo completo. Devuelve 0 si no hubo NINGUN error.
 // Si devuelve != 0, out->errors tiene el detalle: el programa no debe ejecutarse.
 int  paed_parse_file(const char *path, PAEDProgram *out);

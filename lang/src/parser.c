@@ -39,6 +39,11 @@ static cJSON *cargar_json(const char *path, int obligatorio) {
     return raiz;
 }
 
+// La definicion del lenguaje embebida en el binario. La genera el Makefile
+// desde Frankly/data/sintaxis.json, asi que no hay dos fuentes de verdad: hay
+// una sola, y una copia que se rehace sola en cada build.
+extern const char PAED_SINTAXIS_EMBEBIDA[];
+
 // Donde `make install` deja los datos. Se puede pisar al compilar:
 //   clang -DPAED_DATADIR='"/opt/paed/share"'
 #ifndef PAED_DATADIR
@@ -119,18 +124,31 @@ int paed_syntax_load(void) {
     if (g_syntax) return 0;
 
     const char *dir = paed_datadir();
-    if (!dir) {
-        fprintf(stderr,
-                "[paed] no encuentro %s. Probe $PAED_HOME, %s, Frankly/data y "
-                "paed/Frankly/data\n", PAED_SYNTAX_FILE, PAED_DATADIR);
-        return -1;
+
+    if (dir) {
+        char path[PAED_PATH_MAX];
+        snprintf(path, sizeof(path), "%s/%s", dir, PAED_SYNTAX_FILE);
+        g_syntax = cargar_json(path, 1);
+        if (g_syntax) return 0;
     }
 
-    char path[PAED_PATH_MAX];
-    snprintf(path, sizeof(path), "%s/%s", dir, PAED_SYNTAX_FILE);
+    // Ultima red: la copia que viene ADENTRO del binario.
+    //
+    // El archivo del disco gana cuando existe, y eso es a proposito: se puede
+    // tocar la definicion del lenguaje y probarla sin recompilar nada. Lo
+    // embebido es para que un `paed` bajado suelto, sin nada al lado, igual
+    // arranque — un interprete que no sabe que es una palabra clave no sirve
+    // para nada, y "instalaste mal" no es un mensaje de error aceptable.
+    g_syntax = cJSON_Parse(PAED_SINTAXIS_EMBEBIDA);
+    if (!g_syntax) {
+        fprintf(stderr, "[paed] la definicion del lenguaje embebida esta rota\n");
+        return -1;
+    }
+    return 0;
+}
 
-    g_syntax = cargar_json(path, 1);
-    return g_syntax ? 0 : -1;
+const char *paed_sintaxis_embebida(void) {
+    return PAED_SINTAXIS_EMBEBIDA;
 }
 
 int paed_syntax_load_lib(const char *nombre) {

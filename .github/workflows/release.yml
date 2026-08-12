@@ -33,6 +33,18 @@ jobs:
         # que el problema es suyo.
         run: make test
 
+      - name: La version del codigo tiene que ser la del tag
+        # Si VERSION dice 0.1.0 y el tag es v0.1.1, `paed --version` mentiria en
+        # el release. Se corta aca y no despues de publicar.
+        run: |
+          EN_CODIGO=$(cat VERSION)
+          DEL_TAG="${GITHUB_REF_NAME#v}"
+          if [ "$EN_CODIGO" != "$DEL_TAG" ]; then
+            echo "VERSION dice '$EN_CODIGO' pero el tag es '$DEL_TAG'" >&2
+            exit 1
+          fi
+          ./build/paed --version
+
       - name: Armar el paquete
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
@@ -56,6 +68,15 @@ jobs:
           printf 'ACCION ok ES\n    PROCESO\n        ESCRIBIR("el paquete anda");\nFIN_ACCION\n' > /tmp/hola.paed
           cd /tmp && "/tmp/prueba/$PKG/bin/paed" /tmp/hola.paed
 
+          # Y el binario SUELTO, sin nada al lado: tiene que andar igual, porque
+          # lleva la definicion del lenguaje adentro. Es lo que permite bajar un
+          # solo archivo y correr `paed install`.
+          cd "$GITHUB_WORKSPACE"
+          mkdir -p /tmp/pelado && cp build/paed /tmp/pelado/paed
+          cd /tmp/pelado && ./paed /tmp/hola.paed
+          ./paed install /tmp/instalado
+          /tmp/instalado/bin/paed --version
+
       - name: Publicar el release
         # Las notas viven en un archivo y no aca adentro. Un heredoc metido en
         # un `run: |` tiene que ir indentado como el resto del bloque, y esa
@@ -78,3 +99,8 @@ jobs:
         run: |
           cp "$PKG.tar.gz" paed-linux-x86_64.tar.gz
           gh release upload "$GITHUB_REF_NAME" paed-linux-x86_64.tar.gz --clobber
+
+          # El binario SOLO, para el camino de un unico archivo:
+          #     curl -L .../latest/download/paed -o paed && chmod +x paed
+          #     ./paed install
+          gh release upload "$GITHUB_REF_NAME" build/paed --clobber
