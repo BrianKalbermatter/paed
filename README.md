@@ -37,7 +37,7 @@ al lado, y `install` se copia a sí mismo a `/usr/local` — o a `~/.local` si n
 puede escribir ahí. Para elegir destino: `./paed install /opt/paed`.
 
 ```bash
-paed --version / -v      # que version es
+paed --version      # que version es
 paed --help         # todo lo que sabe hacer
 ```
 
@@ -51,12 +51,6 @@ make install PREFIX=$HOME/.local  # sin sudo
 Deja dos cosas: el binario `paed` y el directorio de datos con
 `sintaxis.json`. **Los datos no son un extra**: sin ellos el binario no sabe qué
 es una palabra clave, porque la definición del lenguaje vive ahí y no en el C.
-
-Para desactualizar:
-
-```bash
-make uninstall
-```
 
 ## Usarlo desde otro programa
 
