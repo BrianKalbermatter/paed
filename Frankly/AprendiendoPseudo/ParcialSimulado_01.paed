@@ -6,13 +6,21 @@
 //  data/niveles.json y de solutions/AlgoritmosSimples_Nivel*, no son
 //  inventados.
 //
-//  Se ejecuta con:   build/paedrun paed/Frankly/AprendiendoPseudo/ParcialSimulado_01.paed
+//  Los datos ENTRAN POR TECLADO, como en un parcial de verdad:
 //
-//  NOTA SOBRE LOS DATOS: en un parcial de verdad los datos entran con LEER.
-//  El interprete todavia no lo implementa, asi que van fijos al principio de
-//  cada ejercicio, bien visibles, para poder cambiarlos y volver a correr.
-//  La logica es la misma: lo que se evalua es el algoritmo, no de donde
-//  salieron los numeros.
+//      paed Frankly/AprendiendoPseudo/ParcialSimulado_01.paed
+//
+//  y vas contestando. Para correrlo sin tipear, los datos de ejemplo estan al
+//  final en el bloque ENTRADA:
+//
+//      f=ParcialSimulado_01.paed
+//      sed -n '/^\/\/ .. ENTRADA/,$p' $f | sed '1d;s|^// \?||' | paed $f
+//
+//  (el patron va anclado al principio de linea, si no matchea esta misma
+//   linea del comentario que lo explica)
+//
+//  UNA LINEA POR DATO. `LEER(a, b, c)` consume TRES lineas, no una linea con
+//  tres numeros.
 // ════════════════════════════════════════════════════════════════════════════
 
 ACCION parcial_simulado_01 ES
@@ -58,6 +66,7 @@ ACCION parcial_simulado_01 ES
 
         // Ej 5 — Registro de notas del curso
         notas: ARREGLO[1..12] DE REAL;
+        nota: REAL;
         cant: ENTERO;
         i: ENTERO;
         suma: REAL;
@@ -75,10 +84,12 @@ ACCION parcial_simulado_01 ES
         // ────────────────────────────────────────────────────────────────────
         ESCRIBIR("── Ejercicio 1: precio con inflacion ──");
 
-        C := 1000;      // costo actual
-        R := 0.04;      // 4% anual
-        A := 2026;      // anio actual
-        N := 2031;      // anio a calcular
+        ESCRIBIR("costo actual del articulo:");
+        LEER(C);
+        ESCRIBIR("inflacion anual (0.04 es 4%):");
+        LEER(R);
+        ESCRIBIR("anio actual y anio a calcular:");
+        LEER(A, N);
 
         P := C * (1 + R) ** (N - A);
 
@@ -95,9 +106,9 @@ ACCION parcial_simulado_01 ES
         // ────────────────────────────────────────────────────────────────────
         ESCRIBIR("── Ejercicio 2: discriminante ──");
 
-        a := 1;
-        b := -5;
-        c := 6;
+        // Tres destinos en UN solo LEER: consume tres lineas, una por variable
+        ESCRIBIR("coeficientes a, b y c:");
+        LEER(a, b, c);
 
         D := b ** 2 - 4 * a * c;
 
@@ -129,8 +140,10 @@ ACCION parcial_simulado_01 ES
         // ────────────────────────────────────────────────────────────────────
         ESCRIBIR("── Ejercicio 3: precio PC + impresora ──");
 
-        cant_pc  := 7;
-        cant_imp := 2;
+        ESCRIBIR("cuantas PCs y cuantas impresoras:");
+        LEER(cant_pc, cant_imp);
+
+        // Los precios son dato del enunciado, no del usuario
         precio_pc  := 500;
         precio_imp := 200;
 
@@ -167,9 +180,8 @@ ACCION parcial_simulado_01 ES
         // ────────────────────────────────────────────────────────────────────
         ESCRIBIR("── Ejercicio 4: condicion del alumno ──");
 
-        n1 := 7;
-        n2 := 4;
-        n3 := 5;
+        ESCRIBIR("las tres notas del alumno:");
+        LEER(n1, n2, n3);
 
         prom := (n1 + n2 + n3) / 3;
 
@@ -195,59 +207,99 @@ ACCION parcial_simulado_01 ES
         //     b) el promedio general
         //     c) la nota mas alta
         //
-        //   El enunciado original lee hasta un centinela (-1). Sin LEER, las
-        //   notas van en un arreglo y `cant` hace de fin de datos.
+        //   ESTE es el enunciado ORIGINAL: se cargan notas hasta que llega el
+        //   centinela -1, y NO se sabe de antemano cuantas van a ser. Con los
+        //   datos fijos en el codigo esto era imposible y habia que reemplazarlo
+        //   por un arreglo de tamanio conocido. Con LEER, el ejercicio es el que
+        //   toma la catedra.
+        //
+        //   El patron es el de siempre: se lee ANTES de entrar al ciclo, y la
+        //   ultima instruccion del ciclo lee el siguiente. Asi el centinela se
+        //   evalua sin haber entrado con el.
         // ────────────────────────────────────────────────────────────────────
         ESCRIBIR("── Ejercicio 5 (BOSS): registro de notas ──");
+        ESCRIBIR("cargue las notas del curso, -1 para terminar (maximo 12):");
 
-        cant := 12;
-        notas[1]  := 8;
-        notas[2]  := 4;
-        notas[3]  := 10;
-        notas[4]  := 6;
-        notas[5]  := 2;
-        notas[6]  := 7;
-        notas[7]  := 5;
-        notas[8]  := 9;
-        notas[9]  := 6;
-        notas[10] := 3;
-        notas[11] := 10;
-        notas[12] := 7;
-
+        cant := 0;
+        suma := 0;
         curso.aprobados    := 0;
         curso.desaprobados := 0;
-        curso.maxima       := notas[1];
-        suma := 0;
+        curso.maxima       := -1;
 
-        PARA i := 1 HASTA cant HACER
-            suma := suma + notas[i];
+        LEER(nota);
 
-            SI (notas[i] >= 6) ENTONCES
+        // La segunda condicion NO es decoracion: el arreglo llega hasta 12 y
+        // sin ella la nota 13 se escribiria fuera de rango. El evaluador lo
+        // cortaria con un error, pero el algoritmo estaria mal igual.
+        MIENTRAS (nota <> -1) Y (cant < 12) HACER
+            cant := cant + 1;
+            notas[cant] := nota;
+            suma := suma + nota;
+
+            SI (nota >= 6) ENTONCES
                 curso.aprobados := curso.aprobados + 1;
             SINO
                 curso.desaprobados := curso.desaprobados + 1;
             FIN_SI
 
-            SI (notas[i] > curso.maxima) ENTONCES
-                curso.maxima := notas[i];
+            SI (nota > curso.maxima) ENTONCES
+                curso.maxima := nota;
             FIN_SI
-        FIN_PARA
 
-        curso.promedio := suma / cant;
+            LEER(nota);
+        FIN_MIENTRAS
 
-        ESCRIBIR("alumnos: ", cant);
-        ESCRIBIR("a) aprobados: ", curso.aprobados, "   desaprobados: ", curso.desaprobados);
-        ESCRIBIR("b) promedio general: ", curso.promedio);
-        ESCRIBIR("c) nota maxima: ", curso.maxima);
-        ESCRIBIR("");
+        // Dividir por cant sin preguntar seria dividir por cero el dia que
+        // alguien cierre la carga sin ingresar ninguna nota.
+        SI (cant > 0) ENTONCES
+            curso.promedio := suma / cant;
 
-        // ── Verificacion: los dos grupos tienen que sumar el total ──
-        SI (curso.aprobados + curso.desaprobados = cant) ENTONCES
-            ESCRIBIR("control: los ", cant, " alumnos estan contados");
+            ESCRIBIR("alumnos: ", cant);
+            ESCRIBIR("a) aprobados: ", curso.aprobados, "   desaprobados: ", curso.desaprobados);
+            ESCRIBIR("b) promedio general: ", curso.promedio);
+            ESCRIBIR("c) nota maxima: ", curso.maxima);
+            ESCRIBIR("");
+
+            // ── Verificacion: los dos grupos tienen que sumar el total ──
+            SI (curso.aprobados + curso.desaprobados = cant) ENTONCES
+                ESCRIBIR("control: los ", cant, " alumnos estan contados");
+            SINO
+                ESCRIBIR("ERROR: faltan alumnos en la cuenta");
+            FIN_SI
         SINO
-            ESCRIBIR("ERROR: faltan alumnos en la cuenta");
+            ESCRIBIR("no se cargo ninguna nota");
         FIN_SI
 
         ESCRIBIR("");
         ESCRIBIR("===== fin del parcial =====");
 FIN_ACCION
+
+// Datos de ejemplo: los mismos que antes estaban fijos en el codigo.
+// Una linea por dato — el bloque de abajo se manda tal cual por la entrada, asi
+// que NO puede llevar texto explicativo adentro: seria leido como un valor.
+// ── ENTRADA ─────────────────────────────────────────────────────────────────
+// 1000
+// 0.04
+// 2026
+// 2031
+// 1
+// -5
+// 6
+// 7
+// 2
+// 7
+// 4
+// 5
+// 8
+// 4
+// 10
+// 6
+// 2
+// 7
+// 5
+// 9
+// 6
+// 3
+// 10
+// 7
+// -1
