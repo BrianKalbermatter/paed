@@ -57,36 +57,17 @@ jobs:
           cd /tmp && "/tmp/prueba/$PKG/bin/paed" /tmp/hola.paed
 
       - name: Publicar el release
+        # Las notas viven en un archivo y no aca adentro. Un heredoc metido en
+        # un `run: |` tiene que ir indentado como el resto del bloque, y esa
+        # indentacion se le cuela al texto publicado; si lo dejas en columna 0
+        # para que salga limpio, cortas el bloque de YAML y el workflow deja de
+        # ser valido. Con --notes-file no hay que elegir.
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release create "$GITHUB_REF_NAME" "$PKG.tar.gz" \
             --title "PAED $GITHUB_REF_NAME" \
-            --notes "$(cat <<'NOTAS'
-PAED — el pseudocodigo AED de la catedra, ejecutable.
-
-## Instalar
-
-```bash
-curl -L https://github.com/BrianKalbermatter/paed/releases/latest/download/paed-linux-x86_64.tar.gz | tar xz
-cd paed-*-linux-x86_64 && ./instalar.sh
-```
-
-No hace falta compilador ni clonar el repo: el binario viene armado.
-
-## Usar
-
-```bash
-paed tu_programa.paed
-```
-
-Los datos de `LEER` entran por teclado, o por una tuberia:
-
-```bash
-printf '10\n20\n' | paed suma.paed
-```
-NOTAS
-)"
+            --notes-file .github/notas-release.md
 
       - name: Nombre estable para el link de "latest"
         # El link .../latest/download/<archivo> necesita que el archivo se llame
