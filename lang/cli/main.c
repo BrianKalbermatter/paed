@@ -213,7 +213,7 @@ static int desinstalar(const char *destino) {
     if (rmdir(datadir) == 0) {
         printf("  borrado %s\n", datadir);
     } else if (access(datadir, F_OK) == 0) {
-        printf("\nOJO: %s no quedo vacio, asi que no se borro.\n", datadir);
+        printf("\n %s no quedo vacio, asi que no se borro.\n", datadir);
         printf("     Adentro hay librerias que no son del lenguaje. Mirá que son antes de borrarlas.\n");
     }
 
@@ -229,8 +229,6 @@ static void ayuda(void) {
     printf("  paed --version             la version\n");
     printf("  paed --help                esto\n\n");
     printf("  --lib <nombre>             carga una libreria que no es del lenguaje\n\n");
-    printf("Los datos de LEER entran por teclado, o por una tuberia:\n");
-    printf("    printf '10\\n20\\n' | paed suma.paed\n");
 }
 
 int main(int argc, char **argv) {
