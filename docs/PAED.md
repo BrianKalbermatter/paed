@@ -293,6 +293,134 @@ argumento desconocido degrada a consola a propósito, porque un escalar no
 necesita declararse. `ABRIR` sí exige que el archivo exista, y ese es el que
 avisa.
 
+### 2.5 El modo de apertura — implementado
+
+El modo va **afuera de los paréntesis**, entre el nombre y el `(`:
+
+| Escrito | Modo | Significa |
+|---|---|---|
+| `ABRIR E/(arch)` | `E` | entrada — solo lectura |
+| `ABRIR S/(arch)` | `S` | salida — solo escritura |
+| `ABRIR E/S(arch)` | `ES` | entrada-salida |
+
+**cátedra**: `TEMAS_7-10_Registros_Archivos.md:132-133`, `wiki.txt:1567` y
+`:2246`. Conteo en el corpus: **197** `E/`, **67** `S/`, **14** `E/S`.
+
+Ni el espacio ni la mayúscula cuentan, y la barra puede ir del otro lado
+(`ABRIR /S`, 7 apariciones). Todas estas son la misma instrucción:
+
+```paed
+ABRIR E/(arch)      ABRIR e/ (arch)      ABRIRe/s(arch)
+ABRIR /S(arch)      ABRIR E/S (arch)
+```
+
+Obligar a una sola forma sería inventar una regla que las fuentes no tienen. El
+modo es **opcional**: sin él, el archivo no queda comprometido a una dirección.
+
+Se guarda como **campo de la instrucción, no como argumento**: se escribe afuera
+del paréntesis, y meterlo en `args[]` correría de lugar al primer argumento —
+que es justo el que decide si la operación es de archivo o de consola (§2.4).
+
+Un modo en un procedimiento que no lo admite (`LEER E/`) se **rechaza**. El modo
+dice si el archivo se puede leer o grabar; ponerlo en `LEER` no significa nada, y
+aceptarlo callado le haría creer al que lo escribió que ahí también decide algo.
+
+### 2.6 El archivo en disco es un CSV — decidido 2026-08-14, NO implementado
+
+> **decidido**, no **cátedra**. La cátedra no dice en qué formato se guarda un
+> `ARCHIVO DE X` — para ella el archivo es abstracto. Esto es una decisión de
+> implementación de PAED y se puede cambiar sin contradecir a nadie.
+
+Un `ARCHIVO DE <registro>` se guarda como **CSV con fila de encabezado**:
+
+```paed
+AMBIENTE
+    remedio = REGISTRO
+        farmacia:           AN(10);
+        medicamento:        AN(20);
+        cant_actual:        ENTERO;
+        fecha_vencimiento:  AN(10);
+    FIN_REGISTRO
+
+    mae: ARCHIVO DE remedio;
+```
+
+en disco, `mae_remedios.csv`:
+
+```csv
+farmacia,medicamento,cant_actual,fecha_vencimiento
+F1,Ibuprofeno,100,01/06/2025
+F1,Paracetamol,50,01/07/2025
+F2,Amoxicilina,30,01/08/2025
+```
+
+**El motivo es que se pueda ver.** El `REGISTRO` ya es una fila con columnas: un
+campo por columna, un registro por fila. El CSV es esa misma tabla, y abrirlo en
+una planilla muestra los campos con su nombre arriba. Un formato binario guarda
+lo mismo y no se puede mirar: cuando un programa da mal, la única forma de saber
+qué tiene el archivo es escribir otro programa que lo lea.
+
+Esto es consistente con el resto del proyecto: `sintaxis.json` se lee en runtime
+en vez de compilarse, y cada test declara su salida esperada adentro del propio
+archivo. La regla es la misma — **si no se puede mirar, no se puede depurar**.
+
+#### Por qué el CSV alcanza acá
+
+El patrón de la cátedra es la **actualización secuencial**: se leen maestro y
+movimientos en paralelo, y se escribe un maestro **nuevo**. No se modifica un
+registro en el lugar.
+
+```
+MAE_REMEDIOS  (E/) ─┐
+                    ├──> NUEVO_MAESTRO (S/)
+MOVIMIENTOS   (E/) ─┘    REM_VENC      (S/)
+                         ERRORES       (S/)
+```
+
+Eso importa porque la debilidad real del CSV es que **no se puede sobrescribir un
+registro en el medio**: los renglones tienen largo variable, y cambiar `100` por
+`75` corre todo lo que sigue. Si el patrón dominante fuera modificar en el lugar,
+el CSV sería la elección equivocada y habría que ir a registros de ancho fijo.
+
+No lo es. Leer secuencial y escribir a otro archivo es exactamente lo que hace
+el CSV sin esfuerzo. `E/S` queda como el caso raro, y cuando haga falta se
+resuelve reescribiendo el archivo entero — que a la escala de estos programas no
+cuesta nada.
+
+#### El encabezado se valida
+
+La primera fila **no es un registro**: es la lista de campos. Al abrir, se
+compara contra el `REGISTRO` declarado, y si no coincide es error.
+
+Sale gratis y ataja el error más caro de los archivos: **abrir el archivo
+equivocado**. Sin encabezado, un archivo de movimientos abierto como maestro se
+lee sin protestar y devuelve basura con forma de dato válido. Con encabezado, se
+cae en el `ABRIR` diciendo qué campo esperaba y cuál encontró.
+
+`FDA` es verdadero cuando no quedan filas después del encabezado. Un archivo
+recién creado tiene solo el encabezado, y por lo tanto `FDA` desde el principio.
+
+#### Los tipos vuelven desde texto
+
+El CSV es todo texto. Al leer, cada columna se convierte al tipo que el
+`REGISTRO` declara: `cant_actual` a `ENTERO`, un `REAL` con punto decimal (§10.6),
+y `AN(n)` tal cual. La conversión la manda **la declaración**, no lo que parezca
+el dato — si `cant_actual` dice `ENTERO` y en el archivo hay `abc`, es error de
+lectura y no un 0 silencioso.
+
+#### Lo que falta decidir
+
+| Punto | Opciones | Estado |
+|---|---|---|
+| Separador | `,` (estándar RFC 4180) vs `;` (lo que abre Excel en es-AR sin preguntar) | **abierto** |
+| Texto con separador o salto adentro | comillas dobles, duplicando las internas (RFC 4180). No choca con el `'` de PAED (§10.4) | propuesto |
+| Nombre del archivo en disco | ¿lo elige el programa en `ABRIR`, o sale del nombre de la variable? | **abierto** |
+| `CREAR` sobre uno que existe | ¿lo pisa, o es error? | **abierto** |
+
+El separador es la decisión que más se nota: con `,` el archivo es portable, pero
+Excel configurado en español lo abre con todo apelmazado en una sola columna — y
+la gracia de esto era abrirlo y ver la planilla.
+
 ## 3. Asignación y operadores
 
 ```paed
@@ -946,7 +1074,8 @@ de línea — nunca se ignora.
 | `FDA` / `NFDA` reconocidas (avisan que faltan archivos) | ✅ |
 | `LEER` de consola: escalar, `A[i]` y `p.campo` | ✅ §5.1 |
 | `ABRIR` / `CREAR` / `CERRAR` / `LEER` sobre ARCHIVOS en disco | parsean, no ejecutan |
-| Modo de apertura `ABRIR E/`, `S/`, `E/S` — sin importar espacios ni mayúsculas | ✅ |
+| El archivo en disco como CSV con encabezado | ❌ decidido §2.6, sin implementar |
+| Modo de apertura `ABRIR E/`, `S/`, `E/S` — sin importar espacios ni mayúsculas | ✅ §2.5 |
 | Modo en un procedimiento que no lo admite (`LEER E/`) | ❌ rechazado, con mensaje propio |
 | `FIN_REGISTRO` faltante cuando ya empieza otro `REGISTRO` | ❌ rechazado, señalando el registro que quedó abierto |
 
@@ -1039,3 +1168,4 @@ sin errores, y aun así tiene sintaxis inválida:
 | v2.0 | 2026-08-07 | Unificación en el dialecto AED. Vivía en `docs/paed_spec.md` |
 | v3.0 | 2026-08 | Reescritura corta al mudarse a `paed/Frankly/docs/` (hoy `docs/`) |
 | v4.0 | 2026-08-10 | Absorbe la v2.0 completa. Se separan **cátedra** / **decidido** / **implementado**, porque había decisiones documentadas que el parser no cumplía |
+| v4.1 | 2026-08-14 | El modo de apertura de `ABRIR` (§2.5, implementado) y el CSV como formato en disco (§2.6, decidido). El repositorio se reordena: la spec sale de `Frankly/docs/` a `docs/` — ver [`ESTRUCTURA.md`](ESTRUCTURA.md) |

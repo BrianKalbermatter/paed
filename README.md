@@ -69,6 +69,14 @@ Y podés **agregarle procedimientos** que no son del lenguaje, con
 `paed_register_proc()`.
 Nota IMPORTANTE: Aun se estan haciendo pruebas, puede que no funcione muy bien o que no FUNCIONE directamente.
 
+## Documentación
+
+| Documento | Qué hay adentro |
+|---|---|
+| [`docs/PAED.md`](docs/PAED.md) | La spec del lenguaje. **Es la única.** |
+| [`docs/ESTRUCTURA.md`](docs/ESTRUCTURA.md) | Qué hay en cada carpeta del repo y por qué |
+| [`docs/ESCENA.md`](docs/ESCENA.md) | La librería de escena 3D de VimMon — no es PAED |
+
 ## Licencia
 
 Ver [LICENSE](LICENSE).

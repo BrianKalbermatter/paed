@@ -1,0 +1,153 @@
+# Estructura del repositorio
+
+Qué hay en cada carpeta, y por qué está donde está. Este documento describe el
+**repositorio**; la definición del lenguaje es [`PAED.md`](PAED.md).
+
+## Hoy
+
+```
+paed/
+├── lang/              EL INTÉRPRETE — es todo el producto
+│   ├── src/           parser.c, expr.c, interpreter.c, secuencia.c,
+│   │                  plataforma.c  ->  se empaquetan en libpaed.a
+│   ├── include/paed/  los .h, la API pública para quien use la librería
+│   ├── cli/main.c     el comando `paed`, un envoltorio de la librería
+│   └── vendor/cjson/  código de terceros, no se toca
+│
+├── data/
+│   ├── sintaxis.json  LA DEFINICIÓN DEL LENGUAJE (ver abajo)
+│   └── escena.json    librería de escena 3D de VimMon — NO es PAED
+│
+├── docs/
+│   ├── PAED.md        la spec única del lenguaje
+│   ├── ESTRUCTURA.md  este archivo
+│   ├── ESCENA.md      la librería de VimMon
+│   └── wiki_paed.txt  documento histórico: las preguntas a la cátedra
+│
+├── tests/             27 programas .paed + correr.sh
+├── ejercicios/        parciales y simulacros — material de estudio, NO tests
+├── helix/             resaltador tree-sitter
+├── _void/             lo retirado — no entra en el build
+├── Makefile
+└── VERSION
+```
+
+### `data/sintaxis.json` no es un archivo de configuración
+
+Es **el lenguaje**. El parser lo lee en runtime y el Makefile lo embebe en el
+binario, así que `paed` funciona como archivo suelto. Que `ABRIR` acepte modo de
+apertura y `LEER` no sale de ahí, no de una lista en C.
+
+Esto no es una preferencia estética. Hubo un momento en el proyecto con **tres
+listas de keywords desincronizadas** — `sintaxis.json`, `paed.tmLanguage.json` y
+`editorText.c` — y a ninguna le entraban `FIN_REGISTRO`, `SUBACCION`, `FDA`,
+`NFDA`, `Verdadero`, `Falso` ni `nil`. Ese es el bug que mató a la versión
+anterior del lenguaje. Una sola fuente leída en runtime es la respuesta a ese
+bug.
+
+### Por qué `tests/` está en la raíz
+
+Un test es **un archivo**: el programa `.paed` trae al final, en comentarios, su
+bloque `ENTRADA` y su bloque `SALIDA ESPERADA`. No hay lista que mantener —
+agregar un test es dejar el archivo ahí.
+
+No existe modo de regrabar la salida automáticamente, a propósito. Si un test
+falla, el runner muestra el diff y el bloque se corrige a mano leyéndolo.
+Regrabar sin leer es exactamente cómo un test deja de proteger: "arregla" el
+test en vez del bug.
+
+### Por qué `ejercicios/` no está en `tests/`
+
+Son parciales y simulacros escritos como estudiante, contra el intérprete viejo.
+Tienen sintaxis que la cátedra no avala (ver `PAED.md §13.2`). Mezclarlos con la
+batería haría que el runner los ejecutara y fallara — o peor, que alguien
+"arreglara" el parser para aceptarlos.
+
+## Qué cambió el 2026-08-14
+
+### Antes
+
+```
+paed/
+├── Frankly/                   <- el intérprete en BASH, ya reemplazado
+│   ├── paed                     715 líneas de bash
+│   ├── core/*.sh                flags, validacion, analisisSemantico, palabras
+│   ├── stdlib/matematica.sh     TRUNC, ABSO, REDOND en bash
+│   ├── tools/                   generar.sh + gen_sintaxis.c
+│   ├── generated/               paed_keywords.h
+│   ├── syntaxes/ syntax/ ftdetect/   tres resaltadores
+│   ├── DOC.txt
+│   ├── data/sintaxis.json     <- VIVO, enterrado acá adentro
+│   ├── docs/PAED.md           <- VIVO, enterrado acá adentro
+│   ├── tests/                 <- VIVO, enterrado acá adentro
+│   └── AprendiendoPseudo/, ejercicio*.paed
+└── lang/
+```
+
+### El problema
+
+`Frankly` era el intérprete en bash. Ya estaba muerto: el Makefile no lo miraba,
+`lang/` no lo incluía, y ningún `.c` tocaba un solo `.sh` de `core/` o
+`stdlib/`. Código reemplazado, no código a portar.
+
+Pero adentro de esa carpeta habían quedado enterradas **las dos cosas más vivas
+del repositorio**: `sintaxis.json`, que se embebe en el binario y se instala en
+el sistema, y `PAED.md`, que es la spec única.
+
+Nunca fueron de Frankly. Son de PAED, y estaban guardadas en la carpeta del
+intérprete retirado.
+
+### El movimiento
+
+| Antes | Ahora | Motivo |
+|---|---|---|
+| `Frankly/data/` | `data/` | Es el lenguaje, no la implementación vieja |
+| `Frankly/docs/` | `docs/` | Es la spec, no notas de Frankly |
+| `Frankly/tests/` | `tests/` | Prueban el intérprete en C, no el de bash |
+| `Frankly/AprendiendoPseudo/`, `Frankly/ejercicio*.paed`, `Frankly/paed.paed` | `ejercicios/` | Material de estudio, no batería |
+| `Frankly/paed` | `_void/paed-interprete-bash` | Retirado |
+| `Frankly/core/`, `stdlib/` | `_void/` | Solo los usaba el intérprete bash |
+| `Frankly/tools/` | `_void/tools/` | Generaba las tres cosas de abajo |
+| `Frankly/generated/paed_keywords.h` | `_void/generated/` | **Nadie en `lang/` lo incluye** |
+| `Frankly/syntaxes/`, `syntax/`, `ftdetect/` | `_void/` | El resaltado hoy es tree-sitter, en `helix/` |
+| `Frankly/DOC.txt` | `_void/DOC.txt` | Él mismo dice que `PAED.md` le gana |
+
+La carpeta `Frankly/` ya no existe.
+
+### Rutas que hubo que corregir
+
+| Archivo | Qué apuntaba mal |
+|---|---|
+| `Makefile` | la fuente de `sintaxis.json`, el `install`, el target `test` |
+| `tests/correr.sh` | la raíz del repo (`../..` -> `..`) y `tests_dir` |
+| `lang/src/parser.c` | los candidatos de búsqueda del directorio de datos |
+| `lang/include/paed/parser.h` | la documentación de esos candidatos |
+| `.github/workflows/release.yml` | el `cp` de `sintaxis.json` al paquete |
+| `docs/PAED.md` | §0.1 y el ejemplo de `paedrun` |
+| **15 archivos de `tests/`** | ver abajo |
+
+Los 15 tests no fallaron por casualidad: su bloque `SALIDA ESPERADA` contiene la
+ruta del propio archivo, porque los errores del parser la imprimen
+(`tests/arreglo_limites.paed:25: error: ...`). Mover la carpeta cambió esa ruta.
+Se corrigió la ruta y **nada más**.
+
+> Esto deja algo a la vista: los tests dependen de su propia ubicación en el
+> disco. Hoy no molesta, pero es la razón por la que mover una carpeta rompió 15
+> pruebas que no tenían nada que ver con lo que se movió.
+
+### `_void/` — por qué guardar y no borrar
+
+Nada de `_void/` entra en el build ni vale como fuente de sintaxis. Se conserva
+porque fue la primera implementación y todavía se puede consultar. El día que no
+sirva ni para eso se borra: el historial de git lo tiene igual.
+
+Ver [`../_void/README.md`](../_void/README.md).
+
+## Verificación
+
+Después de la mudanza, todo esto tiene que seguir dando:
+
+```bash
+make clean && make && make test        # 27/27
+make install PREFIX=/tmp/prueba        # y el binario corre parado afuera del repo
+```
