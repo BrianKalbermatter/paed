@@ -74,6 +74,7 @@ Nota IMPORTANTE: Aun se estan haciendo pruebas, puede que no funcione muy bien o
 | Documento | Qué hay adentro |
 |---|---|
 | [`docs/PAED.md`](docs/PAED.md) | La spec del lenguaje. **Es la única.** |
+| [`docs/ARCHIVOS.md`](docs/ARCHIVOS.md) | Organización de archivos, juego de archivos y plan |
 | [`docs/ESTRUCTURA.md`](docs/ESTRUCTURA.md) | Qué hay en cada carpeta del repo y por qué |
 | [`docs/ESCENA.md`](docs/ESCENA.md) | La librería de escena 3D de VimMon — no es PAED |
 

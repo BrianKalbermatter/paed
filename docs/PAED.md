@@ -383,9 +383,17 @@ registro en el medio**: los renglones tienen largo variable, y cambiar `100` por
 el CSV sería la elección equivocada y habría que ir a registros de ancho fijo.
 
 No lo es. Leer secuencial y escribir a otro archivo es exactamente lo que hace
-el CSV sin esfuerzo. `E/S` queda como el caso raro, y cuando haga falta se
-resuelve reescribiendo el archivo entero — que a la escala de estos programas no
-cuesta nada.
+el CSV sin esfuerzo.
+
+> **Corregido 2026-08-14.** Esta sección decía que el patrón de la cátedra
+> *nunca* modifica en el lugar. Es falso: vale para la actualización
+> **secuencial**, pero la **indexada** usa `RE-ESCRIBIR` y `BORRAR`, que son
+> modificación en el lugar y están en el corpus.
+>
+> El CSV sigue sirviendo, pero el motivo verdadero es otro: no que no haga falta
+> modificar en el lugar, sino que **a esta escala reescribir el archivo entero
+> es gratis** — O(n) por operación, con `n` en el orden de decenas.
+> Ver [`ARCHIVOS.md`](ARCHIVOS.md).
 
 #### El encabezado se valida
 
@@ -420,6 +428,45 @@ lectura y no un 0 silencioso.
 El separador es la decisión que más se nota: con `,` el archivo es portable, pero
 Excel configurado en español lo abre con todo apelmazado en una sola columna — y
 la gracia de esto era abrirlo y ver la planilla.
+
+### 2.7 La organización del archivo — cátedra, NO implementado
+
+La declaración puede decir **cómo está organizado** el archivo:
+
+| Declaración | Organización |
+|---|---|
+| `arch: ARCHIVO DE reg;` | secuencial **sin orden** |
+| `arch: ARCHIVO DE reg ORDENADO POR a, b, c;` | secuencial **ordenado** |
+| `arch: ARCHIVO DE reg INDEXADO POR clave;` | **indexado** |
+
+**cátedra.** `ordenado por` aparece **68 veces** en el corpus, dentro del
+`AMBIENTE` y como código:
+
+```paed
+movi:     archivo de novedades ordenado por clave, tipo_novedad y f_novedad
+Arch:     archivo de reg ordenado por clave3, clave2, clave1, clave0
+arch_mae: Archivo de Formato_mae indexado por clave
+```
+
+**No hay palabra clave para la organización.** La dice la cláusula: sin cláusula
+es secuencial, `ORDENADO POR` es ordenado, `INDEXADO POR` es indexado. El corpus
+escribe `ARCHIVO SECUENCIAL` y `ARCHIVO INDEXADO` en los **enunciados**, nunca en
+la declaración — y `Archivo SECUENCIAL (no ordenado)` confirma que la forma sin
+cláusula es legítima.
+
+Diferencias entre las dos cláusulas:
+
+- `ORDENADO POR` lleva **lista** de campos (clave compuesta). El separador es la
+  coma, y el corpus usa además una `y` antes del último.
+- `INDEXADO POR` lleva **uno**.
+
+Los campos nombrados **se validan contra el `REGISTRO`** del archivo: nombrar un
+campo que el registro no declara es error en el `AMBIENTE`. Sin esa validación la
+cláusula sería decorativa, y el error aparecería mucho más tarde, disfrazado de
+datos desordenados en la salida.
+
+El juego de archivos que arma un ejercicio, la baja lógica contra la física y el
+plan de implementación están en [`ARCHIVOS.md`](ARCHIVOS.md).
 
 ## 3. Asignación y operadores
 
@@ -1075,6 +1122,8 @@ de línea — nunca se ignora.
 | `LEER` de consola: escalar, `A[i]` y `p.campo` | ✅ §5.1 |
 | `ABRIR` / `CREAR` / `CERRAR` / `LEER` sobre ARCHIVOS en disco | parsean, no ejecutan |
 | El archivo en disco como CSV con encabezado | ❌ decidido §2.6, sin implementar |
+| `ORDENADO POR` / `INDEXADO POR` en la declaración | ❌ cátedra §2.7, sin implementar |
+| `HV` (alto valor), `RE-ESCRIBIR`, `BORRAR` | ❌ cátedra, sin implementar |
 | Modo de apertura `ABRIR E/`, `S/`, `E/S` — sin importar espacios ni mayúsculas | ✅ §2.5 |
 | Modo en un procedimiento que no lo admite (`LEER E/`) | ❌ rechazado, con mensaje propio |
 | `FIN_REGISTRO` faltante cuando ya empieza otro `REGISTRO` | ❌ rechazado, señalando el registro que quedó abierto |
