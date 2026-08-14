@@ -27,4 +27,4 @@ FIN_ACCION
 
 // ── SALIDA ESPERADA ─────────────────────────────────────────────────────────
 // los campos validos andan: 1 2
-// Frankly/tests/registro_campo_invalido.paed:25: error: 'p' no tiene un campo 'vz'
+// tests/registro_campo_invalido.paed:25: error: 'p' no tiene un campo 'vz'

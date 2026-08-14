@@ -8,4 +8,4 @@ ACCION cierre_espacio ES
 FIN ACCION
 
 // ── SALIDA ESPERADA ─────────────────────────────────────────────────────────
-// Frankly/tests/cierre_espacio.paed:8: error: el apunte escribe 'FIN ACCION' con espacio, pero en PAED el cierre es una sola palabra: FIN_ACCION o FINACCION
+// tests/cierre_espacio.paed:8: error: el apunte escribe 'FIN ACCION' con espacio, pero en PAED el cierre es una sola palabra: FIN_ACCION o FINACCION

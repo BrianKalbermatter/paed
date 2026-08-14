@@ -5,7 +5,7 @@
 # del editor, ni de ningun otro repo. Los que dependen de PAED son ellos.
 #
 #   make           libpaed.a + el binario `paed`
-#   make test      corre todos los .paed de Frankly/tests
+#   make test      corre todos los .paed de tests/
 #   make install   deja `paed` y sus datos en el sistema
 #
 # Es C puro, sin SDL: compila en cualquier lado.
@@ -58,9 +58,9 @@ LANG_CFLAGS = -Wall -Wextra -Ilang/include -Ilang/vendor/cjson \
 # trabajando. Lo embebido es la ultima red.
 LANG_GEN = lang/src/sintaxis_embebida.c
 
-$(LANG_GEN): Frankly/data/sintaxis.json
+$(LANG_GEN): data/sintaxis.json
 	@mkdir -p $(dir $@)
-	@echo '// GENERADO por el Makefile desde Frankly/data/sintaxis.json — NO EDITAR' > $@
+	@echo '// GENERADO por el Makefile desde data/sintaxis.json — NO EDITAR' > $@
 	@echo 'const char PAED_SINTAXIS_EMBEBIDA[] =' >> $@
 	@sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' -e 's/^/"/' -e 's/$$/\\n"/' $< >> $@
 	@echo ';' >> $@
@@ -152,7 +152,7 @@ $(WIN_BUILD)/%.o: %.c $(SELLO)
 
 # Corre toda la bateria de programas PAED contra la salida que cada uno declara.
 test: $(CLI)
-	@bash Frankly/tests/correr.sh
+	@bash tests/correr.sh
 
 # ── Instalacion ────────────────────────────────────────────────────────────
 #
@@ -161,7 +161,7 @@ test: $(CLI)
 install: all
 	install -d $(BINDIR) $(DATADIR)
 	install -m 755 $(CLI) $(BINDIR)/paed
-	install -m 644 Frankly/data/sintaxis.json $(DATADIR)/
+	install -m 644 data/sintaxis.json $(DATADIR)/
 	@echo
 	@echo "PAED instalado:"
 	@echo "  binario  $(BINDIR)/paed"

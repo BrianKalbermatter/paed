@@ -7,4 +7,4 @@ ACCION cierre_faccion ES
 FACCION
 
 // ── SALIDA ESPERADA ─────────────────────────────────────────────────────────
-// Frankly/tests/cierre_faccion.paed:7: error: 'FACCION' esta incompleto: el cierre se escribe FIN_ACCION o FINACCION
+// tests/cierre_faccion.paed:7: error: 'FACCION' esta incompleto: el cierre se escribe FIN_ACCION o FINACCION

@@ -52,7 +52,7 @@ jobs:
 
           mkdir -p "$PKG/bin" "$PKG/share/paed"
           cp build/paed                  "$PKG/bin/paed"
-          cp Frankly/data/sintaxis.json  "$PKG/share/paed/sintaxis.json"
+          cp data/sintaxis.json  "$PKG/share/paed/sintaxis.json"
           cp instalar.sh README.md LICENSE "$PKG/"
           chmod +x "$PKG/instalar.sh"
 

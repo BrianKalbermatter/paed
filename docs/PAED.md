@@ -7,8 +7,9 @@ Este es el **único** documento de sintaxis del lenguaje. Absorbió a
 está documentado.
 
 La definición formal legible por máquina está en
-[`../data/sintaxis.json`](../data/sintaxis.json): el resaltador de Neovim y el
-parser en C la leen en runtime, y `tools/generar.sh` genera el resto desde ahí.
+[`../data/sintaxis.json`](../data/sintaxis.json): el parser en C la lee en
+runtime y el Makefile la embebe en el binario. No se copia a mano a ningún lado
+— esa fue exactamente la causa del bug que mató a la versión anterior (§0.1).
 
 Los procedimientos de escena 3D de VimMon **no son parte del lenguaje**: son una
 librería aparte, ver [`ESCENA.md`](ESCENA.md).
@@ -34,12 +35,15 @@ errores, y de hecho los contiene:
 
 | Fuente | Estado | Error conocido |
 |---|---|---|
-| `Frankly/paed` (715 líneas bash) | Implementación | Acepta `PARA ... a ...` y comillas dobles — ninguna es de cátedra |
-| `Frankly/DOC.txt` | Notas de aprendizaje | Desactualizado seguido; redirige a este documento |
-| `recta.paed` (VimMon, `programas/AlgebraRectas/`) | Ejercicio propio | Sintaxis incorrecta (ver §12.1) |
-| `Frankly/data/sintaxis.json` | Lista de keywords | Incompleta |
-| `Frankly/syntaxes/paed.tmLanguage.json` | Resaltador | Incompleta, comillas dobles |
-| `paed/src/editorText.c` | Resaltador | Incompleta, desincronizada |
+| `_void/paed-interprete-bash` (715 líneas bash) | Implementación **retirada** | Acepta `PARA ... a ...` y comillas dobles — ninguna es de cátedra |
+| `_void/DOC.txt` | Notas de aprendizaje | Desactualizado seguido; redirige a este documento |
+| `ejercicios/` y `recta.paed` (VimMon, `programas/AlgebraRectas/`) | Ejercicios propios | Sintaxis incorrecta (ver §12.1) |
+| `data/sintaxis.json` | Lista de keywords | Incompleta |
+| `_void/syntaxes/paed.tmLanguage.json` | Resaltador **retirado** | Incompleta, comillas dobles |
+| `lang/` (el intérprete en C) | Implementación | Es lo que hay; igual **no es autoridad** |
+
+Lo que está en `_void/` no entra en el build ni se consulta para decidir nada:
+está guardado porque fue la primera implementación, no porque valga como fuente.
 
 **Regla dura:** si una de estas contradice a la cátedra o a la wiki, **la fuente
 está mal y se corrige** — no se adapta la spec para acomodarla.
@@ -955,7 +959,7 @@ actualizan juntos.
 
 ```bash
 make paedrun
-build/paedrun paed/Frankly/tests/busqueda_binaria.paed
+build/paedrun tests/busqueda_binaria.paed
 ```
 
 El intérprete vive dentro del game loop, así que antes la única forma de probar
@@ -1033,5 +1037,5 @@ sin errores, y aun así tiene sintaxis inválida:
 |---|---|---|
 | v1 | — | PAED declarativo (`cubo nombre=x posicion=0,0,0`). Discontinuado, archivado en `_void/docs/paed_spec_v1.md`. Sus primitivas de escena son hoy una librería, no sintaxis: ver [`ESCENA.md`](ESCENA.md) |
 | v2.0 | 2026-08-07 | Unificación en el dialecto AED. Vivía en `docs/paed_spec.md` |
-| v3.0 | 2026-08 | Reescritura corta al mudarse a `paed/Frankly/docs/` |
+| v3.0 | 2026-08 | Reescritura corta al mudarse a `paed/Frankly/docs/` (hoy `docs/`) |
 | v4.0 | 2026-08-10 | Absorbe la v2.0 completa. Se separan **cátedra** / **decidido** / **implementado**, porque había decisiones documentadas que el parser no cumplía |

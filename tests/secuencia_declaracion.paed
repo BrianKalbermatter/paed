@@ -18,7 +18,7 @@ ACCION secuencia_declaracion ES
 FIN_ACCION
 
 // ── SALIDA ESPERADA ──
-// Frankly/tests/secuencia_declaracion.paed:14: error: ARR trabaja sobre una secuencia y 'fantasma' no esta declarado en el AMBIENTE (falta 'fantasma: SECUENCIA DE <tipo>;')
-// Frankly/tests/secuencia_declaracion.paed:15: error: ARR trabaja sobre una secuencia, pero 'n' se declaro en la linea 11 como ENTERO
-// Frankly/tests/secuencia_declaracion.paed:16: error: 'Sec' no esta declarado, pero si 'sec' (linea 10): los identificadores distinguen mayusculas
-// Frankly/tests/secuencia_declaracion.paed:17: error: AVZ sobre la secuencia 'sec' lleva exactamente 2 argumentos: AVZ(sec, dato)
+// tests/secuencia_declaracion.paed:14: error: ARR trabaja sobre una secuencia y 'fantasma' no esta declarado en el AMBIENTE (falta 'fantasma: SECUENCIA DE <tipo>;')
+// tests/secuencia_declaracion.paed:15: error: ARR trabaja sobre una secuencia, pero 'n' se declaro en la linea 11 como ENTERO
+// tests/secuencia_declaracion.paed:16: error: 'Sec' no esta declarado, pero si 'sec' (linea 10): los identificadores distinguen mayusculas
+// tests/secuencia_declaracion.paed:17: error: AVZ sobre la secuencia 'sec' lleva exactamente 2 argumentos: AVZ(sec, dato)

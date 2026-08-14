@@ -40,7 +40,7 @@ static cJSON *cargar_json(const char *path, int obligatorio) {
 }
 
 // La definicion del lenguaje embebida en el binario. La genera el Makefile
-// desde Frankly/data/sintaxis.json, asi que no hay dos fuentes de verdad: hay
+// desde data/sintaxis.json, asi que no hay dos fuentes de verdad: hay
 // una sola, y una copia que se rehace sola en cada build.
 extern const char PAED_SINTAXIS_EMBEBIDA[];
 
@@ -89,8 +89,8 @@ const char *paed_datadir(void) {
         home ? home : "",
         junto,                // el paquete descomprimido donde sea
         PAED_DATADIR,
-        "Frankly/data",       // parado en el repo de PAED
-        "paed/Frankly/data",  // parado en VimMon, que lo tiene adentro
+        "data",               // parado en el repo de PAED
+        "paed/data",          // parado en VimMon, que lo tiene adentro
     };
 
     for (size_t i = 0; i < sizeof(candidatos) / sizeof(candidatos[0]); i++) {

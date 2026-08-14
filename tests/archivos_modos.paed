@@ -41,12 +41,12 @@ ACCION modos_de_apertura ES
 FIN_ACCION
 
 // ── SALIDA ESPERADA ─────────────────────────────────────────────────────────
-// Frankly/tests/archivos_modos.paed:29: error: ABRIR todavia no esta implementado: por ahora solo se valida la declaracion
-// Frankly/tests/archivos_modos.paed:30: error: LEER(archivo, registro) todavia no avanza el archivo: falta el manejo de archivos en disco
-// Frankly/tests/archivos_modos.paed:32: error: ABRIR todavia no esta implementado: por ahora solo se valida la declaracion
-// Frankly/tests/archivos_modos.paed:33: error: ESCRIBIR(archivo, registro) todavia no graba: falta el manejo de archivos en disco
-// Frankly/tests/archivos_modos.paed:35: error: ABRIR todavia no esta implementado: por ahora solo se valida la declaracion
-// Frankly/tests/archivos_modos.paed:36: error: LEER(archivo, registro) todavia no avanza el archivo: falta el manejo de archivos en disco
-// Frankly/tests/archivos_modos.paed:37: error: ESCRIBIR(archivo, registro) todavia no graba: falta el manejo de archivos en disco
-// Frankly/tests/archivos_modos.paed:39: error: ABRIR todavia no esta implementado: por ahora solo se valida la declaracion
-// Frankly/tests/archivos_modos.paed:40: error: ESCRIBIR(archivo, registro) todavia no graba: falta el manejo de archivos en disco
+// tests/archivos_modos.paed:29: error: ABRIR todavia no esta implementado: por ahora solo se valida la declaracion
+// tests/archivos_modos.paed:30: error: LEER(archivo, registro) todavia no avanza el archivo: falta el manejo de archivos en disco
+// tests/archivos_modos.paed:32: error: ABRIR todavia no esta implementado: por ahora solo se valida la declaracion
+// tests/archivos_modos.paed:33: error: ESCRIBIR(archivo, registro) todavia no graba: falta el manejo de archivos en disco
+// tests/archivos_modos.paed:35: error: ABRIR todavia no esta implementado: por ahora solo se valida la declaracion
+// tests/archivos_modos.paed:36: error: LEER(archivo, registro) todavia no avanza el archivo: falta el manejo de archivos en disco
+// tests/archivos_modos.paed:37: error: ESCRIBIR(archivo, registro) todavia no graba: falta el manejo de archivos en disco
+// tests/archivos_modos.paed:39: error: ABRIR todavia no esta implementado: por ahora solo se valida la declaracion
+// tests/archivos_modos.paed:40: error: ESCRIBIR(archivo, registro) todavia no graba: falta el manejo de archivos en disco

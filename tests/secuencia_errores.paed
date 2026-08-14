@@ -46,10 +46,10 @@ FIN_ACCION
 // 7 9
 
 // ── SALIDA ESPERADA ──
-// Frankly/tests/secuencia_errores.paed:19: error: hay que arrancar 'sec' antes de avanzarla: falta ARR(sec)
-// Frankly/tests/secuencia_errores.paed:22: error: 'secSal' es una SECUENCIA DE SALIDA: se abre con CREAR, no con ARR
-// Frankly/tests/secuencia_errores.paed:25: error: CREAR es para una SECUENCIA DE SALIDA, y 'sec' es de entrada: para recorrerla va ARR(sec)
-// Frankly/tests/secuencia_errores.paed:28: error: hay que crear 'secSal' antes de grabarle: falta CREAR(secSal)
-// Frankly/tests/secuencia_errores.paed:31: error: hay que arrancar 'sec' antes de preguntarle por el fin: falta ARR(sec)
+// tests/secuencia_errores.paed:19: error: hay que arrancar 'sec' antes de avanzarla: falta ARR(sec)
+// tests/secuencia_errores.paed:22: error: 'secSal' es una SECUENCIA DE SALIDA: se abre con CREAR, no con ARR
+// tests/secuencia_errores.paed:25: error: CREAR es para una SECUENCIA DE SALIDA, y 'sec' es de entrada: para recorrerla va ARR(sec)
+// tests/secuencia_errores.paed:28: error: hay que crear 'secSal' antes de grabarle: falta CREAR(secSal)
+// tests/secuencia_errores.paed:31: error: hay que arrancar 'sec' antes de preguntarle por el fin: falta ARR(sec)
 // ultimo leido: 9
-// Frankly/tests/secuencia_errores.paed:42: error: 'sec' ya llego al fin de secuencia: NFDS(sec) era falso antes de este AVZ
+// tests/secuencia_errores.paed:42: error: 'sec' ya llego al fin de secuencia: NFDS(sec) era falso antes de este AVZ

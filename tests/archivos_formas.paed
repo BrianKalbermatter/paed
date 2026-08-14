@@ -64,8 +64,8 @@ FIN_ACCION
 // 1.62
 
 // ── SALIDA ESPERADA ─────────────────────────────────────────────────────────
-// Frankly/tests/archivos_formas.paed:45: error: LEER(archivo, registro) todavia no avanza el archivo: falta el manejo de archivos en disco
-// Frankly/tests/archivos_formas.paed:46: error: LEER(archivo, registro) todavia no avanza el archivo: falta el manejo de archivos en disco
-// Frankly/tests/archivos_formas.paed:47: error: ESCRIBIR(archivo, registro) todavia no graba: falta el manejo de archivos en disco
+// tests/archivos_formas.paed:45: error: LEER(archivo, registro) todavia no avanza el archivo: falta el manejo de archivos en disco
+// tests/archivos_formas.paed:46: error: LEER(archivo, registro) todavia no avanza el archivo: falta el manejo de archivos en disco
+// tests/archivos_formas.paed:47: error: ESCRIBIR(archivo, registro) todavia no graba: falta el manejo de archivos en disco
 // Ana Lopez tiene 41 y mide 1.62
 // el ESCRIBIR de consola sigue funcionando

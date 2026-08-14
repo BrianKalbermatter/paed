@@ -25,7 +25,7 @@
 # muestra el diff y el bloque se corrige A MANO. Regrabar sin leer es cómo un
 # test deja de proteger: "arregla" el test en vez del bug.
 #
-#   make test          (o: bash Frankly/tests/correr.sh)
+#   make test          (o: bash tests/correr.sh)
 #
 # Agregar un test = dejar el .paed con su bloque al final. Nada más: no hay
 # ninguna lista que mantener.
@@ -36,8 +36,8 @@ MARCA='// ── SALIDA ESPERADA'
 MARCA_IN='// ── ENTRADA'
 MARCA_LIB='// ── LIBRERIA'
 
-# La raiz del repo de PAED: dos niveles arriba de Frankly/tests
-raiz=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
+# La raiz del repo de PAED: un nivel arriba de tests/
+raiz=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 cd "$raiz" || exit 1
 
 runner=build/paed
@@ -46,7 +46,7 @@ if [ ! -x "$runner" ]; then
     exit 1
 fi
 
-tests_dir=Frankly/tests
+tests_dir=tests
 pasaron=0
 fallaron=0
 fallidos=()

@@ -4,7 +4,7 @@
 // Parser de PAED (pseudocodigo). Un solo lenguaje, una sola gramatica.
 //
 // La definicion formal del lenguaje NO vive en este header: vive en
-// paed/Frankly/data/sintaxis.json y se carga en runtime con cJSON.
+// paed/data/sintaxis.json y se carga en runtime con cJSON.
 // Si agregas un procedimiento o un parametro, se agrega ahi y nada mas.
 
 #define PAED_NAME_MAX      64
@@ -192,8 +192,8 @@ typedef struct {
 //   1. $PAED_HOME                 — lo pisa todo, para desarrollo y para probar
 //                                   una definicion sin instalarla (como PYTHONHOME)
 //   2. PAED_DATADIR               — donde lo dejo `make install`, fijado al compilar
-//   3. Frankly/data               — corriendo parado en el repo de PAED
-//   4. paed/Frankly/data          — corriendo parado en VimMon, que lo tiene adentro
+//   3. data                      — corriendo parado en el repo de PAED
+//   4. paed/data                 — corriendo parado en VimMon, que lo tiene adentro
 //
 // Devuelve el directorio elegido, o NULL si en ninguno estaba sintaxis.json.
 const char *paed_datadir(void);

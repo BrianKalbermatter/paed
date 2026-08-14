@@ -43,13 +43,13 @@ FIN_ACCION
 
 // ── SALIDA ESPERADA ─────────────────────────────────────────────────────────
 // -- destinos que no son destinos --
-// Frankly/tests/leer_errores.paed:24: error: '"hola"' no sirve como destino de LEER: se espera una variable, un elemento A[i] o un campo p.campo
-// Frankly/tests/leer_errores.paed:25: error: '3' no sirve como destino de LEER: se espera una variable, un elemento A[i] o un campo p.campo
+// tests/leer_errores.paed:24: error: '"hola"' no sirve como destino de LEER: se espera una variable, un elemento A[i] o un campo p.campo
+// tests/leer_errores.paed:25: error: '3' no sirve como destino de LEER: se espera una variable, un elemento A[i] o un campo p.campo
 // -- LEER sin destino --
-// Frankly/tests/leer_errores.paed:28: error: LEER necesita al menos un destino: LEER(x)
+// tests/leer_errores.paed:28: error: LEER necesita al menos un destino: LEER(x)
 // -- indice fuera de los limites del arreglo --
-// Frankly/tests/leer_errores.paed:31: error: indice 9 fuera de rango: 'A' va de 1 a 2
+// tests/leer_errores.paed:31: error: indice 9 fuera de rango: 'A' va de 1 a 2
 // -- campo que el registro no tiene --
-// Frankly/tests/leer_errores.paed:34: error: 'q' no tiene un campo 'vz'
+// tests/leer_errores.paed:34: error: 'q' no tiene un campo 'vz'
 // -- la entrada se termino --
-// Frankly/tests/leer_errores.paed:37: error: la entrada se termino antes de darle un valor a 'x'
+// tests/leer_errores.paed:37: error: la entrada se termino antes de darle un valor a 'x'
