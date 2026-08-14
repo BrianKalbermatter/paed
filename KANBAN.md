@@ -86,8 +86,7 @@ kanban-plugin: board
 
 ## Backlog — infraestructura
 
-- [ ] `escena.json` vive en `data/` del repo de PAED, cuando la escena 3D es de VimMon. Anda porque `paed_syntax_load_lib` busca en el directorio de datos de PAED, pero la librería de un host debería poder vivir del lado del host #infra
-- [ ] Dos copias de cJSON en el árbol: `cjson/` (VimMon, plugin de IA) y `paed/lang/vendor/cjson/`. Linkea bien porque el archivo estático solo aporta lo que falta, pero **depende del ORDEN en el comando de link**. Unificar cuando PAED exponga su cJSON o cuando VimMon deje de necesitarlo #infra
+- [ ] **Lo que toca a VimMon vive en el `KANBAN.md` de VimMon, no acá.** `escena.json` del lado equivocado y las dos copias de cJSON son problemas de VimMon: PAED no sabe que VimMon existe #infra
 - [ ] Los tests traen su propia ruta en el bloque `SALIDA ESPERADA`, porque los errores del parser la imprimen. Mover `tests/` los rompe a todos. Hoy no molesta, pero está a la vista #infra
 - [ ] El objeto del CLI se compila en `build/lang/lang/cli/main.o`, con `lang` repetido. Cosmético #infra
 - [ ] Runner de tests en C en vez de `correr.sh`: hoy la batería **no puede correr en Windows**, aunque ya se cross-compila `paed.exe` #infra
