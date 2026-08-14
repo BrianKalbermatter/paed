@@ -35,8 +35,19 @@ DATADIR  = $(PREFIX)/share/paed
 # tarde o temprano no lo dicen.
 VERSION := $(shell cat VERSION)
 
+# -MMD -MP: el compilador ESCRIBE, al lado de cada .o, un .d que dice de que
+# headers depende. Se incluyen mas abajo, y con eso make se entera de que tocar
+# un .h obliga a recompilar los .c que lo usan.
+#
+# Sin esto el build se rompia CALLADO y de la peor manera: agregar un campo a
+# PAEDInstr recompilaba parser.c pero no main.c, y quedaban dos objetos con dos
+# tamaños distintos del mismo struct. El binario compilaba, linkeaba, y moria en
+# cualquier programa con "*** stack smashing detected ***" — un mensaje que
+# manda a buscar un desborde de buffer que no existe, mientras el error real es
+# que main.c reserva el struct chico y parser.c escribe el grande.
 LANG_CFLAGS = -Wall -Wextra -Ilang/include -Ilang/vendor/cjson \
-              -DPAED_DATADIR='"$(DATADIR)"' -DPAED_VERSION='"$(VERSION)"'
+              -DPAED_DATADIR='"$(DATADIR)"' -DPAED_VERSION='"$(VERSION)"' \
+              -MMD -MP
 
 # sintaxis.json va EMBEBIDO adentro del binario. Es lo que hace que `paed` sea
 # un solo archivo que se puede bajar suelto y ya funcione: sin esto, el binario
@@ -58,6 +69,12 @@ LANG_SRC = lang/src/parser.c lang/src/expr.c lang/src/interpreter.c \
            lang/src/secuencia.c \
            lang/src/plataforma.c $(LANG_GEN) lang/vendor/cjson/cJSON.c
 LANG_OBJ = $(LANG_SRC:%.c=$(BUILDDIR)/lang/%.o)
+CLI_OBJ  = $(BUILDDIR)/lang/lang/cli/main.o
+
+# Los .d que dejo el compilador. Van con '-include' (con guion) y no con
+# 'include': la primera vez todavia no existen, y sin el guion make aborta en
+# vez de compilarlos.
+-include $(LANG_OBJ:.o=.d) $(CLI_OBJ:.o=.d)
 
 LIB      = $(BUILDDIR)/libpaed.a
 CLI      = $(BUILDDIR)/paed
@@ -69,7 +86,7 @@ $(LIB): $(LANG_OBJ)
 	@mkdir -p $(dir $@)
 	ar rcs $@ $(LANG_OBJ)
 
-$(CLI): $(BUILDDIR)/lang/lang/cli/main.o $(LIB)
+$(CLI): $(CLI_OBJ) $(LIB)
 	@mkdir -p $(dir $@)
 	$(CC) $< $(LIB) -lm -o $@
 
@@ -112,9 +129,14 @@ $(BUILDDIR)/lang/%.o: %.c $(SELLO)
 WIN_CC      = x86_64-w64-mingw32-gcc
 WIN_BUILD   = $(BUILDDIR)/windows
 WIN_CFLAGS  = -Wall -Wextra -Ilang/include -Ilang/vendor/cjson \
-              -DPAED_DATADIR='"C:\\\\paed"' -DPAED_VERSION='"$(VERSION)"'
+              -DPAED_DATADIR='"C:\\\\paed"' -DPAED_VERSION='"$(VERSION)"' \
+              -MMD -MP
 WIN_OBJ     = $(LANG_SRC:%.c=$(WIN_BUILD)/%.o) $(WIN_BUILD)/lang/cli/main.o
 WIN_TARGET  = $(WIN_BUILD)/paed.exe
+
+# Mismo motivo que en el build de Linux: sin las dependencias de headers, tocar
+# un .h deja objetos con dos layouts del mismo struct.
+-include $(WIN_OBJ:.o=.d)
 
 windows: $(WIN_TARGET)
 
