@@ -1,0 +1,31 @@
+// Un REGISTRO que se olvida de cerrar.
+//
+// Lo que importa de este test es DONDE apunta el error. Cuando falta el
+// FIN_REGISTRO, la linea que se ve mal no es la que esta mal: el parser sigue
+// creyendo que esta juntando campos, asi que la siguiente declaracion que no
+// tiene forma de campo es la que revienta. Antes el mensaje era "falta ';' al
+// final de la declaracion" sobre la linea del segundo REGISTRO — la unica que
+// estaba perfecta — y el FIN_REGISTRO que falta quedaba varios renglones arriba,
+// sin que nada lo nombrara.
+//
+// Los dos casos que hay son estos:
+//   1. otro REGISTRO arranca con uno todavia abierto
+//   2. el AMBIENTE se termina (empieza el PROCESO) con uno abierto
+
+ACCION registros_sin_cerrar ES
+    AMBIENTE
+        fecha = REGISTRO
+            aaaa: N(4);
+            mm: 1..12;
+
+        alumno = REGISTRO
+            apeNom: AN(50);
+            legajo: N(6);
+
+    PROCESO
+        ESCRIBIR("con un registro abierto el programa no corre");
+FIN_ACCION
+
+// ── SALIDA ESPERADA ─────────────────────────────────────────────────────────
+// Frankly/tests/registro_sin_cerrar.paed:21: error: falta FIN_REGISTRO: el registro 'fecha' de la linea 17 sigue abierto y aca ya empieza otro
+// Frankly/tests/registro_sin_cerrar.paed:25: error: falta FIN_REGISTRO: el registro 'alumno' de la linea 21 quedo abierto y aca ya empieza el PROCESO

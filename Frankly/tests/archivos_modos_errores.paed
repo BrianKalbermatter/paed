@@ -1,0 +1,43 @@
+// Lo que el modo de apertura tiene que CORROBORAR.
+//
+// El modo no es decoracion: `ABRIR E/(arch)` declara que ese archivo es de solo
+// lectura (TEMAS_7-10_Registros_Archivos.md:132). Entonces grabar en un archivo
+// abierto E/ es un error que se puede ver SIN CORRER NADA, y lo mismo leer de uno
+// abierto S/.
+//
+// Los dos ultimos errores salen de una pasada que se hace con el programa
+// completo en la mano, y por eso se reportan al final: el ABRIR que decide la
+// direccion puede estar despues del ESCRIBIR que la rompe.
+//
+// El modo de dos barras se escribe 'E/S/' y no 'E//S' a proposito: '//' abre un
+// comentario, asi que esa forma no llega al parser — la linea se corta antes y
+// el error que sale es que le falta el ';'.
+
+ACCION modos_mal ES
+    AMBIENTE
+        alumno = REGISTRO
+            legajo: N(6);
+        FIN_REGISTRO
+
+        a: alumno;
+        entra: ARCHIVO DE alumno;
+        sale:  ARCHIVO DE alumno;
+
+    PROCESO
+        ABRIR X/(entra);
+        ABRIR E/S/(entra);
+        LEER e/(entra);
+
+        ABRIR E/(entra);
+        ESCRIBIR(entra, a);
+
+        ABRIR S/(sale);
+        LEER(sale, a);
+FIN_ACCION
+
+// ── SALIDA ESPERADA ─────────────────────────────────────────────────────────
+// Frankly/tests/archivos_modos_errores.paed:27: error: modo de apertura invalido en 'ABRIR X/': los de ABRIR son E/ (entrada), S/ (salida), E/S (entrada-salida)
+// Frankly/tests/archivos_modos_errores.paed:28: error: 'ABRIR E/S/' tiene 2 barras: el modo de apertura lleva UNA sola, como en ABRIR E/(arch)
+// Frankly/tests/archivos_modos_errores.paed:29: error: LEER no lleva modo de apertura: el modo se escribe una sola vez, en el ABRIR
+// Frankly/tests/archivos_modos_errores.paed:32: error: el archivo 'entra' se abrio para ENTRADA en la linea 31: ESCRIBIR necesita que este abierto para SALIDA (ABRIR S/ o E/S)
+// Frankly/tests/archivos_modos_errores.paed:35: error: el archivo 'sale' se abrio para SALIDA en la linea 34: LEER necesita que este abierto para ENTRADA (ABRIR E/ o E/S)

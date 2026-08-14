@@ -1,0 +1,52 @@
+// El modo de apertura de la catedra: ABRIR E/(arch).
+//
+// Las cuatro formas de este test son las que aparecen en el material, y las
+// cuatro son la misma instruccion — el espacio no cuenta y la mayuscula tampoco:
+//
+//     ABRIR E/(entra)      pegado, como en TEMAS_7-10:132
+//     ABRIR s/ (sale)      con espacio y en minuscula, como en el corpus de UTN
+//     ABRIRe/s(ambos)      sin ningun espacio, como en el template de ACT INDEX
+//     ABRIR /S(viejo)      con la barra del otro lado, como en la diapo del Tema 8
+//
+// El programa no llega a correr de verdad: el manejo de archivos en disco
+// todavia no existe. Que la salida sean los errores del INTERPRETE y no del
+// PARSER es justamente lo que prueba este test — si el modo no se entendiera,
+// el error diria "nombre de procedimiento invalido".
+
+ACCION modos_de_apertura ES
+    AMBIENTE
+        alumno = REGISTRO
+            legajo: N(6);
+        FIN_REGISTRO
+
+        a: alumno;
+        entra: ARCHIVO DE alumno;
+        sale:  ARCHIVO DE alumno;
+        ambos: ARCHIVO DE alumno;
+        viejo: ARCHIVO DE alumno;
+
+    PROCESO
+        ABRIR E/(entra);
+        LEER(entra, a);
+
+        ABRIR s/ (sale);
+        ESCRIBIR(sale, a);
+
+        ABRIRe/s(ambos);
+        LEER(ambos, a);
+        ESCRIBIR(ambos, a);
+
+        ABRIR /S(viejo);
+        ESCRIBIR(viejo, a);
+FIN_ACCION
+
+// ── SALIDA ESPERADA ─────────────────────────────────────────────────────────
+// Frankly/tests/archivos_modos.paed:29: error: ABRIR todavia no esta implementado: por ahora solo se valida la declaracion
+// Frankly/tests/archivos_modos.paed:30: error: LEER(archivo, registro) todavia no avanza el archivo: falta el manejo de archivos en disco
+// Frankly/tests/archivos_modos.paed:32: error: ABRIR todavia no esta implementado: por ahora solo se valida la declaracion
+// Frankly/tests/archivos_modos.paed:33: error: ESCRIBIR(archivo, registro) todavia no graba: falta el manejo de archivos en disco
+// Frankly/tests/archivos_modos.paed:35: error: ABRIR todavia no esta implementado: por ahora solo se valida la declaracion
+// Frankly/tests/archivos_modos.paed:36: error: LEER(archivo, registro) todavia no avanza el archivo: falta el manejo de archivos en disco
+// Frankly/tests/archivos_modos.paed:37: error: ESCRIBIR(archivo, registro) todavia no graba: falta el manejo de archivos en disco
+// Frankly/tests/archivos_modos.paed:39: error: ABRIR todavia no esta implementado: por ahora solo se valida la declaracion
+// Frankly/tests/archivos_modos.paed:40: error: ESCRIBIR(archivo, registro) todavia no graba: falta el manejo de archivos en disco

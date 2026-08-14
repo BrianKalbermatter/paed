@@ -200,6 +200,47 @@ static int proc_es_variadico(cJSON *proc) {
     return cJSON_IsTrue(cJSON_GetObjectItem(proc, "variadico"));
 }
 
+// Los modos de apertura que admite el procedimiento, o NULL si no admite
+// ninguno. Es un objeto { "E": "entrada", ... }: la clave es el modo
+// normalizado y el valor es como se lo nombra en los mensajes.
+//
+// Que ABRIR lleve modo y LEER no sale de sintaxis.json y no de una lista en C,
+// por la misma razon que todo lo demas: la definicion del lenguaje vive en un
+// solo lado.
+static cJSON *modos_def(cJSON *proc) {
+    if (!proc) return NULL;
+    cJSON *m = cJSON_GetObjectItem(proc, "modos");
+    return cJSON_IsObject(m) ? m : NULL;
+}
+
+// Como se ESCRIBE un modo normalizado: "E" -> "E/", "ES" -> "E/S".
+// Solo para los mensajes: adentro el modo viaja sin barra.
+static const char *modo_escrito(const char *modo, char *buf, size_t n) {
+    if (strlen(modo) <= 1) snprintf(buf, n, "%s/", modo);
+    else                   snprintf(buf, n, "%c/%s", modo[0], modo + 1);
+    return buf;
+}
+
+// La lista de modos validos, ya escrita, para poder decirla en un error:
+//   "E/ (entrada), S/ (salida), E/S (entrada-salida)"
+static void modos_listados(cJSON *modos, char *out, size_t n) {
+    out[0] = '\0';
+    size_t usado = 0;
+
+    cJSON *m = NULL;
+    cJSON_ArrayForEach(m, modos) {
+        if (!m->string) continue;
+        char escrito[PAED_MODO_MAX * 2];
+        modo_escrito(m->string, escrito, sizeof(escrito));
+
+        int puesto = snprintf(out + usado, n - usado, "%s%s (%s)",
+                              usado ? ", " : "", escrito,
+                              cJSON_IsString(m) ? m->valuestring : m->string);
+        if (puesto < 0 || (size_t)puesto >= n - usado) return;
+        usado += (size_t)puesto;
+    }
+}
+
 // ── Utilidades de texto ───────────────────────────────────────────────────────
 
 static char *trim(char *s) {
@@ -610,6 +651,101 @@ static int resolver_forma(PAEDProgram *p, PAEDInstr *instr, cJSON *def,
     return 0;
 }
 
+// ── El modo de apertura: ABRIR E/(arch) ───────────────────────────────────────
+//
+// La catedra escribe el modo AFUERA de los parentesis, entre el nombre del
+// procedimiento y el '('. Es la unica parte del lenguaje que no es ni un
+// argumento ni una palabra clave, asi que se separa antes de todo lo demas.
+//
+// Todas estas son la misma instruccion:
+//
+//     ABRIR E/(arch)      ABRIR e/ (arch)      ABRIRe/s(arch)
+//     ABRIR /S(arch)      ABRIR E/S (arch)
+//
+// El espacio no cuenta y la mayuscula tampoco: son formas que aparecen en el
+// material tal cual (197 'E/', 67 'S/', 14 'E/S', 7 con la barra al reves), y
+// obligar a una sola seria inventar una regla que las fuentes no tienen.
+//
+// Recorta `nombre` dejando solo el procedimiento, y deja el modo normalizado en
+// `modo`: sin barra y en mayuscula. Devuelve 0 si pudo, -1 si ya reporto error.
+static int separar_modo(PAEDProgram *p, int lineno, char *nombre,
+                        char *modo, size_t nmodo) {
+    // Para los mensajes: abajo se recorta `nombre` en el lugar.
+    char crudo[PAED_NAME_MAX];
+    snprintf(crudo, sizeof(crudo), "%s", nombre);
+
+    // El nombre del procedimiento es la primera corrida de caracteres de
+    // identificador. Lo que sigue tiene que ser el modo y nada mas.
+    size_t corte = 0;
+    while (nombre[corte] && (isalnum((unsigned char)nombre[corte]) || nombre[corte] == '_'))
+        corte++;
+
+    char   letras[PAED_MODO_MAX * 2] = {0};   // 'E', 'S' — sin la barra
+    size_t nl     = 0;
+    int    barras = 0;
+
+    for (const char *c = nombre + corte; *c; c++) {
+        if (isspace((unsigned char)*c)) continue;
+        if (*c == '/') { barras++; continue; }
+        if (!isalpha((unsigned char)*c) || nl + 1 >= sizeof(letras)) {
+            add_error(p, lineno, "nombre de procedimiento invalido: '%s'", crudo);
+            return -1;
+        }
+        letras[nl++] = (char)toupper((unsigned char)*c);
+    }
+    letras[nl] = '\0';
+
+    if (barras != 1) {
+        add_error(p, lineno,
+                  "'%s' tiene %d barras: el modo de apertura lleva UNA sola, "
+                  "como en ABRIR E/(arch)", crudo, barras);
+        return -1;
+    }
+
+    nombre[corte] = '\0';
+
+    // 'ABRIRe/s' viene sin espacio, asi que la 'e' quedo pegada al nombre. Se
+    // le devuelven las letras al modo de a una, por la izquierda — que es de
+    // donde salieron — hasta que lo que queda sea un procedimiento que admita
+    // modo. Esto es lo que hace que el espacio de verdad no cuente.
+    size_t largo = strlen(nombre);
+    while (!proc_def(nombre) && largo > 1 && isalpha((unsigned char)nombre[largo - 1])) {
+        if (nl + 1 >= sizeof(letras)) break;
+        memmove(letras + 1, letras, nl + 1);
+        letras[0] = (char)toupper((unsigned char)nombre[largo - 1]);
+        nl++;
+        nombre[--largo] = '\0';
+    }
+
+    cJSON *def = proc_def(nombre);
+    if (!def) {
+        add_error(p, lineno, "nombre de procedimiento invalido: '%s'", crudo);
+        return -1;
+    }
+
+    cJSON *modos = modos_def(def);
+    if (!modos) {
+        // El modo no es decoracion: dice si el archivo se puede leer o grabar.
+        // Ponerlo en LEER no significa nada, y aceptarlo callado seria hacerle
+        // creer al que lo escribio que ahi tambien decide algo.
+        add_error(p, lineno,
+                  "%s no lleva modo de apertura: el modo se escribe una sola vez, "
+                  "en el ABRIR", nombre);
+        return -1;
+    }
+
+    if (!cJSON_GetObjectItem(modos, letras)) {
+        char validos[PAED_MSG_MAX / 2];
+        modos_listados(modos, validos, sizeof(validos));
+        add_error(p, lineno, "modo de apertura invalido en '%s': los de %s son %s",
+                  crudo, nombre, validos);
+        return -1;
+    }
+
+    snprintf(modo, nmodo, "%s", letras);
+    return 0;
+}
+
 static void parse_instruction(PAEDProgram *p, char *linea, int lineno) {
     // 1. Toda instruccion termina en ';'
     size_t len = strlen(linea);
@@ -643,6 +779,35 @@ static void parse_instruction(PAEDProgram *p, char *linea, int lineno) {
         add_error(p, lineno, "falta el nombre del procedimiento antes de '('");
         return;
     }
+
+    // El modo de apertura va PEGADO al nombre, antes del parentesis. Se separa
+    // aca, antes de validar el nombre: con el modo puesto, 'ABRIR E/' no es un
+    // identificador, y el error hablaria de un nombre invalido cuando el nombre
+    // esta perfecto.
+    //
+    // Sin barra pero con un espacio adentro tambien se manda ('ABRIR E(arch)'):
+    // ahi el que falta es el modo A MEDIAS, y separar_modo es el unico que puede
+    // decir que lo que falta es la barra. Se pide que la primera palabra sea un
+    // procedimiento CON modos para no robarle el mensaje a los nombres que estan
+    // mal por otro motivo.
+    char modo[PAED_MODO_MAX] = {0};
+    int  lleva_barra = strchr(nombre, '/') != NULL;
+    int  modo_a_medias = 0;
+
+    if (!lleva_barra) {
+        char *esp = nombre;
+        while (*esp && !isspace((unsigned char)*esp)) esp++;
+        if (*esp) {
+            char primera[PAED_NAME_MAX];
+            snprintf(primera, sizeof(primera), "%.*s", (int)(esp - nombre), nombre);
+            modo_a_medias = modos_def(proc_def(primera)) != NULL;
+        }
+    }
+
+    if ((lleva_barra || modo_a_medias) &&
+        separar_modo(p, lineno, nombre, modo, sizeof(modo)) != 0)
+        return;
+
     if (!es_identificador(nombre)) {
         add_error(p, lineno, "nombre de procedimiento invalido: '%s'", nombre);
         return;
@@ -684,6 +849,7 @@ static void parse_instruction(PAEDProgram *p, char *linea, int lineno) {
     instr->salto = -1;
     strncpy(instr->proc, nombre, PAED_NAME_MAX - 1);
     instr->line = lineno;
+    snprintf(instr->modo, sizeof(instr->modo), "%s", modo);
 
     // 5. Argumentos
     char *partes[PAED_MAX_ARGS];
@@ -1337,6 +1503,25 @@ static int es_fin_accion(const char *linea) {
 //
 // Esta funcion ve UNA declaracion. Varias en el mismo renglon las parte
 // por_cada_sentencia, que es el que llama — misma regla que en el PROCESO.
+// ¿Esta linea abre un REGISTRO? `<nombre> = REGISTRO`, SIN tocar la linea.
+//
+// Hay una version que si la toca (parte el '=' para quedarse con el nombre) mas
+// abajo, en la rama que lo abre de verdad. Esta existe para poder PREGUNTAR
+// antes de decidir: mientras hay un registro abierto, la respuesta cambia el
+// error que corresponde.
+static int abre_registro(const char *linea) {
+    const char *ig = strchr(linea, '=');
+    if (!ig) return 0;
+
+    const char *r = ig + 1;
+    while (*r && isspace((unsigned char)*r)) r++;
+
+    size_t n = strlen(r);
+    while (n > 0 && isspace((unsigned char)r[n - 1])) n--;
+
+    return n == 8 && strncasecmp(r, "REGISTRO", 8) == 0;
+}
+
 static void parse_ambiente_una(PAEDProgram *p, char *linea, int lineno, PAEDRegistro **reg) {
     // ── Dentro de un REGISTRO ──
     if (*reg) {
@@ -1347,6 +1532,27 @@ static void parse_ambiente_una(PAEDProgram *p, char *linea, int lineno, PAEDRegi
             return;
         }
 
+        // Otro REGISTRO que arranca con uno todavia abierto. Lo que falta es el
+        // FIN_REGISTRO del anterior, y hay que decir ESO.
+        //
+        // Sin este caso, `alumno = REGISTRO` entraba como un CAMPO del registro
+        // de arriba, y el error era "falta ';' al final de la declaracion" en
+        // ESTA linea — mandando a mirar la unica linea que estaba bien, mientras
+        // el problema real quedaba varios renglones mas arriba.
+        if (abre_registro(linea)) {
+            add_error(p, lineno,
+                      "falta FIN_REGISTRO: el registro '%s' de la linea %d sigue "
+                      "abierto y aca ya empieza otro", (*reg)->name, (*reg)->line);
+            // Se lo cierra igual y la linea sigue viaje a la rama que abre el
+            // nuevo, mas abajo. Dejarlo abierto haria que todos los campos del
+            // segundo registro cayeran en el primero, y cada uno sumaria su
+            // propio error por algo que ya se reporto una vez.
+            *reg = NULL;
+        }
+    }
+
+    // ── Un campo del REGISTRO que sigue abierto ──
+    if (*reg) {
         if ((*reg)->campo_count >= PAED_MAX_CAMPOS) {
             add_error(p, lineno, "el registro '%s' tiene demasiados campos (maximo %d)",
                       (*reg)->name, PAED_MAX_CAMPOS);
@@ -1381,9 +1587,8 @@ static void parse_ambiente_una(PAEDProgram *p, char *linea, int lineno, PAEDRegi
 
     // ── ¿Abre un REGISTRO? `<nombre> = REGISTRO` ──
     // Se mira el '=' antes que nada: una declaracion normal lleva ':' y esta no.
-    char *igual = strchr(linea, '=');
-    if (igual && kw_es(trim(igual + 1), "REGISTRO")) {
-        *igual = '\0';
+    if (abre_registro(linea)) {
+        *strchr(linea, '=') = '\0';   // abre_registro ya garantizo que esta
         char *nombre = trim(linea);
 
         if (!es_identificador(nombre)) {
@@ -1426,6 +1631,90 @@ static void una_declaracion(PAEDProgram *p, char *texto, int lineno, void *ctx) 
 // las declaraciones del renglon.
 static void parse_ambiente(PAEDProgram *p, char *linea, int lineno, PAEDRegistro **reg) {
     por_cada_sentencia(p, linea, lineno, una_declaracion, reg);
+}
+
+// ── ¿Se puede leer y grabar en lo que el ABRIR dejo abierto? ──────────────────
+//
+// El modo no es un adorno: `ABRIR E/(arch)` dice que ese archivo es de SOLO
+// LECTURA (TEMAS_7-10_Registros_Archivos.md:132). Grabar ahi es exactamente el
+// error que el modo existe para evitar, y se puede ver SIN EJECUTAR NADA:
+// alcanza con juntar los ABRIR de cada archivo y mirar que se hace con el
+// despues.
+//
+// Solo se miran los archivos que ESCRIBIERON su modo. Sin modo no hay nada que
+// corroborar, y suponerle una direccion seria inventar media declaracion.
+//
+// Los modos de todos los ABRIR del mismo archivo se SUMAN: un archivo que se
+// abre E/, se cierra y se vuelve a abrir S/ se usa de las dos formas, y cada una
+// en su momento es correcta. Aca no hay orden ni flujo — eso lo sabe el
+// interprete, no el parser — asi que la duda juega a favor del programa.
+static const char *direccion(const char *letras) {
+    if (strcmp(letras, "E") == 0) return "ENTRADA";
+    if (strcmp(letras, "S") == 0) return "SALIDA";
+    return "ENTRADA-SALIDA";
+}
+
+static void chequear_modos(PAEDProgram *p) {
+    struct {
+        const char *arch;
+        char        letras[PAED_MODO_MAX];   // union de los modos de sus ABRIR
+        int         line;                    // el primer ABRIR que dijo el modo
+    } abiertos[PAED_MAX_DECLS];
+    int n = 0;
+
+    for (int i = 0; i < p->instr_count; i++) {
+        const PAEDInstr *in = &p->instrs[i];
+        if (in->kind != PAED_LLAMADA || in->forma != PAED_FORMA_ARCHIVO) continue;
+        if (strcasecmp(in->proc, "ABRIR") != 0 || !in->modo[0]) continue;
+
+        const char *arch = paed_get_arg(in, "archivo");
+        if (!arch) continue;
+
+        int k = 0;
+        while (k < n && strcmp(abiertos[k].arch, arch) != 0) k++;
+        if (k == n) {
+            if (n >= PAED_MAX_DECLS) break;
+            abiertos[n].arch      = arch;
+            abiertos[n].letras[0] = '\0';
+            abiertos[n].line      = in->line;
+            n++;
+        }
+
+        for (const char *c = in->modo; *c; c++) {
+            if (strchr(abiertos[k].letras, *c)) continue;
+            size_t largo = strlen(abiertos[k].letras);
+            if (largo + 1 >= sizeof(abiertos[k].letras)) break;
+            abiertos[k].letras[largo]     = *c;
+            abiertos[k].letras[largo + 1] = '\0';
+        }
+    }
+
+    if (n == 0) return;
+
+    for (int i = 0; i < p->instr_count; i++) {
+        const PAEDInstr *in = &p->instrs[i];
+        if (in->kind != PAED_LLAMADA || in->forma != PAED_FORMA_ARCHIVO) continue;
+
+        int lee   = strcasecmp(in->proc, "LEER")     == 0;
+        int graba = strcasecmp(in->proc, "ESCRIBIR") == 0;
+        if (!lee && !graba) continue;
+
+        const char *arch = paed_get_arg(in, "archivo");
+        if (!arch) continue;
+
+        int k = 0;
+        while (k < n && strcmp(abiertos[k].arch, arch) != 0) k++;
+        if (k == n) continue;   // se abrio sin modo: no hay nada que decir
+
+        char necesita = lee ? 'E' : 'S';
+        if (strchr(abiertos[k].letras, necesita)) continue;
+
+        add_error(p, in->line,
+                  "el archivo '%s' se abrio para %s en la linea %d: %s necesita que "
+                  "este abierto para %s (ABRIR %c/ o E/S)",
+                  arch, direccion(abiertos[k].letras), abiertos[k].line, in->proc,
+                  lee ? "ENTRADA" : "SALIDA", necesita);
+    }
 }
 
 typedef enum { FUERA, CABECERA, AMBIENTE, PROCESO, CERRADO } Bloque;
@@ -1488,6 +1777,15 @@ int paed_parse_file(const char *path, PAEDProgram *out) {
         if (kw_es(linea, "PROCESO")) {
             if (bloque != CABECERA && bloque != AMBIENTE)
                 add_error(out, lineno, "PROCESO fuera de lugar");
+            // Un REGISTRO no puede quedar abierto cruzando al PROCESO. Se dice
+            // ACA, en la linea donde se nota, y no al final del archivo: el
+            // ultimo renglon del .paed no tiene nada que ver con el problema.
+            if (reg) {
+                add_error(out, lineno,
+                          "falta FIN_REGISTRO: el registro '%s' de la linea %d quedo "
+                          "abierto y aca ya empieza el PROCESO", reg->name, reg->line);
+                reg = NULL;
+            }
             bloque = PROCESO;
             continue;
         }
@@ -1555,6 +1853,11 @@ int paed_parse_file(const char *path, PAEDProgram *out) {
     }
 
     fclose(f);
+
+    // Va con el programa completo en la mano: el ABRIR que decide si un archivo
+    // se puede grabar puede estar despues del ESCRIBIR que lo usa, y linea por
+    // linea eso no se puede saber.
+    chequear_modos(out);
 
     if (bloque == FUERA)  add_error(out, lineno, "falta ACCION <nombre> ES");
     if (bloque == CABECERA || bloque == AMBIENTE) add_error(out, lineno, "falta PROCESO");

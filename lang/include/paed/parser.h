@@ -23,6 +23,10 @@
 // Cuantos bloques se pueden anidar. 32 niveles de SI dentro de MIENTRAS dentro
 // de SI es mucho mas de lo que aguanta leer un humano.
 #define PAED_MAX_BLOQUES   32
+// El modo de apertura de ABRIR, ya normalizado: "E", "S" o "ES" (mas el '\0').
+// Se guarda SIN la barra y en mayuscula: como se escribio en el .paed —
+// 'E/', '/e', 'e/s' — es cosa del parser, no del resto del programa.
+#define PAED_MODO_MAX       4
 
 // El archivo con la definicion formal del lenguaje. Vive en el DIRECTORIO DE
 // DATOS, que se resuelve en runtime — ver paed_datadir().
@@ -115,6 +119,18 @@ typedef struct {
     PAEDArg args[PAED_MAX_ARGS];
     int     arg_count;
     int     line;
+
+    // Modo de apertura, para los procedimientos que lo admiten (ABRIR):
+    //
+    //     ABRIR E/(arch)     modo "E"    solo lectura
+    //     ABRIR S/(arch)     modo "S"    solo escritura
+    //     ABRIR E/S(arch)    modo "ES"   las dos
+    //
+    // Vacio cuando la instruccion no lo lleva. Va como campo y no como un
+    // argumento mas porque NO es un argumento: se escribe afuera de los
+    // parentesis, y meterlo en args[] correria de lugar al primer argumento,
+    // que es justo el que decide si la instruccion es de archivo o de consola.
+    char    modo[PAED_MODO_MAX];
 
     // Condicion de SI/MIENTRAS, o la expresion de la derecha de un ':='.
     // Se guarda CRUDA: todavia no hay evaluador de expresiones.

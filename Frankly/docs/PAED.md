@@ -942,6 +942,9 @@ de línea — nunca se ignora.
 | `FDA` / `NFDA` reconocidas (avisan que faltan archivos) | ✅ |
 | `LEER` de consola: escalar, `A[i]` y `p.campo` | ✅ §5.1 |
 | `ABRIR` / `CREAR` / `CERRAR` / `LEER` sobre ARCHIVOS en disco | parsean, no ejecutan |
+| Modo de apertura `ABRIR E/`, `S/`, `E/S` — sin importar espacios ni mayúsculas | ✅ |
+| Modo en un procedimiento que no lo admite (`LEER E/`) | ❌ rechazado, con mensaje propio |
+| `FIN_REGISTRO` faltante cuando ya empieza otro `REGISTRO` | ❌ rechazado, señalando el registro que quedó abierto |
 
 Lo que falta está en el KANBAN con su ticket. Esta tabla y el KANBAN se
 actualizan juntos.
