@@ -429,7 +429,7 @@ El separador es la decisión que más se nota: con `,` el archivo es portable, p
 Excel configurado en español lo abre con todo apelmazado en una sola columna — y
 la gracia de esto era abrirlo y ver la planilla.
 
-### 2.7 La organización del archivo — cátedra, NO implementado
+### 2.7 La organización del archivo — cátedra, implementado
 
 La declaración puede decir **cómo está organizado** el archivo:
 
@@ -464,6 +464,22 @@ Los campos nombrados **se validan contra el `REGISTRO`** del archivo: nombrar un
 campo que el registro no declara es error en el `AMBIENTE`. Sin esa validación la
 cláusula sería decorativa, y el error aparecería mucho más tarde, disfrazado de
 datos desordenados en la salida.
+
+**La validación va en una pasada aparte**, cuando el `AMBIENTE` ya se leyó
+entero — no dentro de la declaración. Un archivo puede declararse **antes** que
+su registro, y validar en el momento daría "campo inexistente" por el solo hecho
+de haber escrito las declaraciones en otro orden.
+
+El efecto se ve en los mensajes: los errores de la cláusula salen en orden de
+línea, y los de la clave después, aunque estén más arriba en el archivo.
+
+Repetir un campo en la clave también se rechaza: el segundo desempata lo que el
+primero ya dejó igual.
+
+Las organizaciones se definen en `data/sintaxis.json`, no en el C. El asistente
+del editor tiene que ofrecer exactamente las que el parser acepta, y con dos
+listas un día dicen cosas distintas — que es el bug que mató a la versión
+anterior (§0.1).
 
 El juego de archivos que arma un ejercicio, la baja lógica contra la física y el
 plan de implementación están en [`ARCHIVOS.md`](ARCHIVOS.md).
@@ -1122,7 +1138,9 @@ de línea — nunca se ignora.
 | `LEER` de consola: escalar, `A[i]` y `p.campo` | ✅ §5.1 |
 | `ABRIR` / `CREAR` / `CERRAR` / `LEER` sobre ARCHIVOS en disco | parsean, no ejecutan |
 | El archivo en disco como CSV con encabezado | ❌ decidido §2.6, sin implementar |
-| `ORDENADO POR` / `INDEXADO POR` en la declaración | ❌ cátedra §2.7, sin implementar |
+| `ORDENADO POR` / `INDEXADO POR` en la declaración | ✅ §2.7 |
+| Campo de la clave que el registro no declara | ❌ rechazado, en una pasada aparte §2.7 |
+| `INDEXADO POR` con más de un campo | ❌ rechazado |
 | `HV` (alto valor), `RE-ESCRIBIR`, `BORRAR` | ❌ cátedra, sin implementar |
 | Modo de apertura `ABRIR E/`, `S/`, `E/S` — sin importar espacios ni mayúsculas | ✅ §2.5 |
 | Modo en un procedimiento que no lo admite (`LEER E/`) | ❌ rechazado, con mensaje propio |

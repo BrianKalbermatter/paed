@@ -1298,6 +1298,153 @@ static int parse_bloque(PAEDProgram *p, char *linea, int lineno, Pila *pila) {
     return 0;   // no era una linea de bloque
 }
 
+// ── La organizacion de un archivo ─────────────────────────────────────────────
+//
+// Las organizaciones salen de sintaxis.json y NO de una lista en C, igual que
+// todo lo demas: el asistente del editor tiene que ofrecer las mismas que el
+// parser acepta, y con dos listas un dia dicen cosas distintas.
+static cJSON *organizaciones(void) {
+    cJSON *a = cJSON_GetObjectItem(g_syntax, "archivos");
+    if (!cJSON_IsObject(a)) return NULL;
+    cJSON *o = cJSON_GetObjectItem(a, "organizaciones");
+    return cJSON_IsArray(o) ? o : NULL;
+}
+
+static const char *org_str(cJSON *org, const char *campo) {
+    cJSON *v = cJSON_GetObjectItem(org, campo);
+    return cJSON_IsString(v) ? v->valuestring : NULL;
+}
+
+// ¿`resto` arranca con esta clausula? Devuelve lo que viene DESPUES, o NULL.
+//
+// La clausula son dos palabras ("ORDENADO POR") y entre ellas puede haber
+// cualquier cantidad de espacios, asi que no alcanza con comparar la cadena
+// entera: se van consumiendo palabra por palabra.
+//
+// Cada palabra tiene que terminar donde termina: sin ese recaudo 'ORDENADOS'
+// entraria por 'ORDENADO', que es el mismo agujero que tapa el isspace de
+// tipo_tras_DE con el 'DE' y 'DEUDA'.
+static char *tras_clausula(char *resto, const char *clausula) {
+    const char *c = clausula;
+
+    while (*c) {
+        while (isspace((unsigned char)*c)) c++;
+        size_t n = 0;
+        while (c[n] && !isspace((unsigned char)c[n])) n++;
+        if (n == 0) break;
+
+        while (isspace((unsigned char)*resto)) resto++;
+        if (strncasecmp(resto, c, n) != 0) return NULL;
+        if (resto[n] && !isspace((unsigned char)resto[n])) return NULL;
+
+        resto += n;
+        c     += n;
+    }
+    return trim(resto);
+}
+
+// Parte la clave en campos. El corpus separa con coma y ademas mete una 'y'
+// antes del ultimo: "clave, tipo_novedad y f_novedad".
+//
+// La 'y' se toma como separador SOLO cuando es palabra suelta. Sin ese
+// recaudo, un campo llamado 'hoy' o 'ley' se partiria al medio.
+static int partir_clave(PAEDProgram *p, int lineno, char *lista,
+                        PAEDDecl *d, const char *nombre) {
+    char *c = lista;
+
+    while (*c) {
+        while (isspace((unsigned char)*c) || *c == ',') c++;
+        if (!*c) break;
+
+        // La 'y' suelta es separador, no un campo.
+        if ((*c == 'y' || *c == 'Y') &&
+            (isspace((unsigned char)c[1]) || c[1] == ',')) {
+            c++;
+            continue;
+        }
+
+        size_t n = 0;
+        while (c[n] && c[n] != ',' && !isspace((unsigned char)c[n])) n++;
+
+        if (d->clave_count >= PAED_MAX_CLAVE) {
+            add_error(p, lineno,
+                      "la clave de '%s' tiene demasiados campos (maximo %d)",
+                      nombre, PAED_MAX_CLAVE);
+            return -1;
+        }
+
+        char campo[PAED_NAME_MAX];
+        snprintf(campo, sizeof(campo), "%.*s", (int)n, c);
+        if (!es_identificador(campo)) {
+            add_error(p, lineno, "'%s' no es un nombre de campo valido", campo);
+            return -1;
+        }
+        snprintf(d->clave[d->clave_count++], PAED_NAME_MAX, "%s", campo);
+        c += n;
+    }
+
+    if (d->clave_count == 0) {
+        add_error(p, lineno, "a '%s' le faltan los campos de la clave", nombre);
+        return -1;
+    }
+    return 0;
+}
+
+// Lee la clausula de organizacion que sigue al tipo, si la hay.
+//
+// `resto` es lo que quedo despues de 'ARCHIVO DE': el tipo y, opcionalmente,
+// la clausula. Recorta `resto` dejando solo el tipo.
+//
+// Sin este corte el tipo se comeria el renglon entero y `d->type` terminaria
+// valiendo "remedio ORDENADO POR farmacia" — un archivo de un tipo que no
+// existe, y el error saldria mucho despues hablando de otra cosa.
+static int separar_organizacion(PAEDProgram *p, int lineno, char *resto,
+                                PAEDDecl *d, const char *nombre) {
+    // El tipo es UNA palabra: termina en el primer espacio.
+    char *esp = resto;
+    while (*esp && !isspace((unsigned char)*esp)) esp++;
+    if (!*esp) return 0;              // sin clausula: secuencial
+
+    *esp = '\0';
+    char *cola = trim(esp + 1);
+    if (!*cola) return 0;
+
+    cJSON *orgs = organizaciones(), *o = NULL;
+    cJSON_ArrayForEach(o, orgs) {
+        const char *clausula = org_str(o, "clausula");
+        if (!clausula) continue;      // la secuencial no tiene clausula
+
+        char *lista = tras_clausula(cola, clausula);
+        if (!lista) continue;
+
+        const char *org = org_str(o, "nombre");
+        snprintf(d->org, sizeof(d->org), "%s", org ? org : "");
+
+        if (!*lista) {
+            add_error(p, lineno, "a '%s' le faltan los campos despues de '%s'",
+                      nombre, clausula);
+            return -1;
+        }
+        if (partir_clave(p, lineno, lista, d, nombre) != 0) return -1;
+
+        // 'INDEXADO POR' lleva UN campo: el indice es una sola clave de
+        // acceso, no una clave compuesta como la del ordenamiento.
+        const char *campos = org_str(o, "campos");
+        if (campos && strcmp(campos, "uno") == 0 && d->clave_count != 1) {
+            add_error(p, lineno,
+                      "'%s' lleva un solo campo y '%s' tiene %d",
+                      clausula, nombre, d->clave_count);
+            return -1;
+        }
+        return 0;
+    }
+
+    add_error(p, lineno,
+              "no se entiende '%s' en la declaracion de '%s': despues del tipo "
+              "solo va ORDENADO POR o INDEXADO POR", cola, nombre);
+    return -1;
+}
+
 // ── Parseo de una declaracion del AMBIENTE: nombre : TIPO; ────────────────────
 
 // Lee el `DE <tipo>` que llevan tanto ARREGLO como ARCHIVO y devuelve el tipo
@@ -1414,6 +1561,14 @@ static void parse_decl(PAEDProgram *p, char *linea, int lineno) {
         }
         if (!*base_p) {
             add_error(p, lineno, "al archivo '%s' le falta el tipo despues de 'DE'", nombre);
+            p->decl_count--;
+            return;
+        }
+
+        // Corta `base_p` dejando solo el tipo y se queda con la organizacion.
+        // Va ANTES de copiar el tipo, no despues: si no, el tipo ya se llevo
+        // la clausula adentro.
+        if (separar_organizacion(p, lineno, base_p, d, nombre) != 0) {
             p->decl_count--;
             return;
         }
@@ -1717,6 +1872,54 @@ static void chequear_modos(PAEDProgram *p) {
     }
 }
 
+// Los campos de la clave de un archivo tienen que existir en su REGISTRO.
+//
+// Va en una PASADA APARTE, cuando el AMBIENTE ya se leyo entero, y no adentro
+// de parse_decl: el archivo puede estar declarado ANTES que el registro, y en
+// ese momento el registro todavia no existe. Validar ahi daria "campo
+// inexistente" por el solo hecho de haber escrito las declaraciones en otro
+// orden.
+//
+// Sin esta validacion la clausula seria decorativa: se aceptaria cualquier
+// nombre inventado, y el sintoma recien aparece mucho despues, como datos
+// desordenados en la salida — que no se parece en nada a la causa.
+static void chequear_claves(PAEDProgram *p) {
+    for (int i = 0; i < p->decl_count; i++) {
+        PAEDDecl *d = &p->decls[i];
+        if (!d->es_archivo || d->clave_count == 0) continue;
+
+        const PAEDRegistro *reg = NULL;
+        for (int r = 0; r < p->registro_count; r++)
+            if (kw_es(p->registros[r].name, d->type)) { reg = &p->registros[r]; break; }
+
+        if (!reg) {
+            add_error(p, d->line,
+                      "'%s' no se puede ordenar por campos: '%s' no es un REGISTRO "
+                      "declarado en el AMBIENTE", d->name, d->type);
+            continue;
+        }
+
+        for (int k = 0; k < d->clave_count; k++) {
+            int existe = 0;
+            for (int c = 0; c < reg->campo_count && !existe; c++)
+                if (kw_es(reg->campos[c].name, d->clave[k])) existe = 1;
+
+            if (!existe) {
+                add_error(p, d->line, "el registro '%s' no tiene un campo '%s'",
+                          reg->name, d->clave[k]);
+                continue;
+            }
+            // Repetir un campo en la clave no ordena por nada nuevo: el
+            // segundo desempata lo que el primero ya dejo igual.
+            for (int j = 0; j < k; j++)
+                if (kw_es(d->clave[j], d->clave[k]))
+                    add_error(p, d->line,
+                              "el campo '%s' esta dos veces en la clave de '%s'",
+                              d->clave[k], d->name);
+        }
+    }
+}
+
 typedef enum { FUERA, CABECERA, AMBIENTE, PROCESO, CERRADO } Bloque;
 
 int paed_parse_file(const char *path, PAEDProgram *out) {
@@ -1857,6 +2060,7 @@ int paed_parse_file(const char *path, PAEDProgram *out) {
     // Va con el programa completo en la mano: el ABRIR que decide si un archivo
     // se puede grabar puede estar despues del ESCRIBIR que lo usa, y linea por
     // linea eso no se puede saber.
+    chequear_claves(out);
     chequear_modos(out);
 
     if (bloque == FUERA)  add_error(out, lineno, "falta ACCION <nombre> ES");

@@ -22,14 +22,7 @@ kanban-plugin: board
 
 ## Backlog — Fase 1: la declaración parsea
 
-- [ ] `data/sintaxis.json`: cláusulas `ORDENADO POR` e `INDEXADO POR` como modificadores de la declaración `ARCHIVO`, con las organizaciones nombradas (`secuencial`, `ordenado`, `indexado`) para que el asistente las lea de ahí y no de una lista en C #f1-declaracion
-- [ ] `PAEDDecl` en `lang/include/paed/parser.h`: campos `org`, `clave[PAED_MAX_CLAVE][PAED_NAME_MAX]` y `clave_count`, al lado de `es_archivo`. `PAED_MAX_CLAVE` en 4 — el corpus llega a `clave3, clave2, clave1, clave0` #f1-declaracion
-- [ ] `lang/src/parser.c`: parsear la cláusula después de resolver `ARCHIVO DE <tipo>`. Separar la lista por comas **y por la palabra `y`**, que el corpus usa antes del último campo (`ordenado por clave, tipo_novedad y f_novedad`) #f1-declaracion
-- [ ] Validar los campos de la clave contra el `REGISTRO` del archivo. Va **después** de parsear todo el `AMBIENTE`, no durante: el archivo puede declararse antes que el registro #f1-declaracion
-- [ ] `INDEXADO POR` con más de un campo es error: lleva uno solo #f1-declaracion
-- [ ] Test `archivos_organizacion.paed`: las tres formas (sin cláusula, `ORDENADO POR` con lista y `y` final, `INDEXADO POR`) #f1-declaracion
-- [ ] Test `archivos_organizacion_errores.paed`: campo que el registro no declara, `INDEXADO POR` con dos campos, cláusula sobre algo que no es archivo #f1-declaracion
-- [ ] Actualizar la tabla de `PAED.md §12` cuando esto pase a ✅ — la tabla y el KANBAN se actualizan juntos #f1-declaracion #docs
+- [ ] *(fase 1 COMPLETA — 29/29 tests. Sigue la fase 2, bloqueada por el separador del CSV)* #f1-declaracion
 
 ## Backlog — Fase 2: el CSV existe en disco
 
@@ -96,6 +89,14 @@ kanban-plugin: board
 
 ## Hecho
 
+- [x] `data/sintaxis.json`: cláusulas `ORDENADO POR` e `INDEXADO POR` como modificadores de la declaración `ARCHIVO`, con las organizaciones nombradas (`secuencial`, `ordenado`, `indexado`) para que el asistente las lea de ahí y no de una lista en C #f1-declaracion
+- [x] `PAEDDecl` en `lang/include/paed/parser.h`: campos `org`, `clave[PAED_MAX_CLAVE][PAED_NAME_MAX]` y `clave_count`, al lado de `es_archivo`. `PAED_MAX_CLAVE` en 4 — el corpus llega a `clave3, clave2, clave1, clave0` #f1-declaracion
+- [x] `lang/src/parser.c`: parsear la cláusula después de resolver `ARCHIVO DE <tipo>`. Separar la lista por comas **y por la palabra `y`**, que el corpus usa antes del último campo (`ordenado por clave, tipo_novedad y f_novedad`) #f1-declaracion
+- [x] Validar los campos de la clave contra el `REGISTRO` del archivo. Va **después** de parsear todo el `AMBIENTE`, no durante: el archivo puede declararse antes que el registro #f1-declaracion
+- [x] `INDEXADO POR` con más de un campo es error: lleva uno solo #f1-declaracion
+- [x] Test `archivos_organizacion.paed`: las tres formas (sin cláusula, `ORDENADO POR` con lista y `y` final, `INDEXADO POR`) #f1-declaracion
+- [x] Test `archivos_organizacion_errores.paed`: campo que el registro no declara, `INDEXADO POR` con dos campos, cláusula sobre algo que no es archivo #f1-declaracion
+- [x] Actualizar la tabla de `PAED.md §12` cuando esto pase a ✅ — la tabla y el KANBAN se actualizan juntos #f1-declaracion #docs
 - [x] **Modo de apertura de `ABRIR`: `E/`, `S/`, `E/S`** — sin importar espacios, mayúsculas ni de qué lado va la barra. Es campo de `PAEDInstr`, no argumento: va afuera del paréntesis y meterlo en `args[]` correría de lugar al primer argumento, que es el que decide si la operación es de archivo o de consola #f1-declaracion
 - [x] `LEER E/` y cualquier modo sobre un procedimiento que no lo admite: rechazado con mensaje propio #f1-declaracion
 - [x] `FIN_REGISTRO` faltante cuando ya empieza otro `REGISTRO`: antes entraba como campo del anterior y el error era "falta ';'" en la única línea que estaba bien #parser

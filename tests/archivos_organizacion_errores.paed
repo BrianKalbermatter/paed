@@ -1,0 +1,51 @@
+// Lo que NO se acepta en la organizacion de un archivo, y con que mensaje.
+//
+// Sin estos chequeos la clausula seria decorativa: se aceptaria cualquier campo
+// inventado y el sintoma recien aparece mucho despues, como datos desordenados
+// en la salida — que no se parece en nada a la causa.
+//
+// Este programa falla a proposito, y falla SEIS veces: el parser reporta todas
+// las declaraciones malas, no corta en la primera.
+//
+// Los errores NO salen ordenados por linea (21, 27, 30, y despues 18, 24, 33).
+// No es un bug: los tres primeros los caza el parser al leer la declaracion, y
+// los tres ultimos una pasada aparte que corre cuando el AMBIENTE ya se leyo
+// entero. Esa pasada existe porque un archivo puede declararse ANTES que su
+// registro, y validar en el momento daria error por el solo hecho de haber
+// escrito las declaraciones en otro orden.
+
+ACCION archivos_organizacion_errores ES
+    AMBIENTE
+        remedio = REGISTRO
+            farmacia: AN(10);
+            medicamento: AN(20);
+        FIN_REGISTRO
+
+        // Un campo que el registro no declara.
+        a: ARCHIVO DE remedio ORDENADO POR precio;
+
+        // El indice lleva UN campo, no una clave compuesta.
+        b: ARCHIVO DE remedio INDEXADO POR farmacia, medicamento;
+
+        // El mismo campo dos veces no ordena por nada nuevo.
+        c: ARCHIVO DE remedio ORDENADO POR farmacia, farmacia;
+
+        // La clausula esta pero los campos no.
+        d: ARCHIVO DE remedio ORDENADO POR;
+
+        // Una palabra que no es ninguna de las dos clausulas.
+        e: ARCHIVO DE remedio AGRUPADO POR farmacia;
+
+        // No se puede ordenar por campos si el tipo no es un REGISTRO.
+        f: ARCHIVO DE ENTERO ORDENADO POR farmacia;
+    PROCESO
+        ESCRIBIR("no deberia llegar aca");
+FIN_ACCION
+
+// ── SALIDA ESPERADA ─────────────────────────────────────────────────────────
+// tests/archivos_organizacion_errores.paed:28: error: 'INDEXADO POR' lleva un solo campo y 'b' tiene 2
+// tests/archivos_organizacion_errores.paed:34: error: a 'd' le faltan los campos despues de 'ORDENADO POR'
+// tests/archivos_organizacion_errores.paed:37: error: no se entiende 'AGRUPADO POR farmacia' en la declaracion de 'e': despues del tipo solo va ORDENADO POR o INDEXADO POR
+// tests/archivos_organizacion_errores.paed:25: error: el registro 'remedio' no tiene un campo 'precio'
+// tests/archivos_organizacion_errores.paed:31: error: el campo 'farmacia' esta dos veces en la clave de 'c'
+// tests/archivos_organizacion_errores.paed:40: error: 'f' no se puede ordenar por campos: 'ENTERO' no es un REGISTRO declarado en el AMBIENTE

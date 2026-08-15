@@ -113,7 +113,11 @@
         "VAR",
         "DE",
         "AN",
-        "N"
+        "N",
+        "ARCHIVO",
+        "ORDENADO",
+        "INDEXADO",
+        "POR"
       ]
     },
     {
@@ -340,5 +344,36 @@
       "retorna": "ENTERO",
       "descripcion": "redondeo al entero mas cercano"
     }
-  ]
+  ],
+  "archivos": {
+    "descripcion": "Como esta ORGANIZADO un archivo. La organizacion no tiene palabra clave propia: la dice la clausula que sigue al tipo. Sin clausula es secuencial. Vive aca y no en el C para que el parser y el asistente del editor lean la misma definicion.",
+    "organizaciones": [
+      {
+        "nombre": "secuencial",
+        "clausula": null,
+        "campos": "ninguno",
+        "descripcion": "secuencial, sin orden garantizado",
+        "implementado": true
+      },
+      {
+        "nombre": "ordenado",
+        "clausula": "ORDENADO POR",
+        "campos": "lista",
+        "descripcion": "secuencial, ordenado por una clave que puede ser compuesta",
+        "implementado": true
+      },
+      {
+        "nombre": "indexado",
+        "clausula": "INDEXADO POR",
+        "campos": "uno",
+        "descripcion": "acceso directo por clave",
+        "implementado": false
+      }
+    ],
+    "separadores_clave": [
+      ",",
+      "y"
+    ],
+    "fuente": "'ordenado por' aparece 68 veces en el corpus de la catedra, dentro del AMBIENTE y como codigo: 'movi: archivo de novedades ordenado por clave, tipo_novedad y f_novedad', 'Arch: archivo de reg ordenado por clave3, clave2, clave1, clave0', 'arch_mae: Archivo de Formato_mae indexado por clave'. Las palabras ARCHIVO SECUENCIAL / ARCHIVO INDEXADO aparecen en los ENUNCIADOS, nunca en la declaracion, y 'Archivo SECUENCIAL (no ordenado)' confirma que la forma sin clausula es legitima. El separador de la lista es la coma, y el corpus agrega una 'y' antes del ultimo campo."
+  }
 }

@@ -27,6 +27,9 @@
 // Se guarda SIN la barra y en mayuscula: como se escribio en el .paed —
 // 'E/', '/e', 'e/s' — es cosa del parser, no del resto del programa.
 #define PAED_MODO_MAX       4
+// Cuantos campos puede tener la clave de un archivo. El corpus llega a cuatro
+// ('ordenado por clave3, clave2, clave1, clave0'), asi que 4 alcanza y sobra.
+#define PAED_MAX_CLAVE      4
 
 // El archivo con la definicion formal del lenguaje. Vive en el DIRECTORIO DE
 // DATOS, que se resuelve en runtime — ver paed_datadir().
@@ -59,6 +62,22 @@ typedef struct {
     // (pedir datos por consola): las dos formas se escriben igual y tienen
     // dos argumentos, asi que lo unico que las separa es esta declaracion.
     int  es_archivo;
+
+    // Como esta ORGANIZADO el archivo, y cual es su clave:
+    //
+    //     arch: ARCHIVO DE reg;                        org ""          0 campos
+    //     arch: ARCHIVO DE reg ORDENADO POR a, b;      org "ordenado"  2 campos
+    //     arch: ARCHIVO DE reg INDEXADO POR clave;     org "indexado"  1 campo
+    //
+    // `org` guarda el NOMBRE de la organizacion tal como la declara
+    // sintaxis.json, no un numero: las organizaciones se definen alla, y un
+    // enum aca obligaria a tocar el C cada vez que se agregue una.
+    //
+    // Vacio significa secuencial sin orden — que es una organizacion valida y
+    // no un olvido: el corpus escribe 'Archivo SECUENCIAL (no ordenado)'.
+    char org[PAED_NAME_MAX];
+    char clave[PAED_MAX_CLAVE][PAED_NAME_MAX];
+    int  clave_count;
 
     // Secuencia: `sec: SECUENCIA DE CARACTER;`. Cumple el mismo papel que
     // es_archivo — es la declaracion, y solo ella, la que hace que
