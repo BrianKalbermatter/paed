@@ -834,7 +834,27 @@ int interp_exec(const PAEDProgram *prog) {
     // Se sigue el hilo con un indice en vez de recorrer el array de punta a
     // punta: el flujo ya no es lineal. Esto es, literalmente, un contador de
     // programa.
-    while (i >= 0 && i < prog->instr_count) {
+    //
+    // El `fallos == 0` CORTA la ejecucion en el primer error de runtime, y esa
+    // asimetria con el parser es a proposito:
+    //
+    //   - Al PARSEAR los errores son independientes. Que falte un ';' en la
+    //     linea 10 no tiene nada que ver con que falte un FIN_SI en la 40, asi
+    //     que reportarlos todos ahorra una vuelta entera de corregir y volver.
+    //
+    //   - Al EJECUTAR son dependientes. Despues del primero el estado ya quedo
+    //     sucio — variables con valores viejos, un archivo sin abrir, un
+    //     registro a medio llenar — y lo que venga despues es probablemente
+    //     CONSECUENCIA del primero, no un problema nuevo.
+    //
+    // Lo que se evitaba dejandolo seguir era peor que un error de mas: un LEER
+    // que fallaba dejaba el registro con el valor ANTERIOR, y el programa
+    // seguia imprimiendo totales que parecian razonables y estaban mal. Ninguno
+    // de esos numeros era un error reportado: eran mentiras silenciosas.
+    //
+    // La condicion se mira ARRIBA del ciclo, asi que la instruccion que fallo
+    // alcanza a reportar su error y recien la vuelta siguiente no arranca.
+    while (i >= 0 && i < prog->instr_count && fallos == 0) {
         if (++pasos > PAED_MAX_PASOS) {
             fprintf(stderr, "%s: error: el programa paso los %d pasos sin terminar "
                             "(bucle infinito?)\n", prog->path, PAED_MAX_PASOS);
@@ -933,6 +953,14 @@ int interp_exec(const PAEDProgram *prog) {
 
         if (!ok && fallos > PAED_MAX_ERRORS) break;
     }
+
+    // Cortar sin decir por que es brusco: se ve un error, el programa termina,
+    // y no se sabe si termino porque llego al final o porque se corto. Solo se
+    // avisa cuando quedaban instrucciones — si el error fue en la ultima, no
+    // hay nada que aclarar.
+    if (fallos > 0 && i >= 0 && i < prog->instr_count)
+        fprintf(stderr, "%s: se corta la ejecucion: despues del primer error "
+                        "el estado ya no es confiable\n", prog->path);
 
     return fallos == 0 ? 0 : -1;
 }

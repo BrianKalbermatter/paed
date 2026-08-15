@@ -12,6 +12,18 @@
 // todavia no existe. Que la salida sean los errores del INTERPRETE y no del
 // PARSER es justamente lo que prueba este test — si el modo no se entendiera,
 // el error diria "nombre de procedimiento invalido".
+//
+// OJO — CORTADO POR EL CORTE DE EJECUCION (2026-08-14).
+//
+// Este archivo era un CATALOGO: probaba varios mensajes de error de una sola
+// corrida. Desde que un error de runtime corta la ejecucion, solo se verifica
+// el PRIMERO, y los de mas abajo quedaron sin probar.
+//
+// No se partio en varios archivos a proposito: casi todos esos errores son
+// ESTATICOS reportados tarde (el parser ya sabe que '"hola"' no es un destino y
+// que un registro no tiene tal campo). El arreglo de fondo es moverlos al
+// parser, donde reportar de a muchos SI corresponde — y ahi el catalogo vuelve
+// a funcionar solo. Esta en el KANBAN.
 
 ACCION modos_de_apertura ES
     AMBIENTE
@@ -41,12 +53,5 @@ ACCION modos_de_apertura ES
 FIN_ACCION
 
 // ── SALIDA ESPERADA ─────────────────────────────────────────────────────────
-// tests/archivos_modos.paed:29: error: no existe el archivo 'entra.csv': hay que crearlo con CREAR(entra) antes de abrirlo
-// tests/archivos_modos.paed:30: error: hay que abrir 'entra' antes de leerlo
-// tests/archivos_modos.paed:32: error: no existe el archivo 'sale.csv': hay que crearlo con CREAR(sale) antes de abrirlo
-// tests/archivos_modos.paed:33: error: hay que abrir 'sale' antes de grabarlo
-// tests/archivos_modos.paed:35: error: no existe el archivo 'ambos.csv': hay que crearlo con CREAR(ambos) antes de abrirlo
-// tests/archivos_modos.paed:36: error: hay que abrir 'ambos' antes de leerlo
-// tests/archivos_modos.paed:37: error: hay que abrir 'ambos' antes de grabarlo
-// tests/archivos_modos.paed:39: error: no existe el archivo 'viejo.csv': hay que crearlo con CREAR(viejo) antes de abrirlo
-// tests/archivos_modos.paed:40: error: hay que abrir 'viejo' antes de grabarlo
+// tests/archivos_modos.paed:41: error: no existe el archivo 'entra.csv': hay que crearlo con CREAR(entra) antes de abrirlo
+// tests/archivos_modos.paed: se corta la ejecucion: despues del primer error el estado ya no es confiable

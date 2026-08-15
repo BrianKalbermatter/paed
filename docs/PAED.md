@@ -929,6 +929,25 @@ implementación:
 
 ## 9. Errores
 
+**Al parsear se reportan TODOS; al ejecutar se corta en el primero.** No es una
+inconsistencia:
+
+| | Los errores son | Y entonces |
+|---|---|---|
+| **parseando** | independientes entre sí | conviene verlos todos de una vez |
+| **ejecutando** | dependientes: el estado ya quedó sucio | lo que sigue es consecuencia, no información |
+
+Dejarlo seguir era peor que un error de más. Un `LEER` que falla deja el
+registro con el valor **anterior**, y el programa sigue imprimiendo totales que
+parecen razonables y están mal — números que nadie reportó como error.
+
+Cuando corta lo dice:
+
+```
+error: se corta la ejecucion: despues del primer error el estado ya no es confiable
+```
+
+
 El parser **nunca ignora en silencio**. Formato clang:
 
 ```

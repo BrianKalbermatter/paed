@@ -20,6 +20,18 @@
 // estan implementados. Lo que se prueba es que el parser elija bien la forma, y
 // eso se ve en el contraste: las tres lineas de archivo fallan, y las dos de
 // consola leen sus datos del bloque ENTRADA y siguen de largo.
+//
+// OJO — CORTADO POR EL CORTE DE EJECUCION (2026-08-14).
+//
+// Este archivo era un CATALOGO: probaba varios mensajes de error de una sola
+// corrida. Desde que un error de runtime corta la ejecucion, solo se verifica
+// el PRIMERO, y los de mas abajo quedaron sin probar.
+//
+// No se partio en varios archivos a proposito: casi todos esos errores son
+// ESTATICOS reportados tarde (el parser ya sabe que '"hola"' no es un destino y
+// que un registro no tiene tal campo). El arreglo de fondo es moverlos al
+// parser, donde reportar de a muchos SI corresponde — y ahi el catalogo vuelve
+// a funcionar solo. Esta en el KANBAN.
 
 ACCION archivos_formas ES
     AMBIENTE
@@ -64,8 +76,5 @@ FIN_ACCION
 // 1.62
 
 // ── SALIDA ESPERADA ─────────────────────────────────────────────────────────
-// tests/archivos_formas.paed:45: error: hay que abrir 'maestro' antes de leerlo
-// tests/archivos_formas.paed:46: error: hay que abrir 'movim' antes de leerlo
-// tests/archivos_formas.paed:47: error: hay que abrir 'salida' antes de grabarlo
-// Ana Lopez tiene 41 y mide 1.62
-// el ESCRIBIR de consola sigue funcionando
+// tests/archivos_formas.paed:57: error: hay que abrir 'maestro' antes de leerlo
+// tests/archivos_formas.paed: se corta la ejecucion: despues del primer error el estado ya no es confiable
