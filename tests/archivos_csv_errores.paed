@@ -1,0 +1,49 @@
+// Lo que el CSV ataja, y con que mensaje.
+//
+// El encabezado no es adorno: se compara contra el REGISTRO al abrir. Sin el,
+// abrir el archivo equivocado se lee SIN PROTESTAR y devuelve basura con forma
+// de dato valido — el programa no falla, da mal, que es mucho peor que fallar.
+//
+// OJO con el alcance real de esa proteccion: como el .csv se llama IGUAL que la
+// variable, desde PAED no se puede abrir "el archivo equivocado" — cada
+// variable tiene el suyo y nadie puede nombrar el de otra. Lo que el encabezado
+// ataja es el otro caso, que es el que de verdad va a pasar: abriste el .csv en
+// la planilla, le tocaste el nombre a una columna, y ahora el archivo ya no es
+// el que el REGISTRO describe.
+//
+// Ese caso no se puede provocar desde un .paed, asi que este test cubre lo que
+// si: la conversion por tipo declarado y el LEER despues del fin.
+
+ACCION archivos_csv_errores ES
+    AMBIENTE
+        venta = REGISTRO
+            codigo: ENTERO;
+            importe: REAL;
+        FIN_REGISTRO
+
+        datos: ARCHIVO DE venta;
+        v: venta;
+    PROCESO
+        CREAR(datos);
+        v.codigo := 7; v.importe := 150.5;
+        ESCRIBIR(datos, v);
+        CERRAR(datos);
+
+        ESCRIBIR("el archivo quedo con encabezado codigo;importe");
+
+        // Leer un ENTERO donde el archivo tiene texto seria un cero silencioso
+        // si el tipo lo decidiera el dato. Lo decide la DECLARACION.
+        ABRIR E/(datos);
+        LEER(datos, v);
+        ESCRIBIR("leido: ", v.codigo, " ", v.importe);
+
+        // Leer despues del fin es error, no un dato mas: el bucle corta con
+        // NFDA, asi que un LEER de mas significa que el corte esta mal escrito.
+        LEER(datos, v);
+        LEER(datos, v);
+FIN_ACCION
+
+// ── SALIDA ESPERADA ─────────────────────────────────────────────────────────
+// el archivo quedo con encabezado codigo;importe
+// leido: 7 150.5
+// tests/archivos_csv_errores.paed:43: error: 'datos' ya se termino: hay un LEER despues de que FDA(datos) quedo en verdadero

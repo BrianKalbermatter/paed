@@ -1820,7 +1820,19 @@ static void chequear_modos(PAEDProgram *p) {
     for (int i = 0; i < p->instr_count; i++) {
         const PAEDInstr *in = &p->instrs[i];
         if (in->kind != PAED_LLAMADA || in->forma != PAED_FORMA_ARCHIVO) continue;
-        if (strcasecmp(in->proc, "ABRIR") != 0 || !in->modo[0]) continue;
+
+        // CREAR tambien ABRE el archivo, y lo abre para SALIDA — el archivo
+        // nace vacio, no hay nada que leerle.
+        //
+        // Sin este caso, un programa que CREA un archivo, lo carga, lo cierra y
+        // despues lo vuelve a abrir con ABRIR E/ para recorrerlo daba error en
+        // todos sus ESCRIBIR: el chequeo veia un solo ABRIR, el de lectura, y
+        // creia que el archivo nunca se habia abierto para grabar. Es el patron
+        // mas comun de todos, y estaba rechazado.
+        const char *letras = NULL;
+        if (strcasecmp(in->proc, "CREAR") == 0)      letras = "S";
+        else if (strcasecmp(in->proc, "ABRIR") == 0) letras = in->modo;
+        if (!letras || !letras[0]) continue;
 
         const char *arch = paed_get_arg(in, "archivo");
         if (!arch) continue;
@@ -1835,7 +1847,7 @@ static void chequear_modos(PAEDProgram *p) {
             n++;
         }
 
-        for (const char *c = in->modo; *c; c++) {
+        for (const char *c = letras; *c; c++) {
             if (strchr(abiertos[k].letras, *c)) continue;
             size_t largo = strlen(abiertos[k].letras);
             if (largo + 1 >= sizeof(abiertos[k].letras)) break;

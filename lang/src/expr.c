@@ -1,5 +1,6 @@
 #include "paed/expr.h"
 #include "paed/secuencia.h"   // FDS y NFDS preguntan por el estado de una secuencia
+#include "paed/archivo.h"     // FDA y NFDA, por el de un archivo
 
 #include <ctype.h>
 #include <math.h>
@@ -353,23 +354,41 @@ static Valor primario(Ctx *c) {
                 return LOG(quiere_fin ? s->fin : !s->fin);
             }
 
-            int sin_soporte =
-                strcmp(nombre, "FDA")  == 0 || strcmp(nombre, "NFDA") == 0;
+            // FDA(arch) y NFDA(arch) preguntan por el ESTADO de un archivo,
+            // igual que FDS por el de una secuencia: el argumento se lee como
+            // NOMBRE y no se evalua, porque 'arch' no tiene ningun valor.
+            if (strcasecmp(nombre, "FDA") == 0 || strcasecmp(nombre, "NFDA") == 0) {
+                int quiere_fin = (strcasecmp(nombre, "FDA") == 0);
 
-            if (sin_soporte) {
                 espacios(c);
-                if (*c->p != ')') {
-                    Ctx basura = *c;
-                    basura.fallo = 1;
-                    eval_o(&basura);
-                    c->p = basura.p;
+                char arch[PAED_NAME_MAX];
+                size_t k = 0;
+                while (isalnum((unsigned char)*c->p) || *c->p == '_') {
+                    if (k < PAED_NAME_MAX - 1) arch[k++] = *c->p;
+                    c->p++;
                 }
+                arch[k] = '\0';
                 espacios(c);
-                if (*c->p == ')') c->p++;
 
-                falla(c, "%s() necesita archivos en disco, que todavia no existen "
-                         "en el interprete", nombre);
-                return LOG(0);
+                if (*c->p != ')') {
+                    falla(c, "%s lleva el nombre de un archivo: %s(arch)", nombre, nombre);
+                    return LOG(0);
+                }
+                c->p++;
+
+                if (!k) { falla(c, "%s necesita el nombre de un archivo", nombre); return LOG(0); }
+
+                Archivo *a = arch_buscar(arch);
+                if (!a) {
+                    falla(c, "'%s' no es un archivo declarado en el AMBIENTE", arch);
+                    return LOG(0);
+                }
+                if (!a->abierto && !a->cerrado) {
+                    falla(c, "hay que abrir '%s' antes de preguntarle por el fin: "
+                             "falta ABRIR(%s)", arch, arch);
+                    return LOG(0);
+                }
+                return LOG(quiere_fin ? a->fin : !a->fin);
             }
 
             Valor arg = {0};

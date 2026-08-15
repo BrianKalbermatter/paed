@@ -1,6 +1,7 @@
 #include "paed/interpreter.h"
 #include "paed/expr.h"
 #include "paed/secuencia.h"
+#include "paed/archivo.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -93,6 +94,22 @@ void interp_set_secuencia(PaedSecuenciaDatos fn, void *ud) {
     secdatos_fn = fn;
     secdatos_ud = ud;
 }
+
+// La carpeta donde vive el .paed. El .csv se crea al lado: un parcial es una
+// carpeta con el programa y sus datos.
+//
+// Se miran las dos barras porque el mismo binario se cross-compila para
+// Windows, donde el separador es '\\'.
+static void dir_del_programa(const char *path, char *out, size_t n) {
+    const char *ultima = NULL;
+    for (const char *c = path; *c; c++)
+        if (*c == '/' || *c == '\\') ultima = c;
+
+    if (!ultima) { out[0] = '\0'; return; }
+    snprintf(out, n, "%.*s", (int)(ultima - path), path);
+}
+
+static const PAEDRegistro *registro_de(const PAEDProgram *prog, const char *tipo);
 
 // ¿Sirve como destino de un LEER? Tiene que ser un nombre: 'x', o 'p.campo'.
 // Descarta LEER("hola") y LEER(3), que no tienen donde guardar nada.
@@ -409,6 +426,155 @@ static int exec_secuencia(const PAEDProgram *prog, const PAEDInstr *in, const ch
     return grabar_secuencia(prog, in);
 }
 
+// ── Archivos ─────────────────────────────────────────────────────────────────
+
+static int arch_falla(const PAEDProgram *prog, const PAEDInstr *in) {
+    runtime_error(prog, in, arch_error());
+    return -1;
+}
+
+static Archivo *archivo_de(const PAEDProgram *prog, const PAEDInstr *in) {
+    const char *nombre = paed_get_arg(in, "archivo");
+    if (!nombre) {
+        runtime_error(prog, in, "falta el nombre del archivo");
+        return NULL;
+    }
+    Archivo *a = arch_buscar(nombre);
+    if (!a) {
+        char msg[PAED_MSG_MAX];
+        snprintf(msg, sizeof(msg), "'%s' no es un archivo declarado en el AMBIENTE", nombre);
+        runtime_error(prog, in, msg);
+        return NULL;
+    }
+    return a;
+}
+
+// ¿El campo guarda un numero? Lo dice el TIPO declarado, no el dato.
+//
+// Es al reves que en LEER de consola, donde el tipo lo decide el dato porque no
+// hay ninguna declaracion de donde agarrarse. Aca el REGISTRO ya lo dijo, y
+// respetarlo es lo que hace que un ENTERO con 'abc' adentro sea un error de
+// lectura y no un cero silencioso.
+static int campo_es_numero(const char *tipo) {
+    return strncasecmp(tipo, "ENTERO", 6) == 0 ||
+           strncasecmp(tipo, "REAL",   4) == 0 ||
+           (toupper((unsigned char)tipo[0]) == 'N' && tipo[1] == '(');
+}
+
+// El REGISTRO que se lee desde el archivo, o hacia el. Es el segundo argumento.
+static const PAEDRegistro *registro_del_arg(const PAEDProgram *prog, const PAEDInstr *in,
+                                            const char **var) {
+    if (in->arg_count < 2) {
+        runtime_error(prog, in, "falta el registro: se escribe LEER(archivo, registro)");
+        return NULL;
+    }
+    *var = in->args[1].val;
+
+    const PAEDDecl *d = NULL;
+    for (int i = 0; i < prog->decl_count; i++)
+        if (strcasecmp(prog->decls[i].name, *var) == 0) { d = &prog->decls[i]; break; }
+
+    if (!d) {
+        char msg[PAED_MSG_MAX];
+        snprintf(msg, sizeof(msg), "'%s' no esta declarado en el AMBIENTE", *var);
+        runtime_error(prog, in, msg);
+        return NULL;
+    }
+
+    const PAEDRegistro *r = registro_de(prog, d->type);
+    if (!r) {
+        char msg[PAED_MSG_MAX];
+        snprintf(msg, sizeof(msg),
+                 "'%s' es de tipo '%s', que no es un REGISTRO: un archivo se lee "
+                 "hacia un registro", *var, d->type);
+        runtime_error(prog, in, msg);
+        return NULL;
+    }
+    return r;
+}
+
+static int leer_archivo(const PAEDProgram *prog, const PAEDInstr *in, Archivo *a) {
+    const char *var = NULL;
+    const PAEDRegistro *r = registro_del_arg(prog, in, &var);
+    if (!r) return -1;
+
+    char valores[PAED_MAX_CAMPOS][PAED_VAL_MAX];
+    int  hay = 0;
+    if (arch_leer(a, valores, &hay) != 0) return arch_falla(prog, in);
+
+    // Sin fila no se toca el registro: conserva lo que tenia. Es lo que espera
+    // el bucle de AED, donde el LEER de abajo es el que pone FDA en verdadero.
+    if (!hay) return 0;
+
+    for (int c = 0; c < r->campo_count; c++) {
+        char completo[PAED_NAME_MAX];
+        snprintf(completo, sizeof(completo), "%s.%s", var, r->campos[c].name);
+
+        Valor v = {0};
+        if (campo_es_numero(r->campos[c].type)) {
+            char *fin = NULL;
+            v.tipo = VAL_NUM;
+            v.num  = strtod(valores[c], &fin);
+            while (fin && isspace((unsigned char)*fin)) fin++;
+
+            if (!valores[c][0] || (fin && *fin)) {
+                char msg[PAED_MSG_MAX];
+                snprintf(msg, sizeof(msg),
+                         "en el archivo '%s' el campo '%s' dice '%s' y esta declarado %s",
+                         a->nombre, r->campos[c].name, valores[c], r->campos[c].type);
+                runtime_error(prog, in, msg);
+                return -1;
+            }
+        } else {
+            v.tipo = VAL_TEXTO;
+            snprintf(v.texto, sizeof(v.texto), "%s", valores[c]);
+        }
+
+        if (env_set(&env, completo, v) != 0) {
+            runtime_error(prog, in, env.error);
+            return -1;
+        }
+    }
+    return 0;
+}
+
+static int grabar_archivo(const PAEDProgram *prog, const PAEDInstr *in, Archivo *a) {
+    const char *var = NULL;
+    const PAEDRegistro *r = registro_del_arg(prog, in, &var);
+    if (!r) return -1;
+
+    char valores[PAED_MAX_CAMPOS][PAED_VAL_MAX];
+    for (int c = 0; c < r->campo_count; c++) {
+        char completo[PAED_NAME_MAX];
+        snprintf(completo, sizeof(completo), "%s.%s", var, r->campos[c].name);
+
+        const Valor *v = env_buscar(&env, completo);
+        if (!v) {
+            char msg[PAED_MSG_MAX];
+            snprintf(msg, sizeof(msg), "el campo '%s' no tiene valor todavia", completo);
+            runtime_error(prog, in, msg);
+            return -1;
+        }
+        valor_a_texto(v, valores[c], PAED_VAL_MAX);
+    }
+
+    if (arch_grabar(a, valores) != 0) return arch_falla(prog, in);
+    return 0;
+}
+
+static int exec_archivo(const PAEDProgram *prog, const PAEDInstr *in, const char *p) {
+    Archivo *a = archivo_de(prog, in);
+    if (!a) return -1;
+
+    // El modo viene de la instruccion (ABRIR E/), y el parser ya verifico que
+    // sea uno valido y que el procedimiento lo admita.
+    if (strcasecmp(p, "CREAR")  == 0) return arch_crear(a, in->modo)  != 0 ? arch_falla(prog, in) : 0;
+    if (strcasecmp(p, "ABRIR")  == 0) return arch_abrir(a, in->modo)  != 0 ? arch_falla(prog, in) : 0;
+    if (strcasecmp(p, "CERRAR") == 0) return arch_cerrar(a)           != 0 ? arch_falla(prog, in) : 0;
+    if (strcasecmp(p, "LEER")   == 0) return leer_archivo(prog, in, a);
+    return grabar_archivo(prog, in, a);
+}
+
 static int exec_instr(const PAEDProgram *prog, const PAEDInstr *in) {
     const char *p = in->proc;
 
@@ -439,20 +605,16 @@ static int exec_instr(const PAEDProgram *prog, const PAEDInstr *in) {
     // ABRIR y CERRAR van PRIMERO: tambien operan sobre un archivo, asi que el
     // parser les pone forma ARCHIVO, y si el chequeo de abajo fuera antes
     // dirian que "no graban" — que no es lo que hacen.
-    if (strcasecmp(p, "ABRIR")  == 0 || strcasecmp(p, "CERRAR") == 0 ||
-        strcasecmp(p, "CREAR") == 0) {
-        char msg[PAED_MSG_MAX];
-        snprintf(msg, sizeof(msg),
-                 "%s todavia no esta implementado: por ahora solo se valida la declaracion", p);
-        runtime_error(prog, in, msg);
-        return -1;
-    }
+    if (in->forma == PAED_FORMA_ARCHIVO &&
+        (strcasecmp(p, "ABRIR")  == 0 || strcasecmp(p, "CERRAR") == 0 ||
+         strcasecmp(p, "CREAR")  == 0 || strcasecmp(p, "LEER")   == 0 ||
+         strcasecmp(p, "ESCRIBIR") == 0))
+        return exec_archivo(prog, in, p);
 
-    if (in->forma == PAED_FORMA_ARCHIVO) {
+    if (strcasecmp(p, "ABRIR") == 0) {
         char msg[PAED_MSG_MAX];
         snprintf(msg, sizeof(msg),
-                 "%s(archivo, registro) todavia no %s: falta el manejo de archivos en disco",
-                 p, strcasecmp(p, "LEER") == 0 ? "avanza el archivo" : "graba");
+                 "ABRIR trabaja sobre un archivo declarado en el AMBIENTE");
         runtime_error(prog, in, msg);
         return -1;
     }
@@ -575,6 +737,41 @@ static int declarar_ambiente(const PAEDProgram *prog) {
             continue;
         }
 
+        // Un ARCHIVO se anota en la tabla de archivos y NO se aplana en
+        // variables. Va antes de la rama de registros a proposito: sin este
+        // `continue`, `arch: ARCHIVO DE venta` creaba las variables
+        // "arch.codigo" y "arch.precio" como si el archivo fuera un registro en
+        // memoria — y un archivo no tiene campos, los tiene el registro que se
+        // lee DESDE el.
+        if (d->es_archivo) {
+            char dir[PAED_PATH_MAX];
+            dir_del_programa(prog->path, dir, sizeof(dir));
+
+            Archivo *a = arch_declarar(d->name, dir);
+            if (!a) {
+                fprintf(stderr, "%s:%d: error: %s\n", prog->path, d->line, arch_error());
+                fallos++;
+                continue;
+            }
+
+            // Los campos del REGISTRO son el encabezado del CSV y el orden de
+            // las columnas. Si el tipo no es un registro, el archivo queda sin
+            // campos y ABRIR/CREAR lo dicen — no es error declararlo, es error
+            // usarlo.
+            const PAEDRegistro *r = registro_de(prog, d->type);
+            if (!r) continue;
+
+            char campos[PAED_MAX_CAMPOS][PAED_NAME_MAX];
+            for (int c = 0; c < r->campo_count; c++)
+                snprintf(campos[c], PAED_NAME_MAX, "%s", r->campos[c].name);
+
+            if (arch_set_campos(a, campos, r->campo_count) != 0) {
+                fprintf(stderr, "%s:%d: error: %s\n", prog->path, d->line, arch_error());
+                fallos++;
+            }
+            continue;
+        }
+
         // Variable de tipo REGISTRO: se APLANA en una variable por campo.
         // `pori: vector2` con campos vx,vy pasa a ser "pori.vx" y "pori.vy".
         //
@@ -619,6 +816,7 @@ int interp_exec(const PAEDProgram *prog) {
     // se guarda) no pueden compartir la posicion de lectura de una secuencia:
     // la segunda arrancaria donde quedo la primera.
     sec_reset();
+    arch_reset();
     int fallos_ambiente = declarar_ambiente(prog);
     if (fallos_ambiente > 0) return -1;   // sin sus arreglos, el programa no corre
 

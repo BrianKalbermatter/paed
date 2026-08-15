@@ -41,12 +41,12 @@ ACCION modos_de_apertura ES
 FIN_ACCION
 
 // ── SALIDA ESPERADA ─────────────────────────────────────────────────────────
-// tests/archivos_modos.paed:29: error: ABRIR todavia no esta implementado: por ahora solo se valida la declaracion
-// tests/archivos_modos.paed:30: error: LEER(archivo, registro) todavia no avanza el archivo: falta el manejo de archivos en disco
-// tests/archivos_modos.paed:32: error: ABRIR todavia no esta implementado: por ahora solo se valida la declaracion
-// tests/archivos_modos.paed:33: error: ESCRIBIR(archivo, registro) todavia no graba: falta el manejo de archivos en disco
-// tests/archivos_modos.paed:35: error: ABRIR todavia no esta implementado: por ahora solo se valida la declaracion
-// tests/archivos_modos.paed:36: error: LEER(archivo, registro) todavia no avanza el archivo: falta el manejo de archivos en disco
-// tests/archivos_modos.paed:37: error: ESCRIBIR(archivo, registro) todavia no graba: falta el manejo de archivos en disco
-// tests/archivos_modos.paed:39: error: ABRIR todavia no esta implementado: por ahora solo se valida la declaracion
-// tests/archivos_modos.paed:40: error: ESCRIBIR(archivo, registro) todavia no graba: falta el manejo de archivos en disco
+// tests/archivos_modos.paed:29: error: no existe el archivo 'tests/entra.csv': hay que crearlo con CREAR(entra) antes de abrirlo
+// tests/archivos_modos.paed:30: error: hay que abrir 'entra' antes de leerlo
+// tests/archivos_modos.paed:32: error: no existe el archivo 'tests/sale.csv': hay que crearlo con CREAR(sale) antes de abrirlo
+// tests/archivos_modos.paed:33: error: hay que abrir 'sale' antes de grabarlo
+// tests/archivos_modos.paed:35: error: no existe el archivo 'tests/ambos.csv': hay que crearlo con CREAR(ambos) antes de abrirlo
+// tests/archivos_modos.paed:36: error: hay que abrir 'ambos' antes de leerlo
+// tests/archivos_modos.paed:37: error: hay que abrir 'ambos' antes de grabarlo
+// tests/archivos_modos.paed:39: error: no existe el archivo 'tests/viejo.csv': hay que crearlo con CREAR(viejo) antes de abrirlo
+// tests/archivos_modos.paed:40: error: hay que abrir 'viejo' antes de grabarlo

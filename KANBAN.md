@@ -6,9 +6,6 @@ kanban-plugin: board
 
 ## Decisiones pendientes
 
-- [ ] De dónde sale el nombre del `.csv` en disco: ¿lo dice el programa en `ABRIR`, o sale del nombre de la variable? #decidir #f2-csv
-- [ ] `CREAR` sobre un archivo que ya existe: ¿lo pisa o es error? #decidir #f2-csv
-- [ ] Entrecomillado de texto con el separador adentro. Propuesto: RFC 4180 (comillas dobles, duplicando las internas). No choca con el `'` de PAED (§10.4) #decidir #f2-csv
 - [ ] Qué valor exacto vale `HV`. `DBL_MAX` lo hace incomparable de verdad pero se imprime feo; `999999999` es legible y alcanza para las claves de los ejercicios #decidir #f3-algoritmo
 - [ ] ¿`HV` distingue mayúsculas (`hv`, `Hv`)? Las keywords no distinguen, y esto es una constante del lenguaje: debería seguir la misma regla #decidir #f3-algoritmo
 - [ ] Sintaxis de `ABRIR`: la wiki escribe `ABRIR(arch, lectura)` y la cátedra `Abrir E/(arch)` (`TEORIA_COMPLETA.txt:1104`). **Son incompatibles.** Hoy está implementada la de cátedra #decidir
@@ -21,18 +18,10 @@ kanban-plugin: board
 
 ## Backlog — Fase 1: la declaración parsea
 
-- [ ] *(fase 1 COMPLETA — 29/29 tests. Sigue la fase 2, bloqueada por el separador del CSV)* #f1-declaracion
+- [ ] *(fases 1 y 2 COMPLETAS — 30/30 tests. Sigue la fase 3: HV y el test de actualizacion secuencial)* #f1-declaracion
 
 ## Backlog — Fase 2: el CSV existe en disco
 
-- [ ] `CREAR` escribe el encabezado con los campos del `REGISTRO`, en orden de declaración #f2-csv
-- [ ] `ABRIR` con su modo lee el encabezado y lo **compara contra el `REGISTRO`**. Si no coincide, error diciendo qué campo esperaba y cuál encontró. Es lo que ataja abrir el archivo equivocado, que hoy se leería sin protestar devolviendo basura con forma de dato válido #f2-csv
-- [ ] `LEER(arch, reg)` trae la próxima fila y convierte cada columna al tipo declarado. Un `ENTERO` que en el archivo dice `abc` es error de lectura, **no** un cero silencioso #f2-csv
-- [ ] `ESCRIBIR(arch, reg)` agrega una fila #f2-csv
-- [ ] `FDA` verdadero cuando no quedan filas después del encabezado. Un archivo recién creado tiene solo encabezado: `FDA` desde el arranque #f2-csv
-- [ ] `CERRAR` cierra y descarga #f2-csv
-- [ ] Handle de archivo de verdad en el intérprete: hoy la forma se distingue y se valida, pero ninguna operación toca el disco #f2-csv
-- [ ] Test de ida y vuelta: crear, escribir registros, cerrar, reabrir, leer entero hasta `FDA` — y que el `.csv` se abra en una planilla y se entienda #f2-csv
 
 ## Backlog — Fase 3: el algoritmo completo
 
@@ -88,6 +77,17 @@ kanban-plugin: board
 
 ## Hecho
 
+- [x] De dónde sale el nombre del `.csv` en disco: ¿lo dice el programa en `ABRIR`, o sale del nombre de la variable? #decidir #f2-csv
+- [x] `CREAR` sobre un archivo que ya existe: ¿lo pisa o es error? #decidir #f2-csv
+- [x] Entrecomillado de texto con el separador adentro. Propuesto: RFC 4180 (comillas dobles, duplicando las internas). No choca con el `'` de PAED (§10.4) #decidir #f2-csv
+- [x] `CREAR` escribe el encabezado con los campos del `REGISTRO`, en orden de declaración #f2-csv
+- [x] `ABRIR` con su modo lee el encabezado y lo **compara contra el `REGISTRO`**. Si no coincide, error diciendo qué campo esperaba y cuál encontró. Es lo que ataja abrir el archivo equivocado, que hoy se leería sin protestar devolviendo basura con forma de dato válido #f2-csv
+- [x] `LEER(arch, reg)` trae la próxima fila y convierte cada columna al tipo declarado. Un `ENTERO` que en el archivo dice `abc` es error de lectura, **no** un cero silencioso #f2-csv
+- [x] `ESCRIBIR(arch, reg)` agrega una fila #f2-csv
+- [x] `FDA` verdadero cuando no quedan filas después del encabezado. Un archivo recién creado tiene solo encabezado: `FDA` desde el arranque #f2-csv
+- [x] `CERRAR` cierra y descarga #f2-csv
+- [x] Handle de archivo de verdad en el intérprete: hoy la forma se distingue y se valida, pero ninguna operación toca el disco #f2-csv
+- [x] Test de ida y vuelta: crear, escribir registros, cerrar, reabrir, leer entero hasta `FDA` — y que el `.csv` se abra en una planilla y se entienda #f2-csv
 - [x] **Separador del CSV: `;`** — decidido 2026-08-14, contra el estandar a proposito. El motivo de usar CSV era abrirlo y ver la planilla, y con coma Excel en español lo apelmaza en la columna A. No hay choque con los numeros: el decimal de PAED es el punto. Es una constante en un solo lugar #decidir #f2-csv
 - [x] `data/sintaxis.json`: cláusulas `ORDENADO POR` e `INDEXADO POR` como modificadores de la declaración `ARCHIVO`, con las organizaciones nombradas (`secuencial`, `ordenado`, `indexado`) para que el asistente las lea de ahí y no de una lista en C #f1-declaracion
 - [x] `PAEDDecl` en `lang/include/paed/parser.h`: campos `org`, `clave[PAED_MAX_CLAVE][PAED_NAME_MAX]` y `clave_count`, al lado de `es_archivo`. `PAED_MAX_CLAVE` en 4 — el corpus llega a `clave3, clave2, clave1, clave0` #f1-declaracion

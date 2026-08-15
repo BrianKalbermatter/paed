@@ -1,7 +1,6 @@
-// El patron de recorrido de un archivo, tal como esta en el apunte
-// (OnlySintaxis.md:160-168):
+// El patron de recorrido de un archivo, de punta a punta y tocando el disco.
 //
-//     ABRIR(arch, lectura);
+//     ABRIR E/(arch);
 //     LEER(arch, reg);
 //     MIENTRAS NO FDA(arch) HACER
 //         // procesar reg
@@ -9,41 +8,68 @@
 //     FIN_MIENTRAS
 //     CERRAR(arch);
 //
-// El LEER de antes del MIENTRAS no sobra: es la "lectura adelantada", y sin
-// ella FDA no sabe si el archivo estaba vacio desde el principio.
+// El LEER de antes del MIENTRAS no sobra: es la LECTURA ADELANTADA, y sin ella
+// FDA no sabe si el archivo estaba vacio desde el principio. El LEER de abajo
+// del ciclo es el que termina poniendo FDA en verdadero.
 //
-// Este programa TERMINA CON ERROR a proposito. Hoy es documentacion ejecutable
-// de lo que falta: cuando los archivos se implementen, este test es el que va a
-// mostrar el progreso.
+// Este programa CREA su propio archivo, lo carga, lo cierra y despues lo
+// recorre. Asi no depende de ningun .csv guardado en el repo: el dato de
+// entrada lo produce el mismo test.
+//
+// El .csv queda en tests/arch.csv y se puede abrir en una planilla — que era
+// justamente el motivo de elegir CSV (PAED.md §2.6).
 
 ACCION archivos_patron_fda ES
     AMBIENTE
         alumno = REGISTRO
             legajo: ENTERO;
+            nombre: AN(20);
             nota: REAL;
         FIN_REGISTRO
 
-        arch: ARCHIVO DE alumno;
+        arch: ARCHIVO DE alumno ORDENADO POR legajo;
         reg: alumno;
         cant: ENTERO;
+        suma: REAL;
     PROCESO
-        cant := 0;
+        // ── Cargarlo ────────────────────────────────────────────────────────
+        // CREAR escribe la fila de encabezado con los campos del REGISTRO.
+        CREAR(arch);
 
-        ABRIR(arch, lectura);
+        reg.legajo := 101; reg.nombre := 'Ana'; reg.nota := 8.5;
+        ESCRIBIR(arch, reg);
+
+        reg.legajo := 205; reg.nombre := 'Bruno'; reg.nota := 6;
+        ESCRIBIR(arch, reg);
+
+        reg.legajo := 317; reg.nombre := 'Carla'; reg.nota := 9.5;
+        ESCRIBIR(arch, reg);
+
+        CERRAR(arch);
+
+        // ── Recorrerlo ──────────────────────────────────────────────────────
+        cant := 0;
+        suma := 0;
+
+        ABRIR E/(arch);
         LEER(arch, reg);
 
         MIENTRAS (NO FDA(arch)) HACER
             cant := cant + 1;
+            suma := suma + reg.nota;
+            ESCRIBIR("  ", reg.legajo, " ", reg.nombre, " ", reg.nota);
             LEER(arch, reg);
         FIN_MIENTRAS
 
         CERRAR(arch);
+
         ESCRIBIR("registros leidos: ", cant);
+        ESCRIBIR("promedio: ", suma / cant);
 FIN_ACCION
 
 // ── SALIDA ESPERADA ─────────────────────────────────────────────────────────
-// tests/archivos_patron_fda.paed:32: error: ABRIR todavia no esta implementado: por ahora solo se valida la declaracion
-// tests/archivos_patron_fda.paed:33: error: LEER(archivo, registro) todavia no avanza el archivo: falta el manejo de archivos en disco
-// tests/archivos_patron_fda.paed:35: error: FDA() necesita archivos en disco, que todavia no existen en el interprete
-// tests/archivos_patron_fda.paed:40: error: CERRAR todavia no esta implementado: por ahora solo se valida la declaracion
-// registros leidos: 0
+//   101 Ana 8.5
+//   205 Bruno 6
+//   317 Carla 9.5
+// registros leidos: 3
+// promedio: 8

@@ -325,7 +325,7 @@ Un modo en un procedimiento que no lo admite (`LEER E/`) se **rechaza**. El modo
 dice si el archivo se puede leer o grabar; ponerlo en `LEER` no significa nada, y
 aceptarlo callado le haría creer al que lo escribió que ahí también decide algo.
 
-### 2.6 El archivo en disco es un CSV — decidido 2026-08-14, NO implementado
+### 2.6 El archivo en disco es un CSV — implementado 2026-08-14
 
 > **decidido**, no **cátedra**. La cátedra no dice en qué formato se guarda un
 > `ARCHIVO DE X` — para ella el archivo es abstracto. Esto es una decisión de
@@ -1154,12 +1154,17 @@ de línea — nunca se ignora.
 | `LEER`/`ESCRIBIR`: consola vs archivo, distinguidos | ✅ §2.4 |
 | `FDA` / `NFDA` reconocidas (avisan que faltan archivos) | ✅ |
 | `LEER` de consola: escalar, `A[i]` y `p.campo` | ✅ §5.1 |
-| `ABRIR` / `CREAR` / `CERRAR` / `LEER` sobre ARCHIVOS en disco | parsean, no ejecutan |
-| El archivo en disco como CSV con encabezado | ❌ decidido §2.6, sin implementar |
+| `ABRIR` / `CREAR` / `CERRAR` / `LEER` / `ESCRIBIR` sobre ARCHIVOS en disco | ✅ §2.6 |
+| `FDA` / `NFDA` | ✅ |
+| El `.csv` con encabezado, validado contra el `REGISTRO` al abrir | ✅ |
+| Campo `ENTERO` que en el archivo trae texto | ❌ error de lectura, no un 0 |
+| `LEER` después de que `FDA` quedó en verdadero | ❌ rechazado |
+
 | `ORDENADO POR` / `INDEXADO POR` en la declaración | ✅ §2.7 |
 | Campo de la clave que el registro no declara | ❌ rechazado, en una pasada aparte §2.7 |
 | `INDEXADO POR` con más de un campo | ❌ rechazado |
 | `HV` (alto valor), `RE-ESCRIBIR`, `BORRAR` | ❌ cátedra, sin implementar |
+| Archivo `INDEXADO` que ejecute distinto del secuencial | ❌ se declara y se valida; el acceso es secuencial |
 | Modo de apertura `ABRIR E/`, `S/`, `E/S` — sin importar espacios ni mayúsculas | ✅ §2.5 |
 | Modo en un procedimiento que no lo admite (`LEER E/`) | ❌ rechazado, con mensaje propio |
 | `FIN_REGISTRO` faltante cuando ya empieza otro `REGISTRO` | ❌ rechazado, señalando el registro que quedó abierto |

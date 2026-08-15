@@ -66,7 +66,7 @@ $(LANG_GEN): data/sintaxis.json
 	@echo ';' >> $@
 
 LANG_SRC = lang/src/parser.c lang/src/expr.c lang/src/interpreter.c \
-           lang/src/secuencia.c \
+           lang/src/secuencia.c lang/src/archivo.c \
            lang/src/plataforma.c $(LANG_GEN) lang/vendor/cjson/cJSON.c
 LANG_OBJ = $(LANG_SRC:%.c=$(BUILDDIR)/lang/%.o)
 CLI_OBJ  = $(BUILDDIR)/lang/lang/cli/main.o
