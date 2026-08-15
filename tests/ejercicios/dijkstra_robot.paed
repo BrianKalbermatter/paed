@@ -1,0 +1,311 @@
+// DIJKSTRA — un robot busca la salida mas barata de un laberinto.
+//
+// El laberinto tiene tres clases de celda, y esa es la gracia:
+//
+//     .   piso normal    cuesta 1 entrar
+//     ~   barro          cuesta 4 entrar
+//     #   muro           no se puede entrar
+//
+// Si todas las celdas costaran lo mismo, Dijkstra seria BFS con pasos de mas:
+// el camino mas barato y el de menos pasos serian el mismo. Con el barro NO lo
+// son, y este laberinto esta armado a proposito para que se note — el robot da
+// un rodeo de dos pasos con tal de pisar menos barro.
+//
+// ── Lo que PAED no tiene, y como se resuelve ────────────────────────────────
+//
+// 1. NO HAY ARREGLOS DE DOS DIMENSIONES. La grilla se APLANA en un arreglo
+//    lineal, con la cuenta de siempre:
+//
+//        indice = (fila - 1) * cols + col
+//        fila   = (indice - 1) DIV cols + 1
+//        col    = (indice - 1) MOD cols + 1
+//
+// 2. NO HAY COLA DE PRIORIDAD. Se usa la version O(n^2) de Dijkstra: en cada
+//    vuelta se BUSCA a mano el nodo no visitado con la distancia mas chica.
+//    Para 48 celdas sobra, y ademas es la version original del paper — la cola
+//    de prioridad vino despues.
+//
+// 3. NO HAY INFINITO... pero HAY ALGO MEJOR. `HV` (alto valor) es una
+//    constante del lenguaje que vale mas que cualquier otra cosa y es igual a
+//    si misma. Es EXACTAMENTE el centinela que Dijkstra necesita para
+//    inicializar las distancias. La catedra lo puso para la mezcla de
+//    archivos; sirve igual para esto.
+//
+//    Y hay una propiedad que hace que el algoritmo corte solo: `HV < HV` da
+//    FALSO. Cuando todo lo que queda sin visitar esta a distancia HV, la
+//    busqueda del minimo no elige a nadie, y ahi se sabe que el resto del
+//    laberinto es inalcanzable. No hace falta ningun chequeo aparte.
+//
+// 4. NO HAY `BREAK`. Los ciclos se cortan con una bandera (`seguir`).
+//
+// ── Como se verifico ────────────────────────────────────────────────────────
+//
+// La salida de mas abajo NO se escribio a mano ni se leyo de la pantalla: se
+// comparo con `diff` contra una implementacion independiente de Dijkstra en
+// Python (heapq), sobre el mismo laberinto. Coinciden el costo (17), los 15
+// pares (fila,col) del camino y el dibujo de la grilla, caracter por caracter.
+//
+// Dos casos limite mas, probados aparte cambiando una sola celda:
+//
+//   - Muro en la celda 40: la salida queda aislada. El algoritmo explora 29
+//     celdas y corta con "no hay camino", sin colgarse. Es el centinela HV
+//     haciendo su trabajo.
+//   - Barro a costo 1: el camino CAMBIA solo, al de 12 pasos. Mismo laberinto,
+//     mismo arranque, distinto terreno. Es la prueba de que esto es Dijkstra y
+//     no un BFS disfrazado.
+//
+// ── OJO: este archivo NO lo corre `make test` ───────────────────────────────
+//
+// `tests/correr.sh` recorre `tests/*.paed`, que no entra en los subdirectorios.
+// Trae igual su bloque SALIDA ESPERADA para dos cosas: que se pueda verificar a
+// mano con un diff, y que promoverlo a la bateria sea moverlo a `tests/` y nada
+// mas.
+
+ACCION dijkstra ES
+    AMBIENTE
+        filas: ENTERO; cols: ENTERO; n: ENTERO;
+        inicio: ENTERO; salida: ENTERO;
+
+        // La grilla aplanada. 0 = muro; cualquier otro valor es el costo de
+        // ENTRAR a esa celda.
+        costo: ARREGLO[1..48] DE ENTERO;
+
+        // Los tres arreglos de Dijkstra, mas uno para dibujar el resultado.
+        dist:   ARREGLO[1..48] DE ENTERO;
+        visto:  ARREGLO[1..48] DE ENTERO;
+        previo: ARREGLO[1..48] DE ENTERO;
+        marca:  ARREGLO[1..48] DE ENTERO;
+        camino: ARREGLO[1..48] DE ENTERO;
+
+        // Los cuatro movimientos del robot: arriba, abajo, izquierda, derecha.
+        // En arreglos y no escritos cuatro veces: sin funciones propias, esta
+        // es la unica forma de no repetir el bloque de relajacion.
+        df: ARREGLO[1..4] DE ENTERO;
+        dc: ARREGLO[1..4] DE ENTERO;
+
+        i: ENTERO; k: ENTERO; u: ENTERO; v: ENTERO;
+        f: ENTERO; c: ENTERO; nf: ENTERO; nc: ENTERO;
+        mejor: ENTERO; nueva: ENTERO;
+        seguir: ENTERO; pasos: ENTERO; visitados: ENTERO;
+        linea: AN(60); ruta: AN(60);
+    PROCESO
+        filas := 6; cols := 8; n := 48;
+        inicio := 1; salida := 48;
+
+        // ── El laberinto ────────────────────────────────────────────────────
+        // Las asignaciones se agrupan por renglon para que el codigo TENGA LA
+        // FORMA del mapa. Un laberinto escrito en 48 lineas sueltas no se lee.
+        //
+        //            .  .  .  #  .  .  .  .
+        costo[ 1]:=1; costo[ 2]:=1; costo[ 3]:=1; costo[ 4]:=0; costo[ 5]:=1; costo[ 6]:=1; costo[ 7]:=1; costo[ 8]:=1;
+        //            .  #  .  #  .  #  #  .
+        costo[ 9]:=1; costo[10]:=0; costo[11]:=1; costo[12]:=0; costo[13]:=1; costo[14]:=0; costo[15]:=0; costo[16]:=1;
+        //            .  #  .  .  .  #  .  .
+        costo[17]:=1; costo[18]:=0; costo[19]:=1; costo[20]:=1; costo[21]:=1; costo[22]:=0; costo[23]:=1; costo[24]:=1;
+        //            .  #  #  #  ~  #  .  #
+        costo[25]:=1; costo[26]:=0; costo[27]:=0; costo[28]:=0; costo[29]:=4; costo[30]:=0; costo[31]:=1; costo[32]:=0;
+        //            .  .  .  #  ~  .  .  .
+        costo[33]:=1; costo[34]:=1; costo[35]:=1; costo[36]:=0; costo[37]:=4; costo[38]:=1; costo[39]:=1; costo[40]:=1;
+        //            #  #  .  .  .  #  #  S
+        costo[41]:=0; costo[42]:=0; costo[43]:=1; costo[44]:=1; costo[45]:=1; costo[46]:=0; costo[47]:=0; costo[48]:=1;
+
+        df[1] := -1; dc[1] :=  0;
+        df[2] :=  1; dc[2] :=  0;
+        df[3] :=  0; dc[3] := -1;
+        df[4] :=  0; dc[4] :=  1;
+
+        ESCRIBIR("=== EL LABERINTO ===");
+        ESCRIBIR("R = robot    S = salida    # = muro    ~ = barro (cuesta 4)");
+        ESCRIBIR("");
+
+        PARA f := 1 HASTA filas HACER
+            linea := "";
+            PARA c := 1 HASTA cols HACER
+                i := (f - 1) * cols + c;
+                SI (i = inicio) ENTONCES
+                    linea := linea + "R";
+                SINO
+                    SI (i = salida) ENTONCES
+                        linea := linea + "S";
+                    SINO
+                        SI (costo[i] = 0) ENTONCES
+                            linea := linea + "#";
+                        SINO
+                            SI (costo[i] > 1) ENTONCES
+                                linea := linea + "~";
+                            SINO
+                                linea := linea + ".";
+                            FIN_SI
+                        FIN_SI
+                    FIN_SI
+                FIN_SI
+            FIN_PARA
+            ESCRIBIR("  ", linea);
+        FIN_PARA
+
+        // ── Dijkstra ────────────────────────────────────────────────────────
+        //
+        // Todas las distancias arrancan en HV. Es "todavia no se como llegar",
+        // no "esta lejos": por eso tiene que ser mayor que cualquier distancia
+        // real, y no un numero grande elegido a ojo.
+        PARA i := 1 HASTA n HACER
+            dist[i] := HV; visto[i] := 0; previo[i] := 0; marca[i] := 0;
+        FIN_PARA
+
+        dist[inicio] := 0;
+        seguir := 1;
+        visitados := 0;
+
+        MIENTRAS (seguir = 1) HACER
+            // 1. El no visitado mas cercano. Si ninguno tiene distancia menor
+            //    que HV, `u` queda en 0 — y eso ya significa "no queda nada
+            //    alcanzable", porque HV < HV es falso.
+            u := 0;
+            mejor := HV;
+            PARA i := 1 HASTA n HACER
+                SI ((visto[i] = 0) Y (dist[i] < mejor)) ENTONCES
+                    mejor := dist[i];
+                    u := i;
+                FIN_SI
+            FIN_PARA
+
+            SI (u = 0) ENTONCES
+                seguir := 0;
+            SINO
+                visto[u] := 1;
+                visitados := visitados + 1;
+
+                // 2. Llegar a la salida y cerrarla ES el final. Dijkstra
+                //    garantiza que cuando un nodo se marca visitado, su
+                //    distancia ya es la definitiva: seguir buscando no puede
+                //    mejorarla.
+                SI (u = salida) ENTONCES
+                    seguir := 0;
+                SINO
+                    f := (u - 1) DIV cols + 1;
+                    c := (u - 1) MOD cols + 1;
+
+                    // 3. Relajar los cuatro vecinos.
+                    PARA k := 1 HASTA 4 HACER
+                        nf := f + df[k];
+                        nc := c + dc[k];
+
+                        // El corte de la condicion importa: si el vecino cae
+                        // afuera de la grilla, `v` ni se calcula. Sin
+                        // cortocircuito habria que anidar cuatro SI.
+                        SI ((nf >= 1) Y (nf <= filas) Y (nc >= 1) Y (nc <= cols)) ENTONCES
+                            v := (nf - 1) * cols + nc;
+                            SI ((costo[v] > 0) Y (visto[v] = 0)) ENTONCES
+                                nueva := dist[u] + costo[v];
+                                SI (nueva < dist[v]) ENTONCES
+                                    dist[v] := nueva;
+                                    previo[v] := u;
+                                FIN_SI
+                            FIN_SI
+                        FIN_SI
+                    FIN_PARA
+                FIN_SI
+            FIN_SI
+        FIN_MIENTRAS
+
+        ESCRIBIR("");
+        ESCRIBIR("=== RESULTADO ===");
+        ESCRIBIR("celdas exploradas: ", visitados);
+
+        SI (dist[salida] = HV) ENTONCES
+            ESCRIBIR("no hay camino: la salida esta amurallada");
+        SINO
+            // ── Reconstruir el camino, de atras para adelante ───────────────
+            // `previo` encadena cada celda con la anterior. Se camina desde la
+            // salida hasta que `previo` da 0, que es el arranque.
+            pasos := 0;
+            u := salida;
+            MIENTRAS (u <> 0) HACER
+                pasos := pasos + 1;
+                camino[pasos] := u;
+                marca[u] := 1;
+                u := previo[u];
+            FIN_MIENTRAS
+
+            ESCRIBIR("costo total:       ", dist[salida]);
+            ESCRIBIR("pasos del camino:  ", pasos - 1);
+            ESCRIBIR("");
+            ESCRIBIR("=== EL CAMINO (o) ===");
+            ESCRIBIR("");
+
+            PARA f := 1 HASTA filas HACER
+                linea := "";
+                PARA c := 1 HASTA cols HACER
+                    i := (f - 1) * cols + c;
+                    SI (costo[i] = 0) ENTONCES
+                        linea := linea + "#";
+                    SINO
+                        SI (marca[i] = 1) ENTONCES
+                            linea := linea + "o";
+                        SINO
+                            SI (costo[i] > 1) ENTONCES
+                                linea := linea + "~";
+                            SINO
+                                linea := linea + ".";
+                            FIN_SI
+                        FIN_SI
+                    FIN_SI
+                FIN_PARA
+                ESCRIBIR("  ", linea);
+            FIN_PARA
+
+            // El camino se guardo al reves, asi que se lee al reves para que
+            // salga en el orden en que el robot lo recorre.
+            ESCRIBIR("");
+            ESCRIBIR("=== LA RUTA, paso a paso ===");
+            ruta := "";
+            PARA i := pasos HASTA 1; -1 HACER
+                u := camino[i];
+                f := (u - 1) DIV cols + 1;
+                c := (u - 1) MOD cols + 1;
+                ruta := ruta + "(" + f + "," + c + ")";
+                SI (i > 1) ENTONCES
+                    ruta := ruta + " ";
+                FIN_SI
+                // Se corta cada 5 celdas para no pasarse del largo maximo de
+                // un valor, que en PAED son 128 bytes.
+                SI (((pasos - i + 1) MOD 5) = 0) ENTONCES
+                    ESCRIBIR("  ", ruta);
+                    ruta := "";
+                FIN_SI
+            FIN_PARA
+            SI (ruta <> "") ENTONCES
+                ESCRIBIR("  ", ruta);
+            FIN_SI
+        FIN_SI
+FIN_ACCION
+
+// ── SALIDA ESPERADA ─────────────────────────────────────────────────────────
+// === EL LABERINTO ===
+// R = robot    S = salida    # = muro    ~ = barro (cuesta 4)
+// 
+//   R..#....
+//   .#.#.##.
+//   .#...#..
+//   .###~#.#
+//   ...#~...
+//   ##...##S
+// 
+// === RESULTADO ===
+// celdas exploradas: 31
+// costo total:       17
+// pasos del camino:  14
+// 
+// === EL CAMINO (o) ===
+// 
+//   o..#....
+//   o#.#.##.
+//   o#...#..
+//   o###~#.#
+//   ooo#oooo
+//   ##ooo##o
+// 
+// === LA RUTA, paso a paso ===
+//   (1,1) (2,1) (3,1) (4,1) (5,1) 
+//   (5,2) (5,3) (6,3) (6,4) (6,5) 
+//   (5,5) (5,6) (5,7) (5,8) (6,8)
