@@ -20,7 +20,7 @@ Frankly/tools/gen_sintaxis
 # corre ./instalar.sh — no viaja por git a proposito.
 helix/
 
-# Los .csv que los tests CREAN al correr. Son datos generados, no fuente: el
+# Los .csv que los programas CREAN al correr. Son datos generados, no fuente: el
 # test se los fabrica solo, justamente para no depender de ningun archivo
 # guardado en el repo.
 #
@@ -28,6 +28,7 @@ helix/
 # otra carpeta, tiene que poder versionarse. Ignorar de mas es como se pierden
 # archivos en silencio — ver el aviso de arriba sobre 'Frankly/paed'.
 tests/*.csv
+ejercicios/*.csv
 
 # Metadata de Windows
 *:Zone.Identifier
