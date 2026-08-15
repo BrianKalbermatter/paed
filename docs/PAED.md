@@ -325,6 +325,48 @@ Un modo en un procedimiento que no lo admite (`LEER E/`) se **rechaza**. El modo
 dice si el archivo se puede leer o grabar; ponerlo en `LEER` no significa nada, y
 aceptarlo callado le haría creer al que lo escribió que ahí también decide algo.
 
+### 2.8 `HV` — alto valor, implementado 2026-08-14
+
+Es una **constante del lenguaje**: no se declara, no se asigna y no ocupa una
+entrada de variable, igual que `V` y `F`. Vale **más que cualquier clave
+posible**.
+
+```paed
+LEER(mae, reg_mae);
+SI FDA(mae) ENTONCES
+    clave_mae := HV;
+SINO
+    clave_mae := reg_mae.farmacia + '-' + reg_mae.medicamento;
+FIN_SI
+```
+
+**cátedra**: `wiki.txt:2399-2450`, `OnlySintaxis.md:248-296`. Es el centinela de
+la mezcla de archivos: cuando uno se agota su clave pasa a `HV`, pierde siempre
+la comparación, y el ciclo sigue vaciando el otro con las mismas reglas. Sin
+`HV` hacen falta **tres** ciclos — uno principal y dos residuales, cada uno
+repitiendo las mismas reglas con variantes (`wiki.txt:2447`).
+
+**No es un número grande, es un tipo de valor propio.** Esa fue la decisión, y
+tiene un motivo medible: las claves de los parciales son **texto**
+(`F1-Ibuprofeno`), y la comparación pasa los dos lados a texto cuando uno lo es.
+Con `HV = 999999999`:
+
+```
+strcmp("999999999", "F1-Ibuprofeno")  →  '9' (0x39) < 'F' (0x46)  →  HV es MENOR
+```
+
+Justo al revés de lo que `HV` significa. Como tipo propio, "gana siempre" es una
+regla del evaluador y no una casualidad del ASCII: funciona contra números y
+contra textos por igual.
+
+Se imprime como `HV`, no como un número enorme: si un `ESCRIBIR` lo muestra, lo
+que hay que entender es que el archivo se agotó.
+
+**Distingue mayúsculas**, por el mismo motivo que `V`: una constante de una o
+dos letras choca con nombres de variable comunes — `v` es justo el que usa
+`AVZ(sec, v)` en todo el corpus. Escrita como la escribe la cátedra, en
+mayúsculas, no se pisa con nada.
+
 ### 2.6 El archivo en disco es un CSV — implementado 2026-08-14
 
 > **decidido**, no **cátedra**. La cátedra no dice en qué formato se guarda un
@@ -1163,7 +1205,8 @@ de línea — nunca se ignora.
 | `ORDENADO POR` / `INDEXADO POR` en la declaración | ✅ §2.7 |
 | Campo de la clave que el registro no declara | ❌ rechazado, en una pasada aparte §2.7 |
 | `INDEXADO POR` con más de un campo | ❌ rechazado |
-| `HV` (alto valor), `RE-ESCRIBIR`, `BORRAR` | ❌ cátedra, sin implementar |
+| `HV` (alto valor) | ✅ §2.8 |
+| `RE-ESCRIBIR`, `BORRAR` | ❌ cátedra, sin implementar |
 | Archivo `INDEXADO` que ejecute distinto del secuencial | ❌ se declara y se valida; el acceso es secuencial |
 | Modo de apertura `ABRIR E/`, `S/`, `E/S` — sin importar espacios ni mayúsculas | ✅ §2.5 |
 | Modo en un procedimiento que no lo admite (`LEER E/`) | ❌ rechazado, con mensaje propio |

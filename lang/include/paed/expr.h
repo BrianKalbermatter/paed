@@ -40,6 +40,18 @@ typedef enum {
     VAL_NUM,      // entero o real: en PAED no se distinguen al evaluar
     VAL_TEXTO,
     VAL_LOGICO,
+
+    // HV — alto valor. Es MAYOR QUE CUALQUIER COSA, y por eso es un tipo y no
+    // un numero grande.
+    //
+    // Un 999999999 no sirve: las claves de los parciales son TEXTO
+    // ("F1-Ibuprofeno"), y comparar() pasa los dos lados a texto cuando uno lo
+    // es. Ahi strcmp("999999999", "F1-Ibuprofeno") da que HV es MENOR, porque
+    // '9' viene antes que 'F' en ASCII — justo al reves de lo que HV significa.
+    //
+    // Como tipo propio la comparacion es una regla y no una casualidad del
+    // ASCII: gana siempre, contra numeros y contra textos.
+    VAL_ALTO,
 } TipoValor;
 
 typedef struct {

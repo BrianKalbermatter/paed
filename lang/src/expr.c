@@ -125,6 +125,7 @@ int valor_verdadero(const Valor *v) {
         case VAL_LOGICO: return v->logico != 0;
         case VAL_NUM:    return v->num != 0.0;
         case VAL_TEXTO:  return v->texto[0] != '\0';
+        case VAL_ALTO:   return 1;   // HV no es cero ni vacio: es el tope
     }
     return 0;
 }
@@ -136,6 +137,12 @@ void valor_a_texto(const Valor *v, char *out, size_t out_size) {
             break;
         case VAL_LOGICO:
             snprintf(out, out_size, "%s", v->logico ? "V" : "F");
+            break;
+        // Se imprime con su nombre y no con un numero enorme: si un ESCRIBIR
+        // muestra HV, lo que hay que ver es que el archivo se agoto — no un
+        // 999999999 que hay que reconocer de memoria.
+        case VAL_ALTO:
+            snprintf(out, out_size, "HV");
             break;
         case VAL_NUM:
             // Un entero se muestra sin coma: 4 y no 4.000000. En AED la
@@ -264,6 +271,16 @@ static Valor primario(Ctx *c) {
         // Literales logicos (TEORIA_COMPLETA.txt:350-356)
         if (strcmp(nombre, "V") == 0 || strcasecmp(nombre, "VERDADERO") == 0) return LOG(1);
         if (strcmp(nombre, "F") == 0 || strcasecmp(nombre, "FALSO")     == 0) return LOG(0);
+
+        // HV — alto valor, el centinela de la mezcla de archivos. No se
+        // declara, no se asigna y no ocupa una entrada de variable, igual que
+        // V y F.
+        //
+        // Distingue mayusculas por el mismo motivo que 'V': una constante de
+        // una o dos letras choca con nombres de variable comunes, y 'v' es
+        // justo el que usa AVZ(sec, v) en todo el corpus. Escrita como la
+        // escribe la catedra, en mayusculas, no se pisa con nada.
+        if (strcmp(nombre, "HV") == 0) { Valor h = {0}; h.tipo = VAL_ALTO; return h; }
 
         espacios(c);
 
@@ -517,6 +534,15 @@ static Valor suma(Ctx *c) {
 // Compara dos valores. Los textos van por ASCII, como dice la teoria:
 // 'A' < 'K' es verdadero. Devuelve <0, 0 o >0.
 static int comparar(const Valor *a, const Valor *b) {
+    // HV va PRIMERO, antes de mirar los tipos: es mayor que todo, y dos HV son
+    // iguales entre si. Que este arriba de la rama de texto no es un detalle —
+    // si cayera ahi, se compararia la cadena "HV" por ASCII y perderia contra
+    // cualquier clave que empiece con una letra posterior a la H.
+    if (a->tipo == VAL_ALTO || b->tipo == VAL_ALTO) {
+        if (a->tipo == VAL_ALTO && b->tipo == VAL_ALTO) return 0;
+        return a->tipo == VAL_ALTO ? 1 : -1;
+    }
+
     if (a->tipo == VAL_TEXTO || b->tipo == VAL_TEXTO) {
         char x[PAED_VAL_MAX], y[PAED_VAL_MAX];
         valor_a_texto(a, x, sizeof(x));

@@ -6,8 +6,6 @@ kanban-plugin: board
 
 ## Decisiones pendientes
 
-- [ ] Qué valor exacto vale `HV`. `DBL_MAX` lo hace incomparable de verdad pero se imprime feo; `999999999` es legible y alcanza para las claves de los ejercicios #decidir #f3-algoritmo
-- [ ] ¿`HV` distingue mayúsculas (`hv`, `Hv`)? Las keywords no distinguen, y esto es una constante del lenguaje: debería seguir la misma regla #decidir #f3-algoritmo
 - [ ] Sintaxis de `ABRIR`: la wiki escribe `ABRIR(arch, lectura)` y la cátedra `Abrir E/(arch)` (`TEORIA_COMPLETA.txt:1104`). **Son incompatibles.** Hoy está implementada la de cátedra #decidir
 - [ ] `SEGUN` — hay un conflicto que resolver antes de implementarlo #decidir
 - [ ] `REPETIR`/`HASTA` — cero apariciones reales en el corpus, solo declaradas en `sintaxis.json`. Confirmar que existan antes de implementar #decidir
@@ -18,16 +16,13 @@ kanban-plugin: board
 
 ## Backlog — Fase 1: la declaración parsea
 
-- [ ] *(fases 1 y 2 COMPLETAS — 30/30 tests. Sigue la fase 3: HV y el test de actualizacion secuencial)* #f1-declaracion
+- [ ] *(fases 1, 2 y 3 COMPLETAS — 31/31 tests. Sigue la fase 4: el asistente del editor)* #f1-declaracion
 
 ## Backlog — Fase 2: el CSV existe en disco
 
 
 ## Backlog — Fase 3: el algoritmo completo
 
-- [ ] **`HV` (alto valor) como constante del lenguaje**, junto a `V`/`F` en `primario()` de `lang/src/expr.c`. No se declara, no se asigna, no ocupa entrada de variable. Hoy `SI (x <> HV)` da "la variable 'HV' no tiene valor todavía" #f3-algoritmo
-- [ ] `HV` también en `sintaxis.json`, para que el resaltador lo pinte como constante y no como variable #f3-algoritmo
-- [ ] Test de actualización secuencial: maestro + movimientos → maestro nuevo + bajas + errores, con los seis casos y el agotamiento de los dos archivos. **Es el ejercicio que toma la cátedra** #f3-algoritmo
 - [ ] `LV` (Low Value): CERO apariciones en wiki, OnlySintaxis y TEORIA_COMPLETA. **No inventarlo** — si algún día aparece en un parcial, ahí se agrega #f3-algoritmo
 
 ## Backlog — Fase 4: el asistente del editor
@@ -52,6 +47,7 @@ kanban-plugin: board
 
 ## Backlog — lenguaje, sin relación con archivos
 
+- [ ] **Trampa encontrada el 2026-08-14**: `ESCRIBIR("x: ", a = b)` NO compara — cae en la sintaxis de argumentos con nombre (`clave = valor`, la de `MOVER(nombre = fantasma)`) y termina imprimiendo solo `b`. Con paréntesis (`(a = b)`) anda bien. Debería avisar, o al menos quedar documentado #parser
 - [ ] Declaración múltiple `A,B,SUMA: entero`. Es la forma del único ejemplo con autoridad de cátedra (`AED_2021_UnI.pdf:10`) y hoy da "nombre de variable invalido" #parser
 - [ ] `FUNCION`/`PROCEDIMIENTO` anidados dentro de `AMBIENTE` #parser
 - [ ] Nombre de `ACCION` con espacios (`ACCION Ejercicio de Parcial ES`) #parser
@@ -77,6 +73,11 @@ kanban-plugin: board
 
 ## Hecho
 
+- [x] Qué valor exacto vale `HV`. `DBL_MAX` lo hace incomparable de verdad pero se imprime feo; `999999999` es legible y alcanza para las claves de los ejercicios #decidir #f3-algoritmo
+- [x] ¿`HV` distingue mayúsculas (`hv`, `Hv`)? Las keywords no distinguen, y esto es una constante del lenguaje: debería seguir la misma regla #decidir #f3-algoritmo
+- [x] **`HV` (alto valor) como constante del lenguaje**, junto a `V`/`F` en `primario()` de `lang/src/expr.c`. No se declara, no se asigna, no ocupa entrada de variable. Hoy `SI (x <> HV)` da "la variable 'HV' no tiene valor todavía" #f3-algoritmo
+- [x] `HV` también en `sintaxis.json`, para que el resaltador lo pinte como constante y no como variable #f3-algoritmo
+- [x] Test de actualización secuencial: maestro + movimientos → maestro nuevo + bajas + errores, con los seis casos y el agotamiento de los dos archivos. **Es el ejercicio que toma la cátedra** #f3-algoritmo
 - [x] De dónde sale el nombre del `.csv` en disco: ¿lo dice el programa en `ABRIR`, o sale del nombre de la variable? #decidir #f2-csv
 - [x] `CREAR` sobre un archivo que ya existe: ¿lo pisa o es error? #decidir #f2-csv
 - [x] Entrecomillado de texto con el separador adentro. Propuesto: RFC 4180 (comillas dobles, duplicando las internas). No choca con el `'` de PAED (§10.4) #decidir #f2-csv

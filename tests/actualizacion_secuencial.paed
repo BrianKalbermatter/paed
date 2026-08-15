@@ -1,0 +1,199 @@
+// ACTUALIZACION SECUENCIAL — maestro + movimientos hacia un maestro NUEVO.
+//
+// Es el ejercicio que toma la catedra, y el que justifica todo lo demas:
+// archivos en disco, FDA y HV.
+//
+//     MAE_REMEDIOS (E/) ─┐
+//                        ├──> NUEVO (S/)
+//     MOVIMIENTOS  (E/) ─┘    BAJAS (S/)   y los errores por consola
+//
+// Los dos de entrada se leen EN PARALELO comparando claves, y segun como
+// comparen se aplica uno de seis casos. El maestro nunca se modifica: se lee y
+// se escribe uno nuevo. La baja es simplemente NO copiar.
+//
+// HV es lo que sostiene el ciclo. Cuando un archivo se agota su clave pasa a
+// HV, que es mayor que cualquier clave real, asi que ese archivo pierde SIEMPRE
+// la comparacion y el ciclo sigue vaciando el otro con las mismas seis reglas.
+// Sin HV harian falta tres ciclos: uno principal y dos residuales, cada uno
+// repitiendo las mismas reglas con variantes.
+//
+// Los datos son los del simulador de escritorio: 5 remedios y 8 movimientos,
+// que ejercitan los seis casos y ademas agotan el maestro antes que los
+// movimientos (el ultimo, F4, entra con el maestro ya en HV).
+
+ACCION actualizacion_secuencial ES
+    AMBIENTE
+        remedio = REGISTRO
+            farmacia: AN(4);
+            medicamento: AN(20);
+            cant: ENTERO;
+            vence: AN(12);
+        FIN_REGISTRO
+
+        movimiento = REGISTRO
+            farmacia: AN(4);
+            medicamento: AN(20);
+            cod: ENTERO;
+            cant: ENTERO;
+        FIN_REGISTRO
+
+        vencido = REGISTRO
+            medicamento: AN(20);
+            cant: ENTERO;
+        FIN_REGISTRO
+
+        mae:   ARCHIVO DE remedio    ORDENADO POR farmacia, medicamento;
+        mov:   ARCHIVO DE movimiento ORDENADO POR farmacia, medicamento y cod;
+        nuevo: ARCHIVO DE remedio    ORDENADO POR farmacia, medicamento;
+        bajas: ARCHIVO DE vencido;
+
+        reg_mae: remedio;
+        reg_mov: movimiento;
+        reg_alta: remedio;
+        reg_baja: vencido;
+
+        clave_mae: AN(30);
+        clave_mov: AN(30);
+    PROCESO
+        // ── Los datos de entrada ────────────────────────────────────────────
+        CREAR(mae);
+        reg_mae.farmacia := 'F1'; reg_mae.medicamento := 'Ibuprofeno';  reg_mae.cant := 100; reg_mae.vence := '01/06/2025'; ESCRIBIR(mae, reg_mae);
+        reg_mae.farmacia := 'F1'; reg_mae.medicamento := 'Paracetamol'; reg_mae.cant := 50;  reg_mae.vence := '01/07/2025'; ESCRIBIR(mae, reg_mae);
+        reg_mae.farmacia := 'F2'; reg_mae.medicamento := 'Amoxicilina'; reg_mae.cant := 30;  reg_mae.vence := '01/08/2025'; ESCRIBIR(mae, reg_mae);
+        reg_mae.farmacia := 'F2'; reg_mae.medicamento := 'Ibuprofeno';  reg_mae.cant := 80;  reg_mae.vence := '01/06/2025'; ESCRIBIR(mae, reg_mae);
+        reg_mae.farmacia := 'F3'; reg_mae.medicamento := 'Paracetamol'; reg_mae.cant := 20;  reg_mae.vence := '01/09/2025'; ESCRIBIR(mae, reg_mae);
+        CERRAR(mae);
+
+        CREAR(mov);
+        reg_mov.farmacia := 'F1'; reg_mov.medicamento := 'Aspirina';    reg_mov.cod := 1; reg_mov.cant := 60; ESCRIBIR(mov, reg_mov);
+        reg_mov.farmacia := 'F1'; reg_mov.medicamento := 'Paracetamol'; reg_mov.cod := 3; reg_mov.cant := 75; ESCRIBIR(mov, reg_mov);
+        reg_mov.farmacia := 'F1'; reg_mov.medicamento := 'VitaminaC';   reg_mov.cod := 2; reg_mov.cant := 15; ESCRIBIR(mov, reg_mov);
+        reg_mov.farmacia := 'F2'; reg_mov.medicamento := 'Amoxicilina'; reg_mov.cod := 1; reg_mov.cant := 25; ESCRIBIR(mov, reg_mov);
+        reg_mov.farmacia := 'F2'; reg_mov.medicamento := 'Ibuprofeno';  reg_mov.cod := 2; reg_mov.cant := 80; ESCRIBIR(mov, reg_mov);
+        reg_mov.farmacia := 'F3'; reg_mov.medicamento := 'Amoxicilina'; reg_mov.cod := 1; reg_mov.cant := 45; ESCRIBIR(mov, reg_mov);
+        reg_mov.farmacia := 'F3'; reg_mov.medicamento := 'Paracetamol'; reg_mov.cod := 3; reg_mov.cant := 35; ESCRIBIR(mov, reg_mov);
+        reg_mov.farmacia := 'F4'; reg_mov.medicamento := 'Ibuprofeno';  reg_mov.cod := 1; reg_mov.cant := 90; ESCRIBIR(mov, reg_mov);
+        CERRAR(mov);
+
+        // ── La actualizacion ────────────────────────────────────────────────
+        ABRIR E/(mae);
+        ABRIR E/(mov);
+        CREAR(nuevo);
+        CREAR(bajas);
+
+        // Lectura adelantada de los dos, y la clave de cada uno. Un archivo que
+        // ya venia vacio queda en HV desde el arranque, sin ningun caso aparte.
+        LEER(mae, reg_mae);
+        SI FDA(mae) ENTONCES
+            clave_mae := HV;
+        SINO
+            clave_mae := reg_mae.farmacia + '-' + reg_mae.medicamento;
+        FIN_SI
+
+        LEER(mov, reg_mov);
+        SI FDA(mov) ENTONCES
+            clave_mov := HV;
+        SINO
+            clave_mov := reg_mov.farmacia + '-' + reg_mov.medicamento;
+        FIN_SI
+
+        MIENTRAS ((clave_mae <> HV) O (clave_mov <> HV)) HACER
+
+            SI (clave_mae < clave_mov) ENTONCES
+                // No hay movimiento para este registro: se copia tal cual.
+                ESCRIBIR(nuevo, reg_mae);
+                LEER(mae, reg_mae);
+                SI FDA(mae) ENTONCES
+                    clave_mae := HV;
+                SINO
+                    clave_mae := reg_mae.farmacia + '-' + reg_mae.medicamento;
+                FIN_SI
+            SINO
+                SI (clave_mae = clave_mov) ENTONCES
+
+                    SI (reg_mov.cod = 1) ENTONCES
+                        ESCRIBIR("  error: ", clave_mov, " ya existe");
+                    SINO
+                        SI (reg_mov.cod = 2) ENTONCES
+                            // Baja FISICA: no se copia al nuevo, va a bajas.
+                            reg_baja.medicamento := reg_mae.medicamento;
+                            reg_baja.cant := reg_mae.cant;
+                            ESCRIBIR(bajas, reg_baja);
+                        SINO
+                            reg_mae.cant := reg_mov.cant;
+                            ESCRIBIR(nuevo, reg_mae);
+                        FIN_SI
+                    FIN_SI
+
+                    LEER(mae, reg_mae);
+                    SI FDA(mae) ENTONCES
+                        clave_mae := HV;
+                    SINO
+                        clave_mae := reg_mae.farmacia + '-' + reg_mae.medicamento;
+                    FIN_SI
+
+                    LEER(mov, reg_mov);
+                    SI FDA(mov) ENTONCES
+                        clave_mov := HV;
+                    SINO
+                        clave_mov := reg_mov.farmacia + '-' + reg_mov.medicamento;
+                    FIN_SI
+                SINO
+                    // clave_mae > clave_mov: el movimiento no tiene maestro.
+                    SI (reg_mov.cod = 1) ENTONCES
+                        reg_alta.farmacia := reg_mov.farmacia;
+                        reg_alta.medicamento := reg_mov.medicamento;
+                        reg_alta.cant := reg_mov.cant;
+                        reg_alta.vence := 'hoy+30';
+                        ESCRIBIR(nuevo, reg_alta);
+                    SINO
+                        ESCRIBIR("  error: ", clave_mov, " no existe");
+                    FIN_SI
+
+                    LEER(mov, reg_mov);
+                    SI FDA(mov) ENTONCES
+                        clave_mov := HV;
+                    SINO
+                        clave_mov := reg_mov.farmacia + '-' + reg_mov.medicamento;
+                    FIN_SI
+                FIN_SI
+            FIN_SI
+        FIN_MIENTRAS
+
+        CERRAR(mae);
+        CERRAR(mov);
+        CERRAR(nuevo);
+        CERRAR(bajas);
+
+        // ── Que quedo ───────────────────────────────────────────────────────
+        ESCRIBIR("maestro nuevo:");
+        ABRIR E/(nuevo);
+        LEER(nuevo, reg_mae);
+        MIENTRAS (NO FDA(nuevo)) HACER
+            ESCRIBIR("  ", reg_mae.farmacia, "-", reg_mae.medicamento, " ", reg_mae.cant, " ", reg_mae.vence);
+            LEER(nuevo, reg_mae);
+        FIN_MIENTRAS
+        CERRAR(nuevo);
+
+        ESCRIBIR("bajas:");
+        ABRIR E/(bajas);
+        LEER(bajas, reg_baja);
+        MIENTRAS (NO FDA(bajas)) HACER
+            ESCRIBIR("  ", reg_baja.medicamento, " ", reg_baja.cant);
+            LEER(bajas, reg_baja);
+        FIN_MIENTRAS
+        CERRAR(bajas);
+FIN_ACCION
+
+// ── SALIDA ESPERADA ─────────────────────────────────────────────────────────
+//   error: F1-VitaminaC no existe
+//   error: F2-Amoxicilina ya existe
+// maestro nuevo:
+//   F1-Aspirina 60 hoy+30
+//   F1-Ibuprofeno 100 01/06/2025
+//   F1-Paracetamol 75 01/07/2025
+//   F3-Amoxicilina 45 hoy+30
+//   F3-Paracetamol 35 01/09/2025
+//   F4-Ibuprofeno 90 hoy+30
+// bajas:
+//   Ibuprofeno 80
