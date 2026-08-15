@@ -1,86 +1,108 @@
-// Comparaciones DENTRO de los argumentos de ESCRIBIR.
+// Que se puede y que no se puede poner adentro de un argumento.
 //
-// Este archivo existe por dos bugs que convivieron mucho tiempo y que se
-// tapaban entre si. Los dos hacian lo peor que puede hacer un interprete: dar
-// un resultado equivocado sin un solo mensaje de error.
+// ── La regla, y de donde sale ───────────────────────────────────────────────
 //
-//   1. `ESCRIBIR("x ", 3 = 3)` imprimia `3`, y `3 = 4` imprimia `4`.
+// Lo que la catedra SI fija (TEORIA_COMPLETA.txt:319-320):
 //
-//      El parser buscaba un '=' en TODO argumento de TODO procedimiento, para
-//      leerlo como `clave = valor`. Partia `3 = 3` en clave='3' y valor='3',
-//      tiraba la clave, y el '=' de comparacion desaparecia. Ahora la forma
-//      `clave = valor` solo se busca en los procedimientos que DECLARAN
-//      parametros — o sea los de una libreria (escena.json), nunca los del
-//      lenguaje, que son variadicos y reciben expresiones.
+//     "OPERADORES RELACIONALES
+//      (Sirven para comparaciones. Devuelven resultado logico: V o F)"
 //
-//      Nunca se vio antes porque adentro de `SI (...)` andaba bien: ahi la
-//      condicion no pasa por el troceado de argumentos.
+// Los comparadores son SEIS —  =  <>  <  <=  >  >=  — y una comparacion es una
+// expresion con valor. `==` NO EXISTE en AED: la igualdad es '=' sola
+// (TEORIA_COMPLETA.txt:324). Que aparezca en los .paed del corpus es un error
+// de escritura arrastrado, anotado en wiki_paed.txt:225.
 //
-//   2. `ESCRIBIR("Ana" + "Beto")` imprimia `Ana" + "Beto`.
+// Lo que la catedra NO dice: nada sobre si una comparacion puede ir como
+// argumento. Sus dos ejemplos de ESCRIBIR (TEORIA_COMPLETA.txt:442 y 445)
+// pasan un texto y una variable, y el corpus nunca pasa una comparacion — pero
+// que algo no aparezca no es una regla que lo prohiba.
 //
-//      El interprete tenia un atajo: si el argumento empezaba y terminaba con
-//      comilla, imprimia el medio sin evaluar. `"Ana" + "Beto"` cumple esa
-//      condicion. El atajo era una segunda implementacion de lo que primario()
-//      ya hacia en expr.c, asi que se saco en vez de ajustarlo.
+// Entonces esto es una DECISION DE PAED y se documenta como tal: un comparador
+// suelto adentro de un argumento es un ERROR y se rechaza nombrandolo. El
+// motivo no es la teoria, es no aceptarlo callado — que es lo que pasaba antes:
+// el '=' caia en el troceado `clave = valor` (el de `MOVER(nombre = cubo1)`),
+// se comia el lado izquierdo e imprimia el derecho — `ESCRIBIR("x ", 3 = 3)`
+// daba `3`, y `3 = 4` daba `4`. Un resultado equivocado sin un solo mensaje es
+// el peor de los dos mundos, y es lo contrario de lo que promete este parser
+// (ver errores.paed: "el parser NUNCA ignora en silencio").
+//
+// Los seis se rechazan igual. Que el '=' fuera el unico raro era un accidente
+// del troceado, no una regla del lenguaje.
+//
+// Este archivo NO puede llevar los casos que fallan: la ejecucion corta en el
+// primer error, asi que un catalogo de errores solo verificaria el primero.
+// Los rechazos viven en errores.paed, que es el fixture para eso.
 
 ACCION comparaciones ES
-    AMBIENTE
-        s: AN(10);
-        n: ENTERO;
-    PROCESO
-        s := "Ana";
-        n := 3;
+AMBIENTE
+    a: ENTERO;
+    b: ENTERO;
+    s: AN(10);
+    t: AN(10);
+PROCESO
+    a := 3;
+    b := 4;
+    s := "Ana";
+    t := "Beto";
 
-        ESCRIBIR("-- el '=' como comparacion, no como clave = valor --");
-        ESCRIBIR("3 = 3      ", 3 = 3);
-        ESCRIBIR("3 = 4      ", 3 = 4);
-        ESCRIBIR("(3 = 3)    ", (3 = 3));
-        ESCRIBIR("n = 3      ", n = 3);
-        ESCRIBIR("2 + 2 = 4  ", 2 + 2 = 4);
+    ESCRIBIR("-- lo que ESCRIBIR SI muestra --");
+    ESCRIBIR("un texto pelado");
+    ESCRIBIR("variables: ", a, " y ", b);
+    ESCRIBIR("cuentas: ", a + b, " ", a * 2, " ", (a + b) / 2, " ", b DIV a, " ", b MOD a);
+    ESCRIBIR("textos pegados: ", s + " y " + t);
+    ESCRIBIR("texto pegado a un numero: ", "vim" + "mon" + 5);
 
-        ESCRIBIR("-- los otros comparadores no se parten por su '=' --");
-        ESCRIBIR("3 <= 4     ", 3 <= 4);
-        ESCRIBIR("5 >= 9     ", 5 >= 9);
-        ESCRIBIR("3 == 3     ", 3 == 3);
-        ESCRIBIR("3 <> 4     ", 3 <> 4);
+    ESCRIBIR("-- un comparador adentro de un texto es TEXTO --");
+    ESCRIBIR("a = b, y c <= d, y e <> f");
+    ESCRIBIR("con comillas simples: 'x >= y'");
+    ESCRIBIR("mezclado: a = b da ", a + b);
 
-        ESCRIBIR("-- operadores entre dos textos LITERALES --");
-        ESCRIBIR("igual      ", "Ana" = "Ana");
-        ESCRIBIR("distinto   ", "ana" = "Ana");
-        ESCRIBIR("menor      ", "Ana" < "Beto");
-        ESCRIBIR("concatena  ", "Ana" + "Beto");
-        ESCRIBIR("variable   ", s = "Ana");
+    ESCRIBIR("-- comparar va en la condicion --");
+    SI (a = 3) ENTONCES
+        ESCRIBIR("SI con '=' : anda");
+    FIN_SI
 
-        ESCRIBIR("-- un '=' adentro de un texto sigue siendo texto --");
-        ESCRIBIR("a = b, y c = d");
-        ESCRIBIR("mezcla: a = b ", 1 = 1);
+    SI (a <> b) ENTONCES
+        ESCRIBIR("SI con '<>': anda");
+    FIN_SI
 
-        ESCRIBIR("-- combinados con Y / O --");
-        ESCRIBIR("y          ", (3 = 3) Y (4 = 4));
-        ESCRIBIR("o          ", (3 = 9) O (4 = 4));
+    SI ((a < b) Y (b >= 4)) ENTONCES
+        ESCRIBIR("SI con '<' y '>=' combinados: anda");
+    FIN_SI
+
+    SI (s < t) ENTONCES
+        ESCRIBIR("los textos se comparan por ASCII: Ana va antes que Beto");
+    FIN_SI
+
+    SI (s = "Ana") ENTONCES
+        ESCRIBIR("comparar contra un literal de texto: anda");
+    FIN_SI
+
+    // El MIENTRAS es la otra condicion, y usa las mismas reglas.
+    a := 1;
+    MIENTRAS (a <= 3) HACER
+        ESCRIBIR("vuelta ", a);
+        a := a + 1;
+    FIN_MIENTRAS
 FIN_ACCION
 
 // ── SALIDA ESPERADA ─────────────────────────────────────────────────────────
-// -- el '=' como comparacion, no como clave = valor --
-// 3 = 3      V
-// 3 = 4      F
-// (3 = 3)    V
-// n = 3      V
-// 2 + 2 = 4  V
-// -- los otros comparadores no se parten por su '=' --
-// 3 <= 4     V
-// 5 >= 9     F
-// 3 == 3     V
-// 3 <> 4     V
-// -- operadores entre dos textos LITERALES --
-// igual      V
-// distinto   F
-// menor      V
-// concatena  AnaBeto
-// variable   V
-// -- un '=' adentro de un texto sigue siendo texto --
-// a = b, y c = d
-// mezcla: a = b V
-// -- combinados con Y / O --
-// y          V
-// o          V
+// -- lo que ESCRIBIR SI muestra --
+// un texto pelado
+// variables: 3 y 4
+// cuentas: 7 6 3.5 1 1
+// textos pegados: Ana y Beto
+// texto pegado a un numero: vimmon5
+// -- un comparador adentro de un texto es TEXTO --
+// a = b, y c <= d, y e <> f
+// con comillas simples: 'x >= y'
+// mezclado: a = b da 7
+// -- comparar va en la condicion --
+// SI con '=' : anda
+// SI con '<>': anda
+// SI con '<' y '>=' combinados: anda
+// los textos se comparan por ASCII: Ana va antes que Beto
+// comparar contra un literal de texto: anda
+// vuelta 1
+// vuelta 2
+// vuelta 3

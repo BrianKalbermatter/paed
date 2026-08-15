@@ -1,7 +1,7 @@
-//Escribir un algoritmo que permita efectuar la operación de
-diferencia entre dos secuencias (ordenadas crecientes),
-esto es, que genere el conjunto de los elementos no
-comunes a las dos secuencias.
+// Escribir un algoritmo que permita efectuar la operación de
+// diferencia entre dos secuencias (ordenadas crecientes),
+// esto es, que genere el conjunto de los elementos no
+// comunes a las dos secuencias.
 ACCION ej:1_2_10 ES
     VAR a, b: ENTERO
     LEER a

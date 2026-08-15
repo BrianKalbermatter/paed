@@ -1,16 +1,19 @@
 // Fixture de errores: cada linea de PROCESO tiene exactamente un error.
 // Sirve para verificar que el parser NUNCA ignora en silencio.
 ACCION errores ES
-    AMBIENTE
-        cubo1: CUBO;
-    PROCESO
-        CUBO(nombre = cubo1, posicion = (0,0,0), color = #ff0000);
-        MOVER(cubo1, posicion = (1,1,1));
-        MOVERR(nombre = cubo1, posicion = (1,1,1));
-        COLOR(nombre = cubo1, valor = #00ff00);
-        MOVER(nombre = cubo1, posicion = 1,1,1);
-        ESCALAR(nombre = cubo1)
-        MOVER(nombre = fantasma, posicion = (2,2,2));
+AMBIENTE
+    cubo1: CUBO;
+PROCESO
+    CUBO(nombre = cubo1, posicion = (0,0,0), color = #ff0000);
+    MOVER(cubo1, posicion = (1,1,1));
+    MOVERR(nombre = cubo1, posicion = (1,1,1));
+    COLOR(nombre = cubo1, valor = #00ff00);
+    MOVER(nombre = cubo1, posicion = 1,1,1);
+    ESCALAR(nombre = cubo1)
+    MOVER(nombre = fantasma, posicion = (2,2,2));
+    ESCRIBIR("resultado: ", 3 = 3);
+    ESCRIBIR("resultado: ", 3 == 3);
+    ARR(3 < 4);
 FIN_ACCION
 
 // ── LIBRERIA escena
@@ -29,3 +32,7 @@ FIN_ACCION
 // tests/errores.paed:11: error: argumento '1' sin 'clave = valor' en MOVER: la referencia siempre se escribe con nombre
 // tests/errores.paed:11: error: falta el parametro obligatorio 'posicion' en MOVER
 // tests/errores.paed:12: error: falta ';' al final de la instruccion
+// tests/errores.paed:14: error: '=' compara: una comparacion no va como argumento de ESCRIBIR, va en la condicion de un SI o un MIENTRAS
+// tests/errores.paed:15: error: '=' compara: una comparacion no va como argumento de ESCRIBIR, va en la condicion de un SI o un MIENTRAS
+// tests/errores.paed:16: error: '<' compara: una comparacion no va como argumento de ARR, va en la condicion de un SI o un MIENTRAS
+// tests/errores.paed:16: error: ARR necesita una secuencia como primer argumento

@@ -5,17 +5,18 @@
     
 ```paed
 ACCION promedio ES
-    AMBIENTE
-        n, i, suma: ENTERO;
-    PROCESO
-        ESCRIBIR("Cuantos numeros:");
-        LEER(n);
-        suma := 0;
-        PARA i := 1 HASTA n HACER
-            LEER(A[i]);
-            suma := suma + A[i];
-        FIN_PARA
-        ESCRIBIR("promedio = ", suma / n);
+AMBIENTE
+    n, i, suma: ENTERO;
+    A: ARREGLO[1..100] DE ENTERO;
+PROCESO
+    ESCRIBIR("Cuantos numeros:");
+    LEER(n);
+    suma := 0;
+    PARA i := 1 HASTA n HACER
+        LEER(A[i]);
+        suma := suma + A[i];
+    FIN_PARA
+    ESCRIBIR("promedio = ", suma / n);
 FIN_ACCION
 ```
 Como ejecutarlo?

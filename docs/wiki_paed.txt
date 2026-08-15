@@ -145,10 +145,17 @@ BLOQUE 5: Declaraciones (dentro de AMBIENTE)
       SI. Corta en el primer ':', valida que el nombre sea un identificador
       valido, y exige el ';'. Guarda nombre y tipo.
 
+  RESUELTO EN LA COMPARACION
+      - Se pueden declarar varias variables en una linea? (a, b: ENTERO;)
+        SI. Estaba anotado como "Frankly dice NO", y Frankly no decide: la
+        catedra lo escribe en su ejemplo canonico, `a, doble: entero`
+        (TEORIA_COMPLETA.txt:440). IMPLEMENTADO — vale para todos los tipos,
+        y una coma sin nombre al lado es error.
+        Ver tests/catedra_estructura.paed y declaracion_multiple_errores.paed.
+
   A COMPARAR
-      - Se pueden declarar varias variables en una linea?
-        (a, b: ENTERO;)  Frankly dice NO.
-      - Se pueden inicializar en la declaracion? Frankly dice NO.
+      - Se pueden inicializar en la declaracion? Frankly dice NO, y la teoria
+        no muestra ningun caso. Queda abierta: Frankly no alcanza para cerrarla.
 
 
 =======================================================

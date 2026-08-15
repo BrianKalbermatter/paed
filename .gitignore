@@ -32,3 +32,6 @@ ejercicios/*.csv
 
 # Metadata de Windows
 *:Zone.Identifier
+
+# Registro de skills generado por herramientas externas: no es del proyecto.
+.atl/

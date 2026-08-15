@@ -1,0 +1,24 @@
+// Fixture: la coma de mas NO se perdona.
+//
+// `a, doble: entero;` es valido (ver catedra_estructura.paed). El riesgo de
+// aceptar una lista es el clasico: cortar por coma con una funcion que colapsa
+// los separadores vacios, y tragarse `a,,b` o `a,b,` sin decir nada.
+//
+// Este parser promete lo contrario (ver errores.paed), asi que cada hueco de la
+// lista sale nombrado. El nombre vacio se muestra como '' a proposito: es
+// EXACTAMENTE lo que se leyo, y ver las comillas pegadas es lo que hace obvio
+// que sobra una coma.
+
+ACCION declaracion_multiple_errores ES
+AMBIENTE
+    a, , b: ENTERO;
+    c, d,: ENTERO;
+    e, 9mal: ENTERO;
+PROCESO
+    ESCRIBIR("no llega aca");
+FIN_ACCION
+
+// ── SALIDA ESPERADA ─────────────────────────────────────────────────────────
+// tests/declaracion_multiple_errores.paed:14: error: nombre de variable invalido: ''
+// tests/declaracion_multiple_errores.paed:15: error: nombre de variable invalido: ''
+// tests/declaracion_multiple_errores.paed:16: error: nombre de variable invalido: '9mal'

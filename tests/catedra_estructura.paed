@@ -1,0 +1,49 @@
+// El ejemplo canonico de la catedra, escrito COMO LO ESCRIBE LA CATEDRA.
+//
+// Fuente: TEORIA_COMPLETA.txt:438-446, el ejemplo de estructura secuencial:
+//
+//     ACCION Ejemplo1 ES
+//     AMBIENTE
+//         a, doble: entero
+//     PROCESO
+//         ESCRIBIR("Ingrese el numero")
+//         LEER(a)
+//         doble := a * 2
+//         ESCRIBIR("Resultado ", doble)
+//     FIN_ACCION
+//
+// Tres cosas que fija este test, y que ningun otro fijaba:
+//
+//   1. AMBIENTE, PROCESO y FIN_ACCION van SIN SANGRIA, al mismo nivel que
+//      ACCION. Asi esta dibujada la estructura general en
+//      TEORIA_COMPLETA.txt:201-206, y asi el ejemplo de :438. Todos los .paed
+//      del repo los sangraban, que se lee distinto de lo que ve el alumno.
+//
+//   2. VARIAS VARIABLES EN UNA MISMA DECLARACION: `a, doble: entero`.
+//      wiki_paed.txt:149-150 lo dejo como pregunta abierta y la contesto
+//      Frankly con un "NO" — pero Frankly NO ES AUTORIDAD: docs/PAED.md:1319
+//      dice, con todas las letras, que es permisivo y que correr ahi no hace
+//      correcto a un archivo. La catedra lo escribe, y manda la catedra.
+//
+//   3. El TIPO EN MINUSCULA (`entero`). Ya andaba, pero nada lo fijaba: sin
+//      test, manana alguien "normaliza" a mayusculas y rompe el corpus.
+//
+// La unica diferencia con la catedra es el ';' que cierra cada instruccion.
+// Esa si es una decision de PAED, y esta escrita como tal en docs/PAED.md.
+
+ACCION Ejemplo1 ES
+AMBIENTE
+    a, doble: entero;
+PROCESO
+    ESCRIBIR("Ingrese el numero");
+    LEER(a);
+    doble := a * 2;
+    ESCRIBIR("Resultado ", doble);
+FIN_ACCION
+
+// ── ENTRADA ─────────────────────────────────────────────────────────────────
+// 15
+
+// ── SALIDA ESPERADA ─────────────────────────────────────────────────────────
+// Ingrese el numero
+// Resultado 30

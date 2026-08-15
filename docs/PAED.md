@@ -72,19 +72,39 @@ parser exige como terminador.
 
 ```paed
 ACCION nombre_algoritmo ES
-    AMBIENTE
-        variable: TIPO;
-    PROCESO
-        instrucciones;
+AMBIENTE
+    variable: TIPO;
+PROCESO
+    instrucciones;
 FIN_ACCION
 ```
 
+`AMBIENTE`, `PROCESO` y `FIN_ACCION` van **sin sangría**, al mismo nivel que
+`ACCION`. Es la forma en que la cátedra dibuja la estructura general
+(`TEORIA_COMPLETA.txt:201-206`) y su ejemplo canónico (`:438-446`). El parser
+no mira la sangría, pero los `.paed` del repo la respetan para que el alumno
+lea lo mismo que en el apunte — lo fija `tests/catedra_estructura.paed`.
+
 - Palabras clave en MAYÚSCULAS, identificadores en minúsculas.
+- Los tipos se aceptan en cualquier caja: `entero` y `ENTERO` son lo mismo. La
+  cátedra los escribe en minúscula (`TEORIA_COMPLETA.txt:440`).
 - Comentarios con `//` hasta el fin de línea.
-- Declaraciones e instrucciones terminan en `;`.
+- Declaraciones e instrucciones terminan en `;`. **Es la única diferencia con la
+  cátedra**, que no usa terminador — decisión de PAED, no del apunte.
 - Las palabras de bloque (`SI`, `MIENTRAS`, `FIN_SI`, …) **no** llevan `;`.
 - El `AMBIENTE` es opcional: un programa que solo usa escalares puede no tenerlo.
 - El cierre se escribe `FIN_ACCION` **o** `FINACCION`, las dos válidas (§10.7).
+
+**Una declaración puede nombrar varias variables**, separadas por coma:
+
+```paed
+a, doble: entero;        // dos variables del mismo tipo
+```
+
+Sale del ejemplo canónico de la cátedra (`TEORIA_COMPLETA.txt:440`). Vale para
+cualquier tipo, incluidos `ARREGLO`, `ARCHIVO` y `SECUENCIA`: cada nombre recibe
+una copia entera del tipo. Una coma sin nombre al lado (`a,,b` o `a,b,`) es
+**error**, no se perdona en silencio — ver `tests/declaracion_multiple_errores.paed`.
 
 ## 2. Tipos de datos
 
@@ -709,6 +729,27 @@ que una librería del host no puede redefinir `LEER`.
 `ESCRIBIR` **evalúa** sus argumentos: `ESCRIBIR(cont_pal)` imprime el valor, no
 el nombre.
 
+**Una comparación no va como argumento.** Un comparador suelto (`=` `<>` `<`
+`<=` `>` `>=`) adentro de un argumento es error; la comparación va en la
+condición de un `SI` o un `MIENTRAS`. Vale para todos los procedimientos
+variádicos del lenguaje, no solo `ESCRIBIR`.
+
+```paed
+ESCRIBIR("iguales: ", 3 = 3);   // error: '=' compara
+
+SI (3 = 3) ENTONCES             // así
+    ESCRIBIR("iguales");
+FIN_SI
+```
+
+Esto es una **decisión de PAED, no una regla de la cátedra**, y conviene que
+quede claro cuál es cuál. La teoría fija que los relacionales «devuelven
+resultado lógico: V o F» (`TEORIA_COMPLETA.txt:319-320`) y no dice nada sobre si
+una comparación puede ser argumento; sus dos ejemplos de `ESCRIBIR`
+(`:442`, `:445`) pasan un texto y una variable. Se rechaza porque la alternativa
+era el bug que había antes: el `=` caía en el troceado `clave = valor`, se comía
+el lado izquierdo y `ESCRIBIR("x ", 3 = 3)` imprimía `3` sin un solo mensaje.
+
 ### 5.1 `LEER` de consola
 
 ```paed
@@ -749,8 +790,8 @@ Definidas por el usuario, dentro de `AMBIENTE` — **no implementadas**:
 
 ```paed
 FUNCION car_a_num(c: caracter) ES: ENTERO
-    PROCESO
-        ...
+PROCESO
+    ...
 FIN_FUNCION
 ```
 

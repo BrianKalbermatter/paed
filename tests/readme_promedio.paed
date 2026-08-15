@@ -1,0 +1,35 @@
+// El ejemplo del README, palabra por palabra.
+//
+// Existe por una razon concreta: el ejemplo de la portada NO CORRIA. Usaba
+// `A[i]` sin declarar `A` en el AMBIENTE, y ademas escribia `n, i, suma:
+// ENTERO;` — la declaracion multiple de la catedra — que el parser todavia no
+// aceptaba. O sea que lo primero que lee cualquiera que llega al proyecto era
+// un programa roto, y nada lo estaba mirando.
+//
+// La documentacion que nadie ejecuta se pudre. Este test es el que la ejecuta:
+// si el README cambia y el programa deja de andar, falla aca.
+
+ACCION promedio ES
+AMBIENTE
+    n, i, suma: ENTERO;
+    A: ARREGLO[1..100] DE ENTERO;
+PROCESO
+    ESCRIBIR("Cuantos numeros:");
+    LEER(n);
+    suma := 0;
+    PARA i := 1 HASTA n HACER
+        LEER(A[i]);
+        suma := suma + A[i];
+    FIN_PARA
+    ESCRIBIR("promedio = ", suma / n);
+FIN_ACCION
+
+// ── ENTRADA ─────────────────────────────────────────────────────────────────
+// 3
+// 10
+// 20
+// 30
+
+// ── SALIDA ESPERADA ─────────────────────────────────────────────────────────
+// Cuantos numeros:
+// promedio = 20

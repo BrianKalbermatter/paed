@@ -481,23 +481,66 @@ static char *igual_separador(char *s) {
 
 // ¿Este procedimiento admite argumentos con nombre (`clave = valor`)?
 //
-// Solo si DECLARA parametros. Y es la respuesta a un bug que estuvo dando
-// vueltas: hasta ahora se buscaba un '=' en TODO argumento de TODO
-// procedimiento, asi que `ESCRIBIR("x ", 3 = 3)` se partia en clave='3' y
-// valor='3', se tiraba la clave, y el resultado impreso era '3' en vez de 'V'.
-// El '=' de comparacion desaparecia sin un solo mensaje de error.
-//
-// El corte es limpio porque las dos familias no se tocan: los procedimientos
+// Solo si DECLARA parametros. Las dos familias no se tocan: los procedimientos
 // del LENGUAJE (ESCRIBIR, LEER, ARR, AVZ...) son variadicos y declaran
-// "params": [] — reciben expresiones, y ahi un '=' solo puede ser el operador
-// de igualdad. Los de una LIBRERIA (escena.json: CUBO, MOVER...) declaran sus
-// parametros con nombre y no son variadicos — ahi un '=' separa clave de valor.
+// "params": [] — reciben valores. Los de una LIBRERIA (escena.json: CUBO,
+// MOVER...) declaran sus parametros con nombre y no son variadicos — ahi un
+// '=' separa clave de valor.
 //
 // Se mira lo que el procedimiento DECLARA y no una lista de nombres en C, por
 // el mismo motivo de siempre: la definicion del lenguaje vive en el JSON.
 static int proc_admite_clave_valor(cJSON *def) {
     cJSON *params = cJSON_GetObjectItem(def, "params");
     return cJSON_IsArray(params) && cJSON_GetArraySize(params) > 0;
+}
+
+// ── Una comparacion no va como argumento ────────────────────────────────────
+//
+// Busca un operador de comparacion suelto en un argumento, fuera de comillas.
+// Devuelve donde empieza y deja su largo en `largo`; NULL si no hay.
+//
+// DE DONDE SALE, con honestidad sobre que dice y que NO dice la catedra.
+//
+// Lo que la teoria SI fija (TEORIA_COMPLETA.txt:319-320, "OPERADORES
+// RELACIONALES / Sirven para comparaciones. Devuelven resultado logico: V o
+// F"): los seis comparadores son  =  <>  <  <=  >  >=  y una comparacion es
+// una expresion con valor. `==` NO EXISTE en AED — la igualdad es '=' sola
+// (TEORIA_COMPLETA.txt:324, y wiki_paed.txt:225 lo anota como error de
+// escritura arrastrado en los .paed del corpus).
+//
+// Lo que la teoria NO dice: nada sobre si una comparacion puede ir como
+// argumento. Sus dos unicos ejemplos de ESCRIBIR (TEORIA_COMPLETA.txt:442 y
+// 445) pasan un texto y una variable, y el corpus de la catedra nunca pasa una
+// comparacion — pero que algo no aparezca no es una regla que lo prohiba.
+//
+// Asi que esto es una DECISION DE PAED, no una cita: se rechaza. El motivo es
+// el de siempre en este parser — antes el '=' caia en el troceado
+// `clave = valor`, se comia el lado izquierdo y devolvia el derecho sin avisar
+// (`ESCRIBIR("x ", 3 = 3)` daba `3`). Entre aceptar una forma que la catedra
+// nunca escribe y rechazarla nombrandola, se rechaza: un resultado equivocado
+// en silencio es lo contrario de lo que este parser promete (ver
+// tests/errores.paed: "el parser NUNCA ignora en silencio").
+//
+// El mensaje no dice que el procedimiento "muestra" algo, porque esto corre
+// sobre TODOS los variadicos y ARR o CERRAR no muestran nada.
+//
+// Ojo con el orden: los de dos caracteres van ANTES que los de uno, porque si
+// no '<=' se detecta como '<' y el mensaje nombra el operador equivocado.
+static const char *comparador_suelto(const char *s, int *largo) {
+    static const char *OPS2[] = { "<>", "<=", ">=" };
+    int en_texto = 0;
+    char comilla = 0;
+
+    for (const char *c = s; *c; c++) {
+        if (!en_texto && (*c == '"' || *c == '\'')) { en_texto = 1; comilla = *c; continue; }
+        if (en_texto) { if (*c == comilla) en_texto = 0; continue; }
+
+        for (size_t i = 0; i < sizeof(OPS2) / sizeof(*OPS2); i++)
+            if (strncmp(c, OPS2[i], 2) == 0) { *largo = 2; return c; }
+
+        if (*c == '=' || *c == '<' || *c == '>') { *largo = 1; return c; }
+    }
+    return NULL;
 }
 
 // ── Consola o archivo: cual de las dos formas es ──────────────────────────────
@@ -886,12 +929,25 @@ static void parse_instruction(PAEDProgram *p, char *linea, int lineno) {
     int   variadico = proc_es_variadico(def);
     int   hubo_error = 0;
 
-    // Si el procedimiento no declara parametros, sus argumentos son
-    // EXPRESIONES y no pares 'clave = valor': ni se busca el separador, para
-    // que el '=' de comparacion llegue entero al evaluador.
+    // Si el procedimiento no declara parametros, sus argumentos son VALORES y
+    // no pares 'clave = valor': ni se busca el separador. Un '=' ahi no separa
+    // nada, y tampoco compara — se rechaza mas abajo.
     int clave_valor = proc_admite_clave_valor(def);
 
     for (int i = 0; i < n_partes; i++) {
+        if (!clave_valor) {
+            int largo = 0;
+            const char *cmp = comparador_suelto(partes[i], &largo);
+            if (cmp) {
+                add_error(p, lineno,
+                          "'%.*s' compara: una comparacion no va como argumento de %s, "
+                          "va en la condicion de un SI o un MIENTRAS",
+                          largo, cmp, nombre);
+                hubo_error = 1;
+                continue;
+            }
+        }
+
         char *igual = clave_valor ? igual_separador(partes[i]) : NULL;
 
         if (!igual) {
@@ -1501,29 +1557,13 @@ static char *tipo_tras_DE(char *resto) {
     return trim(resto + 2);
 }
 
-static void parse_decl(PAEDProgram *p, char *linea, int lineno) {
-    size_t len = strlen(linea);
-    if (len == 0 || linea[len - 1] != ';') {
-        add_error(p, lineno, "falta ';' al final de la declaracion");
-        return;
-    }
-    linea[len - 1] = '\0';
-
-    char *dosp = strchr(linea, ':');
-    if (!dosp) {
-        add_error(p, lineno, "declaracion invalida: se esperaba nombre: TIPO;");
-        return;
-    }
-    *dosp = '\0';
-    char *nombre = trim(linea);
-    char *tipo   = trim(dosp + 1);
-
+// Declara UNA variable, con el nombre y el tipo ya separados.
+//
+// `tipo` se recibe como buffer propio y modificable a proposito: las ramas de
+// abajo lo trocean en el lugar (trim, tipo_tras_DE, separar_organizacion).
+static void declarar_una(PAEDProgram *p, char *nombre, char *tipo, int lineno) {
     if (!es_identificador(nombre)) {
         add_error(p, lineno, "nombre de variable invalido: '%s'", nombre);
-        return;
-    }
-    if (!*tipo) {
-        add_error(p, lineno, "falta el tipo de '%s'", nombre);
         return;
     }
     if (p->decl_count >= PAED_MAX_DECLS) {
@@ -1660,6 +1700,56 @@ static void parse_decl(PAEDProgram *p, char *linea, int lineno) {
     }
 
     strncpy(d->type, tipo, PAED_NAME_MAX - 1);
+}
+
+// ── Una declaracion puede nombrar VARIAS variables ────────────────────────────
+//
+// `a, doble: entero;` declara las dos. Sale de la catedra, que lo escribe asi
+// en el ejemplo canonico (TEORIA_COMPLETA.txt:440).
+//
+// wiki_paed.txt:149-150 lo tenia como pregunta abierta, contestada con un
+// "Frankly dice NO". Frankly no decide: docs/PAED.md:1319 deja escrito que es
+// permisivo y que correr ahi no hace correcto a un archivo — o sea que tampoco
+// hace incorrecto a lo que rechaza. Manda la catedra, y la catedra lo usa.
+//
+// El corte es por coma y NO colapsa los vacios: `a,,b` y `a,b,` caen en
+// es_identificador("") y dan error con el nombre vacio a la vista. Tragarse una
+// coma de mas seria justo lo que este parser promete no hacer.
+static void parse_decl(PAEDProgram *p, char *linea, int lineno) {
+    size_t len = strlen(linea);
+    if (len == 0 || linea[len - 1] != ';') {
+        add_error(p, lineno, "falta ';' al final de la declaracion");
+        return;
+    }
+    linea[len - 1] = '\0';
+
+    char *dosp = strchr(linea, ':');
+    if (!dosp) {
+        add_error(p, lineno, "declaracion invalida: se esperaba nombre: TIPO;");
+        return;
+    }
+    *dosp = '\0';
+    char *nombres = trim(linea);
+    char *tipo    = trim(dosp + 1);
+
+    if (!*tipo) {
+        add_error(p, lineno, "falta el tipo de '%s'", nombres);
+        return;
+    }
+
+    // El tipo se COPIA para cada nombre: declarar_una lo trocea en el lugar, y
+    // sin copia la segunda variable se encontraria el tipo ya comido.
+    for (char *n = nombres;;) {
+        char *coma = strchr(n, ',');
+        if (coma) *coma = '\0';
+
+        char copia[PAED_LINEA_MAX];
+        snprintf(copia, sizeof(copia), "%s", tipo);
+        declarar_una(p, trim(n), copia, lineno);
+
+        if (!coma) break;
+        n = coma + 1;
+    }
 }
 
 // ── Analisis del archivo completo ─────────────────────────────────────────────
