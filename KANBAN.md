@@ -47,6 +47,7 @@ kanban-plugin: board
 
 ## Backlog — lenguaje, sin relación con archivos
 
+- [ ] **Un error de RUNTIME no corta la ejecución**: `interp_exec` hace `if (exec_instr(...) != 0) fallos++` y sigue. Para errores de PARSEO está bien (querés verlos todos de una), pero en runtime el estado ya quedó sucio y el programa sigue calculando con datos viejos. Visto el 2026-08-14: un `LEER` que falla por un dato mal tipeado deja el registro con el valor ANTERIOR, y el total que imprime es plausible pero MAL. Es justo lo que el proyecto entero trata de evitar: fallar fuerte en vez de contestar mal en silencio #evaluador
 - [ ] **Trampa encontrada el 2026-08-14**: `ESCRIBIR("x: ", a = b)` NO compara — cae en la sintaxis de argumentos con nombre (`clave = valor`, la de `MOVER(nombre = fantasma)`) y termina imprimiendo solo `b`. Con paréntesis (`(a = b)`) anda bien. Debería avisar, o al menos quedar documentado #parser
 - [ ] Declaración múltiple `A,B,SUMA: entero`. Es la forma del único ejemplo con autoridad de cátedra (`AED_2021_UnI.pdf:10`) y hoy da "nombre de variable invalido" #parser
 - [ ] `FUNCION`/`PROCEDIMIENTO` anidados dentro de `AMBIENTE` #parser

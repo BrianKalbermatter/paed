@@ -1,0 +1,81 @@
+// CORTE DE CONTROL — totales por sucursal.
+//
+// El patron aparece en el corpus como "PATRON ESTANDAR — ARCHIVO SECUENCIAL CON
+// CORTE DE CONTROL". La idea: el archivo viene ORDENADO por la clave, asi que
+// todos los registros de una misma sucursal estan JUNTOS. Mientras la sucursal
+// no cambie, se acumula; cuando cambia, se corta, se imprime el total y se
+// arranca el siguiente grupo.
+//
+// Esto es lo que hace util al ORDENADO POR: si el archivo no estuviera
+// ordenado, para totalizar por sucursal habria que leerlo entero varias veces,
+// o guardar todo en memoria. Ordenado, alcanza con una sola pasada y una sola
+// variable de acumulacion.
+//
+// El ciclo interno usa CORTOCIRCUITO y lo necesita:
+//
+//     MIENTRAS ((NO FDA(ventas)) Y (v.sucursal = suc_actual))
+//
+// Si el archivo se termino, `v` conserva el ultimo registro leido. Sin
+// cortocircuito se compararia esa sucursal vieja y el ultimo grupo se contaria
+// dos veces.
+
+ACCION control_ventas ES
+    AMBIENTE
+        venta = REGISTRO
+            sucursal: AN(6);
+            rubro: AN(12);
+            articulo: AN(20);
+            importe: REAL;
+        FIN_REGISTRO
+
+        ventas: ARCHIVO DE venta ORDENADO POR sucursal, rubro;
+
+        v: venta;
+        suc_actual: AN(6);
+        total_suc: REAL;
+        total_gral: REAL;
+        cant: ENTERO;
+    PROCESO
+        // ── Los datos ───────────────────────────────────────────────────────
+        // Ordenados por sucursal y rubro, como declara el ARCHIVO.
+        CREAR(ventas);
+        v.sucursal := 'CENTRO'; v.rubro := 'Almacen';  v.articulo := 'Fideos';      v.importe := 1250.5;  ESCRIBIR(ventas, v);
+        v.sucursal := 'CENTRO'; v.rubro := 'Almacen';  v.articulo := 'Arroz';       v.importe := 980;     ESCRIBIR(ventas, v);
+        v.sucursal := 'CENTRO'; v.rubro := 'Limpieza'; v.articulo := 'Detergente';  v.importe := 2100;    ESCRIBIR(ventas, v);
+        v.sucursal := 'NORTE';  v.rubro := 'Almacen';  v.articulo := 'Aceite';      v.importe := 3400.75; ESCRIBIR(ventas, v);
+        v.sucursal := 'NORTE';  v.rubro := 'Bebidas';  v.articulo := 'Gaseosa 2L';  v.importe := 1800;    ESCRIBIR(ventas, v);
+        v.sucursal := 'SUR';    v.rubro := 'Bebidas';  v.articulo := 'Vino';        v.importe := 5600;    ESCRIBIR(ventas, v);
+        v.sucursal := 'SUR';    v.rubro := 'Limpieza'; v.articulo := 'Lavandina';   v.importe := 890.25;  ESCRIBIR(ventas, v);
+        v.sucursal := 'SUR';    v.rubro := 'Limpieza'; v.articulo := 'Jabon';       v.importe := 1200;    ESCRIBIR(ventas, v);
+        CERRAR(ventas);
+
+        // ── El corte de control ─────────────────────────────────────────────
+        total_gral := 0;
+        cant := 0;
+
+        ABRIR E/(ventas);
+        LEER(ventas, v);
+
+        MIENTRAS (NO FDA(ventas)) HACER
+            suc_actual := v.sucursal;
+            total_suc := 0;
+
+            ESCRIBIR("Sucursal ", suc_actual);
+
+            MIENTRAS ((NO FDA(ventas)) Y (v.sucursal = suc_actual)) HACER
+                ESCRIBIR("   ", v.rubro, "  ", v.articulo, "  $ ", v.importe);
+                total_suc := total_suc + v.importe;
+                cant := cant + 1;
+                LEER(ventas, v);
+            FIN_MIENTRAS
+
+            ESCRIBIR("   ---- total ", suc_actual, ": $ ", total_suc);
+            total_gral := total_gral + total_suc;
+        FIN_MIENTRAS
+
+        CERRAR(ventas);
+
+        ESCRIBIR("");
+        ESCRIBIR("ventas procesadas: ", cant);
+        ESCRIBIR("TOTAL GENERAL:     $ ", total_gral);
+FIN_ACCION

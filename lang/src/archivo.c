@@ -27,6 +27,23 @@ void arch_reset(void) {
     g_error[0]  = '\0';
 }
 
+// El nombre del .csv sin la carpeta.
+//
+// Los mensajes nombran el ARCHIVO y no la ruta completa: la ruta depende de
+// donde este parado el que corre el programa, y con una carpeta larga se comia
+// el buffer del mensaje (PAED_MSG_MAX son 192 bytes) y el error terminaba
+// cortado justo en la parte util — "el registro dice 'im".
+//
+// Es la misma regla que ya seguian los mensajes de sintaxis.json: se nombran
+// archivos, no rutas, porque el mismo programa no puede dar mensajes distintos
+// en dos maquinas.
+static const char *solo_nombre(const char *ruta) {
+    const char *ultima = ruta;
+    for (const char *c = ruta; *c; c++)
+        if (*c == '/' || *c == '\\') ultima = c + 1;
+    return ultima;
+}
+
 Archivo *arch_buscar(const char *nombre) {
     for (int i = 0; i < g_count; i++)
         if (strcasecmp(g_archivos[i].nombre, nombre) == 0) return &g_archivos[i];
@@ -139,7 +156,7 @@ int arch_crear(Archivo *a, const char *modo) {
     // maestro nuevo se crea en cada corrida, y fallar la segunda vez obligaria
     // a borrarlo a mano entre corrida y corrida.
     FILE *f = fopen(a->ruta, "w");
-    if (!f) return falla("no se pudo crear '%s'", a->ruta);
+    if (!f) return falla("no se pudo crear '%s'", solo_nombre(a->ruta));
 
     for (int i = 0; i < a->campo_count; i++) {
         if (i) fputc(PAED_CSV_SEP, f);
@@ -163,7 +180,7 @@ int arch_abrir(Archivo *a, const char *modo) {
     FILE *f = fopen(a->ruta, "r");
     if (!f)
         return falla("no existe el archivo '%s': hay que crearlo con CREAR(%s) antes de abrirlo",
-                     a->ruta, a->nombre);
+                     solo_nombre(a->ruta), a->nombre);
 
     // El encabezado se VALIDA. Sin esto, abrir el archivo equivocado se lee sin
     // protestar y devuelve basura con forma de dato valido — el programa no
@@ -171,7 +188,7 @@ int arch_abrir(Archivo *a, const char *modo) {
     char linea[PAED_CSV_LINEA];
     if (!fgets(linea, sizeof(linea), f)) {
         fclose(f);
-        return falla("'%s' esta vacio: le falta la fila de encabezado", a->ruta);
+        return falla("'%s' esta vacio: le falta la fila de encabezado", solo_nombre(a->ruta));
     }
 
     char cab[PAED_MAX_CAMPOS][PAED_VAL_MAX];
@@ -180,14 +197,14 @@ int arch_abrir(Archivo *a, const char *modo) {
     if (n != a->campo_count) {
         fclose(f);
         return falla("'%s' tiene %d columnas y el registro de '%s' tiene %d campos",
-                     a->ruta, n, a->nombre, a->campo_count);
+                     solo_nombre(a->ruta), n, a->nombre, a->campo_count);
     }
     for (int i = 0; i < n; i++) {
         if (strcasecmp(cab[i], a->campos[i]) == 0) continue;
         fclose(f);
         return falla("'%s' no es el archivo de '%s': la columna %d se llama '%s' "
                      "y el registro dice '%s'",
-                     a->ruta, a->nombre, i + 1, cab[i], a->campos[i]);
+                     solo_nombre(a->ruta), a->nombre, i + 1, cab[i], a->campos[i]);
     }
 
     a->f       = f;
@@ -232,7 +249,7 @@ int arch_leer(Archivo *a, char valores[][PAED_VAL_MAX], int *hay) {
     int n = partir_csv(linea, valores, a->campo_count);
     if (n != a->campo_count)
         return falla("en '%s' hay una fila con %d columnas y el registro tiene %d campos",
-                     a->ruta, n, a->campo_count);
+                     solo_nombre(a->ruta), n, a->campo_count);
 
     *hay = 1;
     return 0;
