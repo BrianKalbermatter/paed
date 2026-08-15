@@ -9,44 +9,102 @@
 // A[4.5] no existe y redondear por atras esconderia el error.
 
 ACCION busqueda_binaria ES
-    AMBIENTE
-        A: ARREGLO[1..10] DE ENTERO;
-        n: ENTERO;
-        i: ENTERO;
-        buscado: ENTERO;
-        izq: ENTERO;
-        der: ENTERO;
-        med: ENTERO;
-        pasos: ENTERO;
-        pos: ENTERO;
-    PROCESO
-        n := 10;
+AMBIENTE
+    A: ARREGLO[1..10] DE ENTERO;
+    n: ENTERO;
+    i: ENTERO;
+    buscado: ENTERO;
+    izq: ENTERO;
+    der: ENTERO;
+    med: ENTERO;
+    pasos: ENTERO;
+    pos: ENTERO;
+PROCESO
+    n := 10;
 
-        A[1]  := 3;
-        A[2]  := 7;
-        A[3]  := 12;
-        A[4]  := 20;
-        A[5]  := 34;
-        A[6]  := 45;
-        A[7]  := 55;
-        A[8]  := 68;
-        A[9]  := 80;
-        A[10] := 91;
+    A[1]  := 3;
+    A[2]  := 7;
+    A[3]  := 12;
+    A[4]  := 20;
+    A[5]  := 34;
+    A[6]  := 45;
+    A[7]  := 55;
+    A[8]  := 68;
+    A[9]  := 80;
+    A[10] := 91;
 
-        ESCRIBIR("-- busqueda binaria --");
+    ESCRIBIR("-- busqueda binaria --");
 
-        buscado := 68;
+    buscado := 68;
+    izq := 1;
+    der := n;
+    pos := 0;
+    pasos := 0;
+
+    MIENTRAS (izq <= der) Y (pos = 0) HACER
+        med := (izq + der) DIV 2;
+        pasos := pasos + 1;
+
+        SI (A[med] = buscado) ENTONCES
+            pos := med;
+        SINO
+            SI (A[med] < buscado) ENTONCES
+                izq := med + 1;
+            SINO
+                der := med - 1;
+            FIN_SI
+        FIN_SI
+    FIN_MIENTRAS
+
+    SI (pos > 0) ENTONCES
+        ESCRIBIR("encontrado ", buscado, " en la posicion ", pos, " en ", pasos, " pasos");
+    SINO
+        ESCRIBIR("no esta el ", buscado);
+    FIN_SI
+
+    // Un valor que NO esta: el rango se cierra hasta que izq pasa a der
+    buscado := 50;
+    izq := 1;
+    der := n;
+    pos := 0;
+    pasos := 0;
+
+    MIENTRAS (izq <= der) Y (pos = 0) HACER
+        med := (izq + der) DIV 2;
+        pasos := pasos + 1;
+
+        SI (A[med] = buscado) ENTONCES
+            pos := med;
+        SINO
+            SI (A[med] < buscado) ENTONCES
+                izq := med + 1;
+            SINO
+                der := med - 1;
+            FIN_SI
+        FIN_SI
+    FIN_MIENTRAS
+
+    SI (pos > 0) ENTONCES
+        ESCRIBIR("encontrado ", buscado, " en la posicion ", pos);
+    SINO
+        ESCRIBIR("no esta el ", buscado, ", descartado en ", pasos, " pasos");
+    FIN_SI
+
+    // Todos los elementos, uno por uno: si alguno no se encuentra en su
+    // propia posicion, la busqueda esta mal.
+    pos := 0;
+    PARA i := 1 HASTA n HACER
+        buscado := A[i];
         izq := 1;
         der := n;
-        pos := 0;
-        pasos := 0;
 
-        MIENTRAS (izq <= der) Y (pos = 0) HACER
+        MIENTRAS (izq <= der) HACER
             med := (izq + der) DIV 2;
-            pasos := pasos + 1;
-
             SI (A[med] = buscado) ENTONCES
-                pos := med;
+                izq := der + 1;
+                SI (med = i) ENTONCES
+                    pos := pos + 1;
+                FIN_SI
             SINO
                 SI (A[med] < buscado) ENTONCES
                     izq := med + 1;
@@ -55,67 +113,9 @@ ACCION busqueda_binaria ES
                 FIN_SI
             FIN_SI
         FIN_MIENTRAS
+    FIN_PARA
 
-        SI (pos > 0) ENTONCES
-            ESCRIBIR("encontrado ", buscado, " en la posicion ", pos, " en ", pasos, " pasos");
-        SINO
-            ESCRIBIR("no esta el ", buscado);
-        FIN_SI
-
-        // Un valor que NO esta: el rango se cierra hasta que izq pasa a der
-        buscado := 50;
-        izq := 1;
-        der := n;
-        pos := 0;
-        pasos := 0;
-
-        MIENTRAS (izq <= der) Y (pos = 0) HACER
-            med := (izq + der) DIV 2;
-            pasos := pasos + 1;
-
-            SI (A[med] = buscado) ENTONCES
-                pos := med;
-            SINO
-                SI (A[med] < buscado) ENTONCES
-                    izq := med + 1;
-                SINO
-                    der := med - 1;
-                FIN_SI
-            FIN_SI
-        FIN_MIENTRAS
-
-        SI (pos > 0) ENTONCES
-            ESCRIBIR("encontrado ", buscado, " en la posicion ", pos);
-        SINO
-            ESCRIBIR("no esta el ", buscado, ", descartado en ", pasos, " pasos");
-        FIN_SI
-
-        // Todos los elementos, uno por uno: si alguno no se encuentra en su
-        // propia posicion, la busqueda esta mal.
-        pos := 0;
-        PARA i := 1 HASTA n HACER
-            buscado := A[i];
-            izq := 1;
-            der := n;
-
-            MIENTRAS (izq <= der) HACER
-                med := (izq + der) DIV 2;
-                SI (A[med] = buscado) ENTONCES
-                    izq := der + 1;
-                    SI (med = i) ENTONCES
-                        pos := pos + 1;
-                    FIN_SI
-                SINO
-                    SI (A[med] < buscado) ENTONCES
-                        izq := med + 1;
-                    SINO
-                        der := med - 1;
-                    FIN_SI
-                FIN_SI
-            FIN_MIENTRAS
-        FIN_PARA
-
-        ESCRIBIR("encontro ", pos, " de ", n, " en su posicion exacta");
+    ESCRIBIR("encontro ", pos, " de ", n, " en su posicion exacta");
 FIN_ACCION
 
 // ── SALIDA ESPERADA ─────────────────────────────────────────────────────────

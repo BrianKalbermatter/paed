@@ -20,51 +20,51 @@
 // justamente el motivo de elegir CSV (PAED.md §2.6).
 
 ACCION archivos_patron_fda ES
-    AMBIENTE
-        alumno = REGISTRO
-            legajo: ENTERO;
-            nombre: AN(20);
-            nota: REAL;
-        FIN_REGISTRO
+AMBIENTE
+    alumno = REGISTRO
+        legajo: ENTERO;
+        nombre: AN(20);
+        nota: REAL;
+    FIN_REGISTRO
 
-        arch: ARCHIVO DE alumno ORDENADO POR legajo;
-        reg: alumno;
-        cant: ENTERO;
-        suma: REAL;
-    PROCESO
-        // ── Cargarlo ────────────────────────────────────────────────────────
-        // CREAR escribe la fila de encabezado con los campos del REGISTRO.
-        CREAR(arch);
+    arch: ARCHIVO DE alumno ORDENADO POR legajo;
+    reg: alumno;
+    cant: ENTERO;
+    suma: REAL;
+PROCESO
+    // ── Cargarlo ────────────────────────────────────────────────────────
+    // CREAR escribe la fila de encabezado con los campos del REGISTRO.
+    CREAR(arch);
 
-        reg.legajo := 101; reg.nombre := 'Ana'; reg.nota := 8.5;
-        ESCRIBIR(arch, reg);
+    reg.legajo := 101; reg.nombre := 'Ana'; reg.nota := 8.5;
+    ESCRIBIR(arch, reg);
 
-        reg.legajo := 205; reg.nombre := 'Bruno'; reg.nota := 6;
-        ESCRIBIR(arch, reg);
+    reg.legajo := 205; reg.nombre := 'Bruno'; reg.nota := 6;
+    ESCRIBIR(arch, reg);
 
-        reg.legajo := 317; reg.nombre := 'Carla'; reg.nota := 9.5;
-        ESCRIBIR(arch, reg);
+    reg.legajo := 317; reg.nombre := 'Carla'; reg.nota := 9.5;
+    ESCRIBIR(arch, reg);
 
-        CERRAR(arch);
+    CERRAR(arch);
 
-        // ── Recorrerlo ──────────────────────────────────────────────────────
-        cant := 0;
-        suma := 0;
+    // ── Recorrerlo ──────────────────────────────────────────────────────
+    cant := 0;
+    suma := 0;
 
-        ABRIR E/(arch);
+    ABRIR E/(arch);
+    LEER(arch, reg);
+
+    MIENTRAS (NO FDA(arch)) HACER
+        cant := cant + 1;
+        suma := suma + reg.nota;
+        ESCRIBIR("  ", reg.legajo, " ", reg.nombre, " ", reg.nota);
         LEER(arch, reg);
+    FIN_MIENTRAS
 
-        MIENTRAS (NO FDA(arch)) HACER
-            cant := cant + 1;
-            suma := suma + reg.nota;
-            ESCRIBIR("  ", reg.legajo, " ", reg.nombre, " ", reg.nota);
-            LEER(arch, reg);
-        FIN_MIENTRAS
+    CERRAR(arch);
 
-        CERRAR(arch);
-
-        ESCRIBIR("registros leidos: ", cant);
-        ESCRIBIR("promedio: ", suma / cant);
+    ESCRIBIR("registros leidos: ", cant);
+    ESCRIBIR("promedio: ", suma / cant);
 FIN_ACCION
 
 // ── SALIDA ESPERADA ─────────────────────────────────────────────────────────

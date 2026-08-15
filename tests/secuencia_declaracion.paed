@@ -6,15 +6,15 @@
 // mirando el AMBIENTE, se puede avisar sin correr una sola instruccion.
 
 ACCION secuencia_declaracion ES
-    AMBIENTE
-        sec: SECUENCIA DE ENTERO;
-        n: ENTERO;
+AMBIENTE
+    sec: SECUENCIA DE ENTERO;
+    n: ENTERO;
 
-    PROCESO
-        ARR(fantasma);       // no esta declarada
-        ARR(n);              // declarada, pero es un ENTERO
-        ARR(Sec);            // el nombre existe con otras mayusculas
-        AVZ(sec);            // le falta el destino
+PROCESO
+    ARR(fantasma);       // no esta declarada
+    ARR(n);              // declarada, pero es un ENTERO
+    ARR(Sec);            // el nombre existe con otras mayusculas
+    AVZ(sec);            // le falta el destino
 FIN_ACCION
 
 // ── SALIDA ESPERADA ──

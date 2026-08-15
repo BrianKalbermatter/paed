@@ -15,32 +15,32 @@
 // si: la conversion por tipo declarado y el LEER despues del fin.
 
 ACCION archivos_csv_errores ES
-    AMBIENTE
-        venta = REGISTRO
-            codigo: ENTERO;
-            importe: REAL;
-        FIN_REGISTRO
+AMBIENTE
+    venta = REGISTRO
+        codigo: ENTERO;
+        importe: REAL;
+    FIN_REGISTRO
 
-        datos: ARCHIVO DE venta;
-        v: venta;
-    PROCESO
-        CREAR(datos);
-        v.codigo := 7; v.importe := 150.5;
-        ESCRIBIR(datos, v);
-        CERRAR(datos);
+    datos: ARCHIVO DE venta;
+    v: venta;
+PROCESO
+    CREAR(datos);
+    v.codigo := 7; v.importe := 150.5;
+    ESCRIBIR(datos, v);
+    CERRAR(datos);
 
-        ESCRIBIR("el archivo quedo con encabezado codigo;importe");
+    ESCRIBIR("el archivo quedo con encabezado codigo;importe");
 
-        // Leer un ENTERO donde el archivo tiene texto seria un cero silencioso
-        // si el tipo lo decidiera el dato. Lo decide la DECLARACION.
-        ABRIR E/(datos);
-        LEER(datos, v);
-        ESCRIBIR("leido: ", v.codigo, " ", v.importe);
+    // Leer un ENTERO donde el archivo tiene texto seria un cero silencioso
+    // si el tipo lo decidiera el dato. Lo decide la DECLARACION.
+    ABRIR E/(datos);
+    LEER(datos, v);
+    ESCRIBIR("leido: ", v.codigo, " ", v.importe);
 
-        // Leer despues del fin es error, no un dato mas: el bucle corta con
-        // NFDA, asi que un LEER de mas significa que el corte esta mal escrito.
-        LEER(datos, v);
-        LEER(datos, v);
+    // Leer despues del fin es error, no un dato mas: el bucle corta con
+    // NFDA, asi que un LEER de mas significa que el corte esta mal escrito.
+    LEER(datos, v);
+    LEER(datos, v);
 FIN_ACCION
 
 // ── SALIDA ESPERADA ─────────────────────────────────────────────────────────

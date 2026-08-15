@@ -21,37 +21,37 @@
 // a funcionar solo. Esta en el KANBAN.
 
 ACCION secuencia_errores ES
-    AMBIENTE
-        sec: SECUENCIA DE ENTERO;
-        secSal: SECUENCIA DE SALIDA;
-        n: ENTERO;
+AMBIENTE
+    sec: SECUENCIA DE ENTERO;
+    secSal: SECUENCIA DE SALIDA;
+    n: ENTERO;
 
-    PROCESO
-        // 1. Avanzar sin haber arrancado
-        AVZ(sec, n);
+PROCESO
+    // 1. Avanzar sin haber arrancado
+    AVZ(sec, n);
 
-        // 2. Arrancar una secuencia de salida
-        ARR(secSal);
+    // 2. Arrancar una secuencia de salida
+    ARR(secSal);
 
-        // 3. Crear una secuencia de entrada
-        CREAR(sec);
+    // 3. Crear una secuencia de entrada
+    CREAR(sec);
 
-        // 4. Grabar en una secuencia que no se creo
-        ESCRIBIR(secSal, 1);
+    // 4. Grabar en una secuencia que no se creo
+    ESCRIBIR(secSal, 1);
 
-        // 5. Preguntar por el fin de una que no arranco
-        SI FDS(sec) ENTONCES
-            ESCRIBIR("nunca llega");
-        FIN_SI
+    // 5. Preguntar por el fin de una que no arranco
+    SI FDS(sec) ENTONCES
+        ESCRIBIR("nunca llega");
+    FIN_SI
 
-        // Ahora si, bien: dos elementos y el avance que la deja en FDS.
-        ARR(sec); AVZ(sec, n);
-        AVZ(sec, n);
-        AVZ(sec, n);
-        ESCRIBIR("ultimo leido: ", n);
+    // Ahora si, bien: dos elementos y el avance que la deja en FDS.
+    ARR(sec); AVZ(sec, n);
+    AVZ(sec, n);
+    AVZ(sec, n);
+    ESCRIBIR("ultimo leido: ", n);
 
-        // 6. Uno mas, despues del fin
-        AVZ(sec, n);
+    // 6. Uno mas, despues del fin
+    AVZ(sec, n);
 FIN_ACCION
 
 // ── SECUENCIA sec ──

@@ -12,37 +12,37 @@
 // declaraciones se entiendan y que el tipo no se coma la clausula.
 
 ACCION archivos_organizacion ES
-    AMBIENTE
-        remedio = REGISTRO
-            farmacia: AN(10);
-            medicamento: AN(20);
-            cant_actual: ENTERO;
-        FIN_REGISTRO
+AMBIENTE
+    remedio = REGISTRO
+        farmacia: AN(10);
+        medicamento: AN(20);
+        cant_actual: ENTERO;
+    FIN_REGISTRO
 
-        // Sin clausula. Es una organizacion valida y no un olvido: el corpus
-        // escribe 'Archivo SECUENCIAL (no ordenado)'.
-        suelto: ARCHIVO DE remedio;
+    // Sin clausula. Es una organizacion valida y no un olvido: el corpus
+    // escribe 'Archivo SECUENCIAL (no ordenado)'.
+    suelto: ARCHIVO DE remedio;
 
-        // Clave compuesta. El separador es la coma.
-        mae: ARCHIVO DE remedio ORDENADO POR farmacia, medicamento;
+    // Clave compuesta. El separador es la coma.
+    mae: ARCHIVO DE remedio ORDENADO POR farmacia, medicamento;
 
-        // El corpus mete una 'y' antes del ultimo campo, y los espacios de mas
-        // no cuentan. Es la misma clave que la de arriba, escrita como la
-        // escribe la catedra.
-        mov: archivo de remedio   ordenado   por   farmacia y medicamento;
+    // El corpus mete una 'y' antes del ultimo campo, y los espacios de mas
+    // no cuentan. Es la misma clave que la de arriba, escrita como la
+    // escribe la catedra.
+    mov: archivo de remedio   ordenado   por   farmacia y medicamento;
 
-        // El indice lleva UN campo.
-        idx: ARCHIVO DE remedio INDEXADO POR farmacia;
+    // El indice lleva UN campo.
+    idx: ARCHIVO DE remedio INDEXADO POR farmacia;
 
-        // El archivo puede declararse ANTES que su registro: la clave se
-        // valida en una pasada aparte, cuando el AMBIENTE ya se leyo entero.
-        antes: ARCHIVO DE venta ORDENADO POR codigo;
+    // El archivo puede declararse ANTES que su registro: la clave se
+    // valida en una pasada aparte, cuando el AMBIENTE ya se leyo entero.
+    antes: ARCHIVO DE venta ORDENADO POR codigo;
 
-        venta = REGISTRO
-            codigo: ENTERO;
-        FIN_REGISTRO
-    PROCESO
-        ESCRIBIR("las cinco declaraciones parsearon");
+    venta = REGISTRO
+        codigo: ENTERO;
+    FIN_REGISTRO
+PROCESO
+    ESCRIBIR("las cinco declaraciones parsearon");
 FIN_ACCION
 
 // ── SALIDA ESPERADA ─────────────────────────────────────────────────────────

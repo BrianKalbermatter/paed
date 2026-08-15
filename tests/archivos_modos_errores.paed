@@ -14,25 +14,25 @@
 // el error que sale es que le falta el ';'.
 
 ACCION modos_mal ES
-    AMBIENTE
-        alumno = REGISTRO
-            legajo: N(6);
-        FIN_REGISTRO
+AMBIENTE
+    alumno = REGISTRO
+        legajo: N(6);
+    FIN_REGISTRO
 
-        a: alumno;
-        entra: ARCHIVO DE alumno;
-        sale:  ARCHIVO DE alumno;
+    a: alumno;
+    entra: ARCHIVO DE alumno;
+    sale:  ARCHIVO DE alumno;
 
-    PROCESO
-        ABRIR X/(entra);
-        ABRIR E/S/(entra);
-        LEER e/(entra);
+PROCESO
+    ABRIR X/(entra);
+    ABRIR E/S/(entra);
+    LEER e/(entra);
 
-        ABRIR E/(entra);
-        ESCRIBIR(entra, a);
+    ABRIR E/(entra);
+    ESCRIBIR(entra, a);
 
-        ABRIR S/(sale);
-        LEER(sale, a);
+    ABRIR S/(sale);
+    LEER(sale, a);
 FIN_ACCION
 
 // ── SALIDA ESPERADA ─────────────────────────────────────────────────────────

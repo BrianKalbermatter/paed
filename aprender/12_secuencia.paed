@@ -24,25 +24,25 @@
 // duplica una factura.
 
 ACCION secuencia ES
-    AMBIENTE
-        sec: SECUENCIA DE ENTERO;
-        v: ENTERO;
-        suma: ENTERO;
-        cuantos: ENTERO;
-    PROCESO
-        suma := 0;
-        cuantos := 0;
+AMBIENTE
+    sec: SECUENCIA DE ENTERO;
+    v: ENTERO;
+    suma: ENTERO;
+    cuantos: ENTERO;
+PROCESO
+    suma := 0;
+    cuantos := 0;
 
-        ARR(sec);
-        MIENTRAS (NFDS(sec)) HACER
-            AVZ(sec, v);
-            ESCRIBIR("leo ", v);
-            suma := suma + v;
-            cuantos := cuantos + 1;
-        FIN_MIENTRAS
+    ARR(sec);
+    MIENTRAS (NFDS(sec)) HACER
+        AVZ(sec, v);
+        ESCRIBIR("leo ", v);
+        suma := suma + v;
+        cuantos := cuantos + 1;
+    FIN_MIENTRAS
 
-        ESCRIBIR("elementos: ", cuantos);
-        ESCRIBIR("suma: ", suma);
+    ESCRIBIR("elementos: ", cuantos);
+    ESCRIBIR("suma: ", suma);
 FIN_ACCION
 
 // ── PISTA ───────────────────────────────────────────────────────────────────

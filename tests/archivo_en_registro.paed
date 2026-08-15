@@ -4,16 +4,16 @@
 // archivo adentro no significa nada. Este programa falla a proposito.
 
 ACCION archivo_en_registro ES
-    AMBIENTE
-        ficha = REGISTRO
-            legajo: ENTERO;
-            adjunto: ARCHIVO DE ENTERO;
-        FIN_REGISTRO
+AMBIENTE
+    ficha = REGISTRO
+        legajo: ENTERO;
+        adjunto: ARCHIVO DE ENTERO;
+    FIN_REGISTRO
 
-        f: ficha;
-    PROCESO
-        f.legajo := 1;
-        ESCRIBIR(f.legajo);
+    f: ficha;
+PROCESO
+    f.legajo := 1;
+    ESCRIBIR(f.legajo);
 FIN_ACCION
 
 // ── SALIDA ESPERADA ─────────────────────────────────────────────────────────

@@ -2,8 +2,8 @@
 // Este programa FALLA a proposito: se prueba que el error lo diga claro,
 // y que no arrastre un segundo error por dejar el PROCESO abierto.
 ACCION cierre_faccion ES
-    PROCESO
-        ESCRIBIR("no deberia correr");
+PROCESO
+    ESCRIBIR("no deberia correr");
 FACCION
 
 // ── SALIDA ESPERADA ─────────────────────────────────────────────────────────

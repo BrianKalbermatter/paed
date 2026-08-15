@@ -1,16 +1,16 @@
 ACCION expresiones ES
-    AMBIENTE
-        segundos: ENTERO;
-        minutos: ENTERO;
-        resto: ENTERO;
-    PROCESO
-        segundos := 200;
-        minutos := segundos DIV 60;
-        resto := segundos MOD 60;
-        ESCRIBIR(segundos, " segundos son ", minutos, " minutos y ", resto, " segundos");
-        ESCRIBIR("2 + 3 * 4 = ", 2 + 3 * 4);
-        ESCRIBIR("(2 + 3) * 4 = ", (2 + 3) * 4);
-        ESCRIBIR("7 / 2 = ", 7 / 2, " pero 7 DIV 2 = ", 7 DIV 2);
+AMBIENTE
+    segundos: ENTERO;
+    minutos: ENTERO;
+    resto: ENTERO;
+PROCESO
+    segundos := 200;
+    minutos := segundos DIV 60;
+    resto := segundos MOD 60;
+    ESCRIBIR(segundos, " segundos son ", minutos, " minutos y ", resto, " segundos");
+    ESCRIBIR("2 + 3 * 4 = ", 2 + 3 * 4);
+    ESCRIBIR("(2 + 3) * 4 = ", (2 + 3) * 4);
+    ESCRIBIR("7 / 2 = ", 7 / 2, " pero 7 DIV 2 = ", 7 DIV 2);
 FIN_ACCION
 
 // ── SALIDA ESPERADA ─────────────────────────────────────────────────────────

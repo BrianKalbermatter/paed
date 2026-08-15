@@ -18,37 +18,37 @@
 // asignacion, y recien reventaba mucho despues culpando a otra cosa.
 
 ACCION sentencias_en_una_linea ES
-    AMBIENTE
-        a: ENTERO; b: ENTERO;
-        sec: SECUENCIA DE ENTERO; n: ENTERO;
+AMBIENTE
+    a: ENTERO; b: ENTERO;
+    sec: SECUENCIA DE ENTERO; n: ENTERO;
 
-        punto = REGISTRO
-            x: REAL; y: REAL;
-        FIN_REGISTRO
+    punto = REGISTRO
+        x: REAL; y: REAL;
+    FIN_REGISTRO
 
-        p: punto;
+    p: punto;
 
-    PROCESO
-        a := 1; b := 2;
-        ESCRIBIR("a + b = ", a + b);
+PROCESO
+    a := 1; b := 2;
+    ESCRIBIR("a + b = ", a + b);
 
-        // El ';' de adentro del texto no corta nada
-        ESCRIBIR("uno; dos; tres");
+    // El ';' de adentro del texto no corta nada
+    ESCRIBIR("uno; dos; tres");
 
-        // Ni el de adentro de los parentesis de una expresion
-        a := (b + 1) * 2; ESCRIBIR("a = ", a);
+    // Ni el de adentro de los parentesis de una expresion
+    a := (b + 1) * 2; ESCRIBIR("a = ", a);
 
-        // El caso que motivo todo esto
-        ARR(sec); AVZ(sec, n);
-        ESCRIBIR("primero: ", n);
+    // El caso que motivo todo esto
+    ARR(sec); AVZ(sec, n);
+    ESCRIBIR("primero: ", n);
 
-        // Tres en una linea tambien
-        a := 10; b := 20; ESCRIBIR("suma: ", a + b);
+    // Tres en una linea tambien
+    a := 10; b := 20; ESCRIBIR("suma: ", a + b);
 
-        // Los dos campos del registro se declararon en un solo renglon, asi
-        // que los dos tienen que existir.
-        p.x := 1.5; p.y := 2.5;
-        ESCRIBIR("p = ", p.x, " , ", p.y);
+    // Los dos campos del registro se declararon en un solo renglon, asi
+    // que los dos tienen que existir.
+    p.x := 1.5; p.y := 2.5;
+    ESCRIBIR("p = ", p.x, " , ", p.y);
 FIN_ACCION
 
 // ── SECUENCIA sec ──

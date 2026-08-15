@@ -34,40 +34,40 @@
 // a funcionar solo. Esta en el KANBAN.
 
 ACCION archivos_formas ES
-    AMBIENTE
-        venta = REGISTRO
-            codigo: ENTERO;
-            monto: REAL;
-        FIN_REGISTRO
+AMBIENTE
+    venta = REGISTRO
+        codigo: ENTERO;
+        monto: REAL;
+    FIN_REGISTRO
 
-        // Tres archivos, para probar que no se pisan entre si
-        maestro: ARCHIVO DE venta;
-        movim:   ARCHIVO DE venta;
-        salida:  ARCHIVO DE venta;
+    // Tres archivos, para probar que no se pisan entre si
+    maestro: ARCHIVO DE venta;
+    movim:   ARCHIVO DE venta;
+    salida:  ARCHIVO DE venta;
 
-        reg_m: venta;
-        reg_v: venta;
+    reg_m: venta;
+    reg_v: venta;
 
-        // Variables comunes, para la forma de consola
-        edad: ENTERO;
-        altura: REAL;
-        nombre: AN(20);
-    PROCESO
-        // ── Forma ARCHIVO: el primer argumento esta declarado ARCHIVO DE ──
-        LEER(maestro, reg_m);
-        LEER(movim, reg_v);
-        ESCRIBIR(salida, reg_m);
+    // Variables comunes, para la forma de consola
+    edad: ENTERO;
+    altura: REAL;
+    nombre: AN(20);
+PROCESO
+    // ── Forma ARCHIVO: el primer argumento esta declarado ARCHIVO DE ──
+    LEER(maestro, reg_m);
+    LEER(movim, reg_v);
+    ESCRIBIR(salida, reg_m);
 
-        // ── Forma CONSOLA: ninguno es un archivo ──
-        LEER(nombre);
-        LEER(edad, altura);      // DOS argumentos, y aun asi es consola
+    // ── Forma CONSOLA: ninguno es un archivo ──
+    LEER(nombre);
+    LEER(edad, altura);      // DOS argumentos, y aun asi es consola
 
-        // Que los datos lleguen a las variables es la otra mitad de la prueba:
-        // sin esto, un LEER que no guardara nada pasaria igual.
-        ESCRIBIR(nombre, " tiene ", edad, " y mide ", altura);
+    // Que los datos lleguen a las variables es la otra mitad de la prueba:
+    // sin esto, un LEER que no guardara nada pasaria igual.
+    ESCRIBIR(nombre, " tiene ", edad, " y mide ", altura);
 
-        // ESCRIBIR de consola no cambia: sigue imprimiendo como siempre
-        ESCRIBIR("el ESCRIBIR de consola sigue funcionando");
+    // ESCRIBIR de consola no cambia: sigue imprimiendo como siempre
+    ESCRIBIR("el ESCRIBIR de consola sigue funcionando");
 FIN_ACCION
 
 // ── ENTRADA ─────────────────────────────────────────────────────────────────

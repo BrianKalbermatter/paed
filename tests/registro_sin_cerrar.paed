@@ -13,17 +13,17 @@
 //   2. el AMBIENTE se termina (empieza el PROCESO) con uno abierto
 
 ACCION registros_sin_cerrar ES
-    AMBIENTE
-        fecha = REGISTRO
-            aaaa: N(4);
-            mm: 1..12;
+AMBIENTE
+    fecha = REGISTRO
+        aaaa: N(4);
+        mm: 1..12;
 
-        alumno = REGISTRO
-            apeNom: AN(50);
-            legajo: N(6);
+    alumno = REGISTRO
+        apeNom: AN(50);
+        legajo: N(6);
 
-    PROCESO
-        ESCRIBIR("con un registro abierto el programa no corre");
+PROCESO
+    ESCRIBIR("con un registro abierto el programa no corre");
 FIN_ACCION
 
 // ── SALIDA ESPERADA ─────────────────────────────────────────────────────────

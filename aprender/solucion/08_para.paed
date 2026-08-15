@@ -1,26 +1,26 @@
 ACCION para ES
-    AMBIENTE
-        i: ENTERO;
-        n: ENTERO;
-        fact: ENTERO;
-    PROCESO
-        n := 5;
+AMBIENTE
+    i: ENTERO;
+    n: ENTERO;
+    fact: ENTERO;
+PROCESO
+    n := 5;
 
-        ESCRIBIR("-- tabla del ", n, " --");
-        PARA i := 1 HASTA 10 HACER
-            ESCRIBIR(n, " x ", i, " = ", n * i);
-        FIN_PARA
+    ESCRIBIR("-- tabla del ", n, " --");
+    PARA i := 1 HASTA 10 HACER
+        ESCRIBIR(n, " x ", i, " = ", n * i);
+    FIN_PARA
 
-        ESCRIBIR("-- cuenta regresiva --");
-        PARA i := 5 HASTA 1; -1 HACER
-            ESCRIBIR(i);
-        FIN_PARA
+    ESCRIBIR("-- cuenta regresiva --");
+    PARA i := 5 HASTA 1; -1 HACER
+        ESCRIBIR(i);
+    FIN_PARA
 
-        fact := 1;
-        PARA i := 1 HASTA n HACER
-            fact := fact * i;
-        FIN_PARA
-        ESCRIBIR(n, "! = ", fact);
+    fact := 1;
+    PARA i := 1 HASTA n HACER
+        fact := fact * i;
+    FIN_PARA
+    ESCRIBIR(n, "! = ", fact);
 FIN_ACCION
 
 // ── SALIDA ESPERADA ─────────────────────────────────────────────────────────

@@ -17,31 +17,31 @@
 // Este promedia mal. 8 y 9 no promedian 12.5.
 
 ACCION registro ES
-    AMBIENTE
-        alumno = REGISTRO
-            nombre: AN(20);
-            nota1: ENTERO;
-            nota2: ENTERO;
-        FIN_REGISTRO
+AMBIENTE
+    alumno = REGISTRO
+        nombre: AN(20);
+        nota1: ENTERO;
+        nota2: ENTERO;
+    FIN_REGISTRO
 
-        a: alumno;
-        promedio: REAL;
-    PROCESO
-        LEER(a.nombre);
-        LEER(a.nota1);
-        LEER(a.nota2);
+    a: alumno;
+    promedio: REAL;
+PROCESO
+    LEER(a.nombre);
+    LEER(a.nota1);
+    LEER(a.nota2);
 
-        promedio := a.nota1 + a.nota2 / 2;
+    promedio := a.nota1 + a.nota2 / 2;
 
-        ESCRIBIR("alumno: ", a.nombre);
-        ESCRIBIR("notas:  ", a.nota1, " y ", a.nota2);
-        ESCRIBIR("promedio: ", promedio);
+    ESCRIBIR("alumno: ", a.nombre);
+    ESCRIBIR("notas:  ", a.nota1, " y ", a.nota2);
+    ESCRIBIR("promedio: ", promedio);
 
-        SI (promedio >= 6) ENTONCES
-            ESCRIBIR("promociona");
-        SINO
-            ESCRIBIR("va a final");
-        FIN_SI
+    SI (promedio >= 6) ENTONCES
+        ESCRIBIR("promociona");
+    SINO
+        ESCRIBIR("va a final");
+    FIN_SI
 FIN_ACCION
 
 // ── PISTA ───────────────────────────────────────────────────────────────────

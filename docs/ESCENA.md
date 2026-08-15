@@ -103,12 +103,12 @@ FONDO (color = #hex);
 
 ```paed
 ACCION escena ES
-    AMBIENTE
-        cubo1: CUBO;
-    PROCESO
-        FONDO (color = #1a1a2e);
-        CAMARA(posicion = (0,2,5), mirar = (0,0,0));
-        CUBO  (nombre = cubo1, posicion = (0,0,0), color = #ff0000, tamano = (1,1,1));
+AMBIENTE
+    cubo1: CUBO;
+PROCESO
+    FONDO (color = #1a1a2e);
+    CAMARA(posicion = (0,2,5), mirar = (0,0,0));
+    CUBO  (nombre = cubo1, posicion = (0,0,0), color = #ff0000, tamano = (1,1,1));
 FIN_ACCION
 ```
 

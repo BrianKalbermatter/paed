@@ -24,29 +24,29 @@
 // a funcionar solo. Esta en el KANBAN.
 
 ACCION leer_errores ES
-    AMBIENTE
-        A: ARREGLO[1..2] DE ENTERO;
-        p = REGISTRO
-            vx: REAL;
-        FIN_REGISTRO
-        q: p;
-        x: ENTERO;
-    PROCESO
-        ESCRIBIR("-- destinos que no son destinos --");
-        LEER("hola");
-        LEER(3);
+AMBIENTE
+    A: ARREGLO[1..2] DE ENTERO;
+    p = REGISTRO
+        vx: REAL;
+    FIN_REGISTRO
+    q: p;
+    x: ENTERO;
+PROCESO
+    ESCRIBIR("-- destinos que no son destinos --");
+    LEER("hola");
+    LEER(3);
 
-        ESCRIBIR("-- LEER sin destino --");
-        LEER();
+    ESCRIBIR("-- LEER sin destino --");
+    LEER();
 
-        ESCRIBIR("-- indice fuera de los limites del arreglo --");
-        LEER(A[9]);
+    ESCRIBIR("-- indice fuera de los limites del arreglo --");
+    LEER(A[9]);
 
-        ESCRIBIR("-- campo que el registro no tiene --");
-        LEER(q.vz);
+    ESCRIBIR("-- campo que el registro no tiene --");
+    LEER(q.vz);
 
-        ESCRIBIR("-- la entrada se termino --");
-        LEER(x);
+    ESCRIBIR("-- la entrada se termino --");
+    LEER(x);
 FIN_ACCION
 
 // ── ENTRADA ─────────────────────────────────────────────────────────────────

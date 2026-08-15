@@ -9,20 +9,20 @@
 // variable, y el que no esta, no existe.
 
 ACCION registro_campo_invalido ES
-    AMBIENTE
-        vector2 = REGISTRO
-            vx: REAL;
-            vy: REAL;
-        FIN_REGISTRO
+AMBIENTE
+    vector2 = REGISTRO
+        vx: REAL;
+        vy: REAL;
+    FIN_REGISTRO
 
-        p: vector2;
-    PROCESO
-        p.vx := 1;
-        p.vy := 2;
-        ESCRIBIR("los campos validos andan: ", p.vx, " ", p.vy);
+    p: vector2;
+PROCESO
+    p.vx := 1;
+    p.vy := 2;
+    ESCRIBIR("los campos validos andan: ", p.vx, " ", p.vy);
 
-        // vz no existe en vector2
-        p.vz := 3;
+    // vz no existe en vector2
+    p.vz := 3;
 FIN_ACCION
 
 // ── SALIDA ESPERADA ─────────────────────────────────────────────────────────

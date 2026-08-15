@@ -26,30 +26,30 @@
 // a funcionar solo. Esta en el KANBAN.
 
 ACCION modos_de_apertura ES
-    AMBIENTE
-        alumno = REGISTRO
-            legajo: N(6);
-        FIN_REGISTRO
+AMBIENTE
+    alumno = REGISTRO
+        legajo: N(6);
+    FIN_REGISTRO
 
-        a: alumno;
-        entra: ARCHIVO DE alumno;
-        sale:  ARCHIVO DE alumno;
-        ambos: ARCHIVO DE alumno;
-        viejo: ARCHIVO DE alumno;
+    a: alumno;
+    entra: ARCHIVO DE alumno;
+    sale:  ARCHIVO DE alumno;
+    ambos: ARCHIVO DE alumno;
+    viejo: ARCHIVO DE alumno;
 
-    PROCESO
-        ABRIR E/(entra);
-        LEER(entra, a);
+PROCESO
+    ABRIR E/(entra);
+    LEER(entra, a);
 
-        ABRIR s/ (sale);
-        ESCRIBIR(sale, a);
+    ABRIR s/ (sale);
+    ESCRIBIR(sale, a);
 
-        ABRIRe/s(ambos);
-        LEER(ambos, a);
-        ESCRIBIR(ambos, a);
+    ABRIRe/s(ambos);
+    LEER(ambos, a);
+    ESCRIBIR(ambos, a);
 
-        ABRIR /S(viejo);
-        ESCRIBIR(viejo, a);
+    ABRIR /S(viejo);
+    ESCRIBIR(viejo, a);
 FIN_ACCION
 
 // ── SALIDA ESPERADA ─────────────────────────────────────────────────────────

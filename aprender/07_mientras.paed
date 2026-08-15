@@ -8,18 +8,18 @@
 // casi siempre vive en el `<` contra el `<=`.
 
 ACCION mientras ES
-    AMBIENTE
-        i: ENTERO;
-        suma: ENTERO;
-    PROCESO
-        i := 1;
-        suma := 0;
-        MIENTRAS (i < 10) HACER
-            suma := suma + i;
-            i := i + 1;
-        FIN_MIENTRAS
-        ESCRIBIR("1 + 2 + ... + 10 = ", suma);
-        ESCRIBIR("el contador quedo en ", i);
+AMBIENTE
+    i: ENTERO;
+    suma: ENTERO;
+PROCESO
+    i := 1;
+    suma := 0;
+    MIENTRAS (i < 10) HACER
+        suma := suma + i;
+        i := i + 1;
+    FIN_MIENTRAS
+    ESCRIBIR("1 + 2 + ... + 10 = ", suma);
+    ESCRIBIR("el contador quedo en ", i);
 FIN_ACCION
 
 // ── PISTA ───────────────────────────────────────────────────────────────────

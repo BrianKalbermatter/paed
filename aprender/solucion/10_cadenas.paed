@@ -1,25 +1,25 @@
 ACCION cadenas ES
-    AMBIENTE
-        nombre: AN(20);
-        apellido: AN(20);
-        completo: AN(45);
-        clave: AN(20);
-    PROCESO
-        nombre := "Ada";
-        apellido := "Lovelace";
-        completo := nombre + " " + apellido;
-        ESCRIBIR("nombre completo: ", completo);
+AMBIENTE
+    nombre: AN(20);
+    apellido: AN(20);
+    completo: AN(45);
+    clave: AN(20);
+PROCESO
+    nombre := "Ada";
+    apellido := "Lovelace";
+    completo := nombre + " " + apellido;
+    ESCRIBIR("nombre completo: ", completo);
 
-        LEER(clave);
-        SI (clave = "abrite sesamo") ENTONCES
-            ESCRIBIR("pasa");
-        SINO
-            ESCRIBIR("clave incorrecta");
-        FIN_SI
+    LEER(clave);
+    SI (clave = "abrite sesamo") ENTONCES
+        ESCRIBIR("pasa");
+    SINO
+        ESCRIBIR("clave incorrecta");
+    FIN_SI
 
-        SI ("Ana" < "Beto") ENTONCES
-            ESCRIBIR("el texto se compara por ASCII: Ana va antes que Beto");
-        FIN_SI
+    SI ("Ana" < "Beto") ENTONCES
+        ESCRIBIR("el texto se compara por ASCII: Ana va antes que Beto");
+    FIN_SI
 FIN_ACCION
 
 // ── ENTRADA ─────────────────────────────────────────────────────────────────

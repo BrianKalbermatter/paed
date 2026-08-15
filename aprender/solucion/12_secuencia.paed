@@ -1,23 +1,23 @@
 ACCION secuencia ES
-    AMBIENTE
-        sec: SECUENCIA DE ENTERO;
-        v: ENTERO;
-        suma: ENTERO;
-        cuantos: ENTERO;
-    PROCESO
-        suma := 0;
-        cuantos := 0;
+AMBIENTE
+    sec: SECUENCIA DE ENTERO;
+    v: ENTERO;
+    suma: ENTERO;
+    cuantos: ENTERO;
+PROCESO
+    suma := 0;
+    cuantos := 0;
 
-        ARR(sec); AVZ(sec, v);
-        MIENTRAS (NFDS(sec)) HACER
-            ESCRIBIR("leo ", v);
-            suma := suma + v;
-            cuantos := cuantos + 1;
-            AVZ(sec, v);
-        FIN_MIENTRAS
+    ARR(sec); AVZ(sec, v);
+    MIENTRAS (NFDS(sec)) HACER
+        ESCRIBIR("leo ", v);
+        suma := suma + v;
+        cuantos := cuantos + 1;
+        AVZ(sec, v);
+    FIN_MIENTRAS
 
-        ESCRIBIR("elementos: ", cuantos);
-        ESCRIBIR("suma: ", suma);
+    ESCRIBIR("elementos: ", cuantos);
+    ESCRIBIR("suma: ", suma);
 FIN_ACCION
 
 // ── SECUENCIA sec ───────────────────────────────────────────────────────────

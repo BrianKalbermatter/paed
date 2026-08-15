@@ -15,31 +15,31 @@
 // escrito las declaraciones en otro orden.
 
 ACCION archivos_organizacion_errores ES
-    AMBIENTE
-        remedio = REGISTRO
-            farmacia: AN(10);
-            medicamento: AN(20);
-        FIN_REGISTRO
+AMBIENTE
+    remedio = REGISTRO
+        farmacia: AN(10);
+        medicamento: AN(20);
+    FIN_REGISTRO
 
-        // Un campo que el registro no declara.
-        a: ARCHIVO DE remedio ORDENADO POR precio;
+    // Un campo que el registro no declara.
+    a: ARCHIVO DE remedio ORDENADO POR precio;
 
-        // El indice lleva UN campo, no una clave compuesta.
-        b: ARCHIVO DE remedio INDEXADO POR farmacia, medicamento;
+    // El indice lleva UN campo, no una clave compuesta.
+    b: ARCHIVO DE remedio INDEXADO POR farmacia, medicamento;
 
-        // El mismo campo dos veces no ordena por nada nuevo.
-        c: ARCHIVO DE remedio ORDENADO POR farmacia, farmacia;
+    // El mismo campo dos veces no ordena por nada nuevo.
+    c: ARCHIVO DE remedio ORDENADO POR farmacia, farmacia;
 
-        // La clausula esta pero los campos no.
-        d: ARCHIVO DE remedio ORDENADO POR;
+    // La clausula esta pero los campos no.
+    d: ARCHIVO DE remedio ORDENADO POR;
 
-        // Una palabra que no es ninguna de las dos clausulas.
-        e: ARCHIVO DE remedio AGRUPADO POR farmacia;
+    // Una palabra que no es ninguna de las dos clausulas.
+    e: ARCHIVO DE remedio AGRUPADO POR farmacia;
 
-        // No se puede ordenar por campos si el tipo no es un REGISTRO.
-        f: ARCHIVO DE ENTERO ORDENADO POR farmacia;
-    PROCESO
-        ESCRIBIR("no deberia llegar aca");
+    // No se puede ordenar por campos si el tipo no es un REGISTRO.
+    f: ARCHIVO DE ENTERO ORDENADO POR farmacia;
+PROCESO
+    ESCRIBIR("no deberia llegar aca");
 FIN_ACCION
 
 // ── SALIDA ESPERADA ─────────────────────────────────────────────────────────

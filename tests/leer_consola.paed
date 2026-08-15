@@ -16,46 +16,46 @@
 // Los datos viven en el bloque ENTRADA de mas abajo: un test es UN archivo.
 
 ACCION leer_consola ES
-    AMBIENTE
-        punto = REGISTRO
-            vx: REAL;
-            vy: REAL;
-        FIN_REGISTRO
+AMBIENTE
+    punto = REGISTRO
+        vx: REAL;
+        vy: REAL;
+    FIN_REGISTRO
 
-        p    : punto;
-        A    : ARREGLO[1..3] DE ENTERO;
-        i    : ENTERO;
-        edad : ENTERO;
-        alto : REAL;
-        nom  : CARACTER;
-        a    : ENTERO;
-        b    : ENTERO;
-    PROCESO
-        ESCRIBIR("-- un destino --");
-        ESCRIBIR("Ingrese su edad:");
-        LEER(edad);
-        ESCRIBIR("dentro de 10 anios va a tener ", edad + 10);
+    p    : punto;
+    A    : ARREGLO[1..3] DE ENTERO;
+    i    : ENTERO;
+    edad : ENTERO;
+    alto : REAL;
+    nom  : CARACTER;
+    a    : ENTERO;
+    b    : ENTERO;
+PROCESO
+    ESCRIBIR("-- un destino --");
+    ESCRIBIR("Ingrese su edad:");
+    LEER(edad);
+    ESCRIBIR("dentro de 10 anios va a tener ", edad + 10);
 
-        ESCRIBIR("-- varios destinos en un solo LEER --");
-        LEER(a, b);
-        ESCRIBIR(a, " + ", b, " = ", a + b);
+    ESCRIBIR("-- varios destinos en un solo LEER --");
+    LEER(a, b);
+    ESCRIBIR(a, " + ", b, " = ", a + b);
 
-        ESCRIBIR("-- el tipo lo decide el dato --");
-        LEER(alto);
-        ESCRIBIR("alto por dos = ", alto * 2);
-        LEER(nom);
-        ESCRIBIR("hola, ", nom);
+    ESCRIBIR("-- el tipo lo decide el dato --");
+    LEER(alto);
+    ESCRIBIR("alto por dos = ", alto * 2);
+    LEER(nom);
+    ESCRIBIR("hola, ", nom);
 
-        ESCRIBIR("-- destino con indice: el indice se evalua al leer --");
-        PARA i := 1 HASTA 3 HACER
-            LEER(A[i]);
-        FIN_PARA
-        ESCRIBIR("A = ", A[1], " ", A[2], " ", A[3]);
-        ESCRIBIR("suma = ", A[1] + A[2] + A[3]);
+    ESCRIBIR("-- destino con indice: el indice se evalua al leer --");
+    PARA i := 1 HASTA 3 HACER
+        LEER(A[i]);
+    FIN_PARA
+    ESCRIBIR("A = ", A[1], " ", A[2], " ", A[3]);
+    ESCRIBIR("suma = ", A[1] + A[2] + A[3]);
 
-        ESCRIBIR("-- destino que es un campo de registro --");
-        LEER(p.vx, p.vy);
-        ESCRIBIR("p = (", p.vx, ", ", p.vy, ")");
+    ESCRIBIR("-- destino que es un campo de registro --");
+    LEER(p.vx, p.vy);
+    ESCRIBIR("p = (", p.vx, ", ", p.vy, ")");
 FIN_ACCION
 
 // ── ENTRADA ─────────────────────────────────────────────────────────────────

@@ -9,17 +9,17 @@
 // La variable `aux` esta declarada y sin usar. Es una pista.
 
 ACCION asignacion ES
-    AMBIENTE
-        a: ENTERO;
-        b: ENTERO;
-        aux: ENTERO;
-    PROCESO
-        a := 10;
-        b := 25;
-        ESCRIBIR("antes:   a=", a, " b=", b);
-        a := b;
-        b := a;
-        ESCRIBIR("despues: a=", a, " b=", b);
+AMBIENTE
+    a: ENTERO;
+    b: ENTERO;
+    aux: ENTERO;
+PROCESO
+    a := 10;
+    b := 25;
+    ESCRIBIR("antes:   a=", a, " b=", b);
+    a := b;
+    b := a;
+    ESCRIBIR("despues: a=", a, " b=", b);
 FIN_ACCION
 
 // ── PISTA ───────────────────────────────────────────────────────────────────

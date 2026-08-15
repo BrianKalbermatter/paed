@@ -10,19 +10,19 @@
 // elige el programador, no es siempre 0 ni siempre 1.
 
 ACCION arreglo_limites ES
-    AMBIENTE
-        A: ARREGLO[5..9] DE ENTERO;
-        i: ENTERO;
-    PROCESO
-        PARA i := 5 HASTA 9 HACER
-            A[i] := i * 10;
-        FIN_PARA
+AMBIENTE
+    A: ARREGLO[5..9] DE ENTERO;
+    i: ENTERO;
+PROCESO
+    PARA i := 5 HASTA 9 HACER
+        A[i] := i * 10;
+    FIN_PARA
 
-        ESCRIBIR("A[5] = ", A[5]);
-        ESCRIBIR("A[9] = ", A[9]);
+    ESCRIBIR("A[5] = ", A[5]);
+    ESCRIBIR("A[9] = ", A[9]);
 
-        // Fuera de rango por abajo: 4 es uno menos que el limite inferior.
-        ESCRIBIR("ahora se va de rango: ", A[4]);
+    // Fuera de rango por abajo: 4 es uno menos que el limite inferior.
+    ESCRIBIR("ahora se va de rango: ", A[4]);
 FIN_ACCION
 
 // ── SALIDA ESPERADA ─────────────────────────────────────────────────────────

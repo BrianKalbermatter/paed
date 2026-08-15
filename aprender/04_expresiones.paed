@@ -10,18 +10,18 @@
 // y 20 segundos". Arreglalo con los operadores que corresponden.
 
 ACCION expresiones ES
-    AMBIENTE
-        segundos: ENTERO;
-        minutos: ENTERO;
-        resto: ENTERO;
-    PROCESO
-        segundos := 200;
-        minutos := segundos / 60;
-        resto := segundos - 60;
-        ESCRIBIR(segundos, " segundos son ", minutos, " minutos y ", resto, " segundos");
-        ESCRIBIR("2 + 3 * 4 = ", 2 + 3 * 4);
-        ESCRIBIR("(2 + 3) * 4 = ", (2 + 3) * 4);
-        ESCRIBIR("7 / 2 = ", 7 / 2, " pero 7 DIV 2 = ", 7 DIV 2);
+AMBIENTE
+    segundos: ENTERO;
+    minutos: ENTERO;
+    resto: ENTERO;
+PROCESO
+    segundos := 200;
+    minutos := segundos / 60;
+    resto := segundos - 60;
+    ESCRIBIR(segundos, " segundos son ", minutos, " minutos y ", resto, " segundos");
+    ESCRIBIR("2 + 3 * 4 = ", 2 + 3 * 4);
+    ESCRIBIR("(2 + 3) * 4 = ", (2 + 3) * 4);
+    ESCRIBIR("7 / 2 = ", 7 / 2, " pero 7 DIV 2 = ", 7 DIV 2);
 FIN_ACCION
 
 // ── PISTA ───────────────────────────────────────────────────────────────────

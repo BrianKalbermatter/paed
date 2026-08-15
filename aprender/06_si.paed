@@ -15,19 +15,19 @@
 // compila, porque nadie se entera.
 
 ACCION si ES
-    AMBIENTE
-        nota: ENTERO;
-    PROCESO
-        LEER(nota);
-        SI (nota <= 6) ENTONCES
-            ESCRIBIR("aprobado con ", nota);
-        SINO
-            ESCRIBIR("desaprobado con ", nota);
-        FIN_SI
+AMBIENTE
+    nota: ENTERO;
+PROCESO
+    LEER(nota);
+    SI (nota <= 6) ENTONCES
+        ESCRIBIR("aprobado con ", nota);
+    SINO
+        ESCRIBIR("desaprobado con ", nota);
+    FIN_SI
 
-        SI (nota >= 9) ENTONCES
-            ESCRIBIR("ademas, felicitaciones");
-        FIN_SI
+    SI (nota >= 9) ENTONCES
+        ESCRIBIR("ademas, felicitaciones");
+    FIN_SI
 FIN_ACCION
 
 // ── PISTA ───────────────────────────────────────────────────────────────────

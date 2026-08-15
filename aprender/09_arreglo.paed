@@ -11,31 +11,31 @@
 // Este programa revienta en la primera vuelta del primer ciclo.
 
 ACCION arreglo ES
-    AMBIENTE
-        A: ARREGLO[1..5] DE ENTERO;
-        i: ENTERO;
-        mayor: ENTERO;
-        suma: ENTERO;
-    PROCESO
-        PARA i := 0 HASTA 4 HACER
-            LEER(A[i]);
-        FIN_PARA
+AMBIENTE
+    A: ARREGLO[1..5] DE ENTERO;
+    i: ENTERO;
+    mayor: ENTERO;
+    suma: ENTERO;
+PROCESO
+    PARA i := 0 HASTA 4 HACER
+        LEER(A[i]);
+    FIN_PARA
 
-        suma := 0;
-        mayor := A[1];
-        PARA i := 1 HASTA 5 HACER
-            suma := suma + A[i];
-            SI (A[i] > mayor) ENTONCES
-                mayor := A[i];
-            FIN_SI
-        FIN_PARA
+    suma := 0;
+    mayor := A[1];
+    PARA i := 1 HASTA 5 HACER
+        suma := suma + A[i];
+        SI (A[i] > mayor) ENTONCES
+            mayor := A[i];
+        FIN_SI
+    FIN_PARA
 
-        ESCRIBIR("el arreglo tiene ", suma, " sumando todo");
-        ESCRIBIR("el mayor es ", mayor);
-        ESCRIBIR("al reves:");
-        PARA i := 5 HASTA 1; -1 HACER
-            ESCRIBIR(A[i]);
-        FIN_PARA
+    ESCRIBIR("el arreglo tiene ", suma, " sumando todo");
+    ESCRIBIR("el mayor es ", mayor);
+    ESCRIBIR("al reves:");
+    PARA i := 5 HASTA 1; -1 HACER
+        ESCRIBIR(A[i]);
+    FIN_PARA
 FIN_ACCION
 
 // ── PISTA ───────────────────────────────────────────────────────────────────

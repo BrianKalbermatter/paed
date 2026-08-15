@@ -3,8 +3,8 @@
 // Se reconoce solo para poder explicarlo: sin esto el error seria
 // "falta ';'", que manda a buscar el problema al lugar equivocado.
 ACCION cierre_espacio ES
-    PROCESO
-        ESCRIBIR("no deberia correr");
+PROCESO
+    ESCRIBIR("no deberia correr");
 FIN ACCION
 
 // ── SALIDA ESPERADA ─────────────────────────────────────────────────────────

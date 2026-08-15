@@ -12,32 +12,32 @@
 // bucle, y la primera vuelta usaria un valor que nadie cargo.
 
 ACCION secuencia_recorrido ES
-    AMBIENTE
-        secNotas: SECUENCIA DE ENTERO;
-        n: ENTERO;
-        suma: ENTERO;
-        cuantos: ENTERO;
+AMBIENTE
+    secNotas: SECUENCIA DE ENTERO;
+    n: ENTERO;
+    suma: ENTERO;
+    cuantos: ENTERO;
 
-    PROCESO
-        // Las dos juntas en una linea, como las escribe la catedra.
-        ARR(secNotas); AVZ(secNotas, n);
+PROCESO
+    // Las dos juntas en una linea, como las escribe la catedra.
+    ARR(secNotas); AVZ(secNotas, n);
 
-        suma := 0;
-        cuantos := 0;
+    suma := 0;
+    cuantos := 0;
 
-        MIENTRAS NFDS(secNotas) HACER
-            suma := suma + n;
-            cuantos := cuantos + 1;
-            AVZ(secNotas, n);
-        FIN_MIENTRAS
+    MIENTRAS NFDS(secNotas) HACER
+        suma := suma + n;
+        cuantos := cuantos + 1;
+        AVZ(secNotas, n);
+    FIN_MIENTRAS
 
-        ESCRIBIR("elementos: ", cuantos);
-        ESCRIBIR("suma: ", suma);
+    ESCRIBIR("elementos: ", cuantos);
+    ESCRIBIR("suma: ", suma);
 
-        // Despues del ultimo AVZ la ventana quedo en fin de secuencia.
-        SI FDS(secNotas) ENTONCES
-            ESCRIBIR("la secuencia se termino");
-        FIN_SI
+    // Despues del ultimo AVZ la ventana quedo en fin de secuencia.
+    SI FDS(secNotas) ENTONCES
+        ESCRIBIR("la secuencia se termino");
+    FIN_SI
 FIN_ACCION
 
 // ── SECUENCIA secNotas ──

@@ -12,40 +12,40 @@
 // funcion que convierte un caracter a numero.
 
 ACCION secuencia_caracteres ES
-    AMBIENTE
-        secAlu: SECUENCIA DE CARACTERES;
-        secSal: SECUENCIA DE SALIDA;
-        v: VENTANA DE CARACTER;
-        i: ENTERO;
-        alumnos: ENTERO;
+AMBIENTE
+    secAlu: SECUENCIA DE CARACTERES;
+    secSal: SECUENCIA DE SALIDA;
+    v: VENTANA DE CARACTER;
+    i: ENTERO;
+    alumnos: ENTERO;
 
-    PROCESO
-        ARR(secAlu); AVZ(secAlu, v);
-        CREAR(secSal);
-        alumnos := 0;
+PROCESO
+    ARR(secAlu); AVZ(secAlu, v);
+    CREAR(secSal);
+    alumnos := 0;
 
-        MIENTRAS NFDS(secAlu) HACER
-            // Legajo: cantidad CONOCIDA de caracteres
-            PARA i := 1 HASTA 2 HACER
-                ESCRIBIR(secSal, v);
-                AVZ(secAlu, v);
-            FIN_PARA
+    MIENTRAS NFDS(secAlu) HACER
+        // Legajo: cantidad CONOCIDA de caracteres
+        PARA i := 1 HASTA 2 HACER
+            ESCRIBIR(secSal, v);
+            AVZ(secAlu, v);
+        FIN_PARA
 
-            ESCRIBIR(secSal, "=");
+        ESCRIBIR(secSal, "=");
 
-            // Nombre: cantidad DESCONOCIDA, termina en '#'
-            MIENTRAS v <> "#" HACER
-                ESCRIBIR(secSal, v);
-                AVZ(secAlu, v);
-            FIN_MIENTRAS
-
-            ESCRIBIR(secSal, ";");
-            AVZ(secAlu, v);            // pasar el '#'
-            alumnos := alumnos + 1;
+        // Nombre: cantidad DESCONOCIDA, termina en '#'
+        MIENTRAS v <> "#" HACER
+            ESCRIBIR(secSal, v);
+            AVZ(secAlu, v);
         FIN_MIENTRAS
 
-        ESCRIBIR("alumnos: ", alumnos);
-        CERRAR(secSal);
+        ESCRIBIR(secSal, ";");
+        AVZ(secAlu, v);            // pasar el '#'
+        alumnos := alumnos + 1;
+    FIN_MIENTRAS
+
+    ESCRIBIR("alumnos: ", alumnos);
+    CERRAR(secSal);
 FIN_ACCION
 
 // ── SECUENCIA secAlu ──

@@ -6,10 +6,10 @@
 // Este programa no llega ni a arrancar. Arreglalo.
 
 ACCION escribir ES
-    PROCESO
-        ESCRIBIR("Hola, PAED");
-        ESCRIBIR("Cada instruccion termina en ';'")
-        ESCRIBIR("ESCRIBIR pega sus argumentos: ", 2, " + ", 2, " = ", 4);
+PROCESO
+    ESCRIBIR("Hola, PAED");
+    ESCRIBIR("Cada instruccion termina en ';'")
+    ESCRIBIR("ESCRIBIR pega sus argumentos: ", 2, " + ", 2, " = ", 4);
 FIN_ACCION
 
 // ── PISTA ───────────────────────────────────────────────────────────────────
