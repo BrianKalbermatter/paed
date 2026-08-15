@@ -420,14 +420,32 @@ lectura y no un 0 silencioso.
 
 | Punto | Opciones | Estado |
 |---|---|---|
-| Separador | `,` (estándar RFC 4180) vs `;` (lo que abre Excel en es-AR sin preguntar) | **abierto** |
+| Separador | `;` — **RESUELTO 2026-08-14**, ver abajo | cerrado |
 | Texto con separador o salto adentro | comillas dobles, duplicando las internas (RFC 4180). No choca con el `'` de PAED (§10.4) | propuesto |
 | Nombre del archivo en disco | ¿lo elige el programa en `ABRIR`, o sale del nombre de la variable? | **abierto** |
 | `CREAR` sobre uno que existe | ¿lo pisa, o es error? | **abierto** |
 
-El separador es la decisión que más se nota: con `,` el archivo es portable, pero
-Excel configurado en español lo abre con todo apelmazado en una sola columna — y
-la gracia de esto era abrirlo y ver la planilla.
+#### El separador es `;` — decidido 2026-08-14
+
+```csv
+farmacia;medicamento;cant_actual;fecha_vencimiento
+F1;Ibuprofeno;100;01/06/2025
+```
+
+Se eligió contra el estándar a propósito. `.csv` quiere decir *comma-separated*,
+y RFC 4180 dice coma — pero **el motivo de usar CSV era poder abrirlo y ver la
+planilla**, y con coma Excel configurado en español lo abre con todo apelmazado
+en la columna A. Un formato portable que hay que pelear para mirar no cumple lo
+único que se le pidió.
+
+No hay choque con los números: el decimal de PAED es el punto (§10.6), así que la
+coma no estaba ocupada — el `;` se elige por la herramienta, no por el dato.
+
+Lo que se paga: `grep`, `awk` y cualquier script asumen coma por defecto y hay
+que avisarles. Es un precio conocido y chico.
+
+**Es una constante, en un solo lugar del código.** Si algún día el archivo tiene
+que viajar a una herramienta que exige coma, se cambia ahí y nada más.
 
 ### 2.7 La organización del archivo — cátedra, implementado
 

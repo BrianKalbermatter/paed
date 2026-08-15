@@ -6,7 +6,6 @@ kanban-plugin: board
 
 ## Decisiones pendientes
 
-- [ ] **Separador del CSV: `,` o `;`** — BLOQUEA la fase 2. Con `,` el archivo es portable (RFC 4180); con `;` lo abre Excel en es-AR sin preguntar. La gracia del CSV era abrirlo y ver la planilla #decidir #f2-csv
 - [ ] De dónde sale el nombre del `.csv` en disco: ¿lo dice el programa en `ABRIR`, o sale del nombre de la variable? #decidir #f2-csv
 - [ ] `CREAR` sobre un archivo que ya existe: ¿lo pisa o es error? #decidir #f2-csv
 - [ ] Entrecomillado de texto con el separador adentro. Propuesto: RFC 4180 (comillas dobles, duplicando las internas). No choca con el `'` de PAED (§10.4) #decidir #f2-csv
@@ -89,6 +88,7 @@ kanban-plugin: board
 
 ## Hecho
 
+- [x] **Separador del CSV: `;`** — decidido 2026-08-14, contra el estandar a proposito. El motivo de usar CSV era abrirlo y ver la planilla, y con coma Excel en español lo apelmaza en la columna A. No hay choque con los numeros: el decimal de PAED es el punto. Es una constante en un solo lugar #decidir #f2-csv
 - [x] `data/sintaxis.json`: cláusulas `ORDENADO POR` e `INDEXADO POR` como modificadores de la declaración `ARCHIVO`, con las organizaciones nombradas (`secuencial`, `ordenado`, `indexado`) para que el asistente las lea de ahí y no de una lista en C #f1-declaracion
 - [x] `PAEDDecl` en `lang/include/paed/parser.h`: campos `org`, `clave[PAED_MAX_CLAVE][PAED_NAME_MAX]` y `clave_count`, al lado de `es_archivo`. `PAED_MAX_CLAVE` en 4 — el corpus llega a `clave3, clave2, clave1, clave0` #f1-declaracion
 - [x] `lang/src/parser.c`: parsear la cláusula después de resolver `ARCHIVO DE <tipo>`. Separar la lista por comas **y por la palabra `y`**, que el corpus usa antes del último campo (`ordenado por clave, tipo_novedad y f_novedad`) #f1-declaracion
