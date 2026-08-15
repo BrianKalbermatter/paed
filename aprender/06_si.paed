@@ -1,0 +1,42 @@
+// EJERCICIO 6 — SI / SINO
+//
+// La forma es:
+//
+//     SI (condicion) ENTONCES
+//         ...
+//     SINO
+//         ...
+//     FIN_SI
+//
+// El SINO es opcional; el FIN_SI no. La condicion va entre parentesis.
+//
+// Este programa corre sin errores y dice cualquier cosa: con un 9 te informa
+// que desaprobaste. Un programa que anda pero miente es peor que uno que no
+// compila, porque nadie se entera.
+
+ACCION si ES
+    AMBIENTE
+        nota: ENTERO;
+    PROCESO
+        LEER(nota);
+        SI (nota <= 6) ENTONCES
+            ESCRIBIR("aprobado con ", nota);
+        SINO
+            ESCRIBIR("desaprobado con ", nota);
+        FIN_SI
+
+        SI (nota >= 9) ENTONCES
+            ESCRIBIR("ademas, felicitaciones");
+        FIN_SI
+FIN_ACCION
+
+// ── PISTA ───────────────────────────────────────────────────────────────────
+// Leela en voz alta: "si la nota es menor o igual a 6, aprobado". ¿Es eso lo
+// que queres decir? Aprobar es sacar 6 O MAS.
+
+// ── ENTRADA ─────────────────────────────────────────────────────────────────
+// 9
+
+// ── SALIDA ESPERADA ─────────────────────────────────────────────────────────
+// aprobado con 9
+// ademas, felicitaciones

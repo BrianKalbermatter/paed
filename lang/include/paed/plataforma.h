@@ -32,6 +32,22 @@ int paed_mkdir(const char *ruta);
 // estandar: MinGW no la tiene y el .exe no compilaba por eso.
 char *paed_strcasestr(const char *pajar, const char *aguja);
 
+// Cuando se modifico `ruta` por ultima vez, en segundos. Lo usa el modo que
+// mira un archivo y vuelve a correrlo cuando lo guardas: la unica forma
+// portable de preguntar "¿esto cambio?" sin quedarse escuchando al sistema de
+// archivos, que en Linux es inotify y en Windows es otra cosa completamente.
+//
+// Un segundo de resolucion alcanza de sobra: entre que guardas y que mirás la
+// terminal pasa mas que eso.
+//
+// Devuelve 0 si pudo, -1 si el archivo no esta.
+int paed_mtime(const char *ruta, long long *out);
+
+// Frena el proceso `ms` milisegundos. Sin esto, un ciclo que pregunta "¿cambio
+// el archivo?" se come un nucleo entero preguntando millones de veces por
+// segundo.
+void paed_dormir_ms(int ms);
+
 // El separador de carpetas del sistema, para armar rutas y para los mensajes.
 // Y la extension del ejecutable: en Windows un archivo sin .exe no se ejecuta.
 #ifdef _WIN32

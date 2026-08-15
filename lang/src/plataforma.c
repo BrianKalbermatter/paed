@@ -6,8 +6,10 @@
 #ifdef _WIN32
   #include <windows.h>
   #include <direct.h>    // _mkdir
+  #include <sys/stat.h>  // _stat
 #else
   #include <sys/stat.h>
+  #include <time.h>      // nanosleep
   #include <unistd.h>    // readlink
 #endif
 
@@ -49,6 +51,34 @@ int paed_mkdir(const char *ruta) {
     return _mkdir(ruta);
 #else
     return mkdir(ruta, 0755);
+#endif
+}
+
+int paed_mtime(const char *ruta, long long *out) {
+    // stat es POSIX y ademas lo trae MSVC como _stat, asi que la unica
+    // diferencia real entre los dos sistemas es como se llama.
+#ifdef _WIN32
+    struct _stat st;
+    if (_stat(ruta, &st) != 0) return -1;
+#else
+    struct stat st;
+    if (stat(ruta, &st) != 0) return -1;
+#endif
+    *out = (long long)st.st_mtime;
+    return 0;
+}
+
+void paed_dormir_ms(int ms) {
+#ifdef _WIN32
+    Sleep((DWORD)ms);
+#else
+    // nanosleep y no sleep(): sleep solo toma segundos enteros, y esperar un
+    // segundo entero entre chequeos se siente lento cuando estas guardando el
+    // archivo y mirando la terminal.
+    struct timespec t;
+    t.tv_sec  = ms / 1000;
+    t.tv_nsec = (long)(ms % 1000) * 1000000L;
+    nanosleep(&t, NULL);
 #endif
 }
 

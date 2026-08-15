@@ -1,0 +1,11 @@
+ACCION escribir ES
+    PROCESO
+        ESCRIBIR("Hola, PAED");
+        ESCRIBIR("Cada instruccion termina en ';'");
+        ESCRIBIR("ESCRIBIR pega sus argumentos: ", 2, " + ", 2, " = ", 4);
+FIN_ACCION
+
+// ── SALIDA ESPERADA ─────────────────────────────────────────────────────────
+// Hola, PAED
+// Cada instruccion termina en ';'
+// ESCRIBIR pega sus argumentos: 2 + 2 = 4

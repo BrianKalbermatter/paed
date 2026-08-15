@@ -22,6 +22,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <paed/aprender.h>
 #include <paed/parser.h>
 #include <paed/interpreter.h>
 #include <paed/plataforma.h>
@@ -339,6 +340,7 @@ static int desinstalar(const char *destino) {
 static void ayuda(void) {
     printf("paed %s — el pseudocodigo AED de la catedra, ejecutable\n\n", PAED_VERSION);
     printf("  paed <archivo.paed>        corre un programa\n");
+    printf("  paed aprender              el tutorial: ejercicios rotos, de menos a mas\n");
     printf("  paed install [destino]     se instala (por defecto /usr/local o ~/.local)\n");
     printf("  paed uninstall [destino]   se borra (por defecto de donde se esta corriendo)\n");
     printf("  paed --version             la version\n");
@@ -359,6 +361,11 @@ int main(int argc, char **argv) {
 
         if (strcmp(argv[1], "uninstall") == 0)
             return desinstalar(argc >= 3 ? argv[2] : NULL);
+
+        // El tutorial. Se le pasa argv desde 'aprender' en adelante, asi que
+        // adentro argv[0] es "aprender" y argv[1] su subcomando.
+        if (strcmp(argv[1], "aprender") == 0)
+            return paed_aprender(argc - 1, argv + 1);
 
         if (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-v") == 0 ||
             strcmp(argv[1], "-version") == 0 || strcmp(argv[1], "version") == 0) {

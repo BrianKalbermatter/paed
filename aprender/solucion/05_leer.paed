@@ -1,0 +1,27 @@
+ACCION leer ES
+    AMBIENTE
+        nombre: AN(30);
+        edad: ENTERO;
+        ciudad: AN(30);
+    PROCESO
+        ESCRIBIR("Como te llamas?");
+        LEER(nombre);
+        ESCRIBIR("Cuantos anios tenes?");
+        LEER(edad);
+        ESCRIBIR("De donde sos?");
+        LEER(ciudad);
+        ESCRIBIR("Hola ", nombre, ", de ", ciudad, ".");
+        ESCRIBIR("El anio que viene cumplis ", edad + 1, ".");
+FIN_ACCION
+
+// ── ENTRADA ─────────────────────────────────────────────────────────────────
+// Ana Gomez
+// 24
+// Rosario
+
+// ── SALIDA ESPERADA ─────────────────────────────────────────────────────────
+// Como te llamas?
+// Cuantos anios tenes?
+// De donde sos?
+// Hola Ana Gomez, de Rosario.
+// El anio que viene cumplis 25.

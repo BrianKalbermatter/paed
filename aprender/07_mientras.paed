@@ -1,0 +1,32 @@
+// EJERCICIO 7 — MIENTRAS y el error de uno
+//
+// MIENTRAS evalua la condicion ANTES de cada vuelta: si arranca falsa, el
+// cuerpo no corre ni una vez.
+//
+// Este suma 1+2+...+10 y le da 45. Le falta exactamente un numero. El "error
+// de uno" (off-by-one) es el bug mas comun que vas a escribir en tu vida, y
+// casi siempre vive en el `<` contra el `<=`.
+
+ACCION mientras ES
+    AMBIENTE
+        i: ENTERO;
+        suma: ENTERO;
+    PROCESO
+        i := 1;
+        suma := 0;
+        MIENTRAS (i < 10) HACER
+            suma := suma + i;
+            i := i + 1;
+        FIN_MIENTRAS
+        ESCRIBIR("1 + 2 + ... + 10 = ", suma);
+        ESCRIBIR("el contador quedo en ", i);
+FIN_ACCION
+
+// ── PISTA ───────────────────────────────────────────────────────────────────
+// ¿Cual es el ultimo valor de `i` que entra al cuerpo con `i < 10`? El 9.
+// Y el 10 nunca se suma. Ademas mira la ultima linea: el contador tiene que
+// quedar en 11, porque para SALIR del ciclo la condicion tiene que dar falso.
+
+// ── SALIDA ESPERADA ─────────────────────────────────────────────────────────
+// 1 + 2 + ... + 10 = 55
+// el contador quedo en 11

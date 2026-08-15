@@ -1,0 +1,63 @@
+// EJERCICIO 8 — PARA, y el paso
+//
+// La forma es:
+//
+//     PARA i := 1 HASTA 10 HACER  ...  FIN_PARA
+//
+// El paso por defecto es +1. Para contar al reves hay que decirlo, y en PAED
+// el paso va despues de un ';':
+//
+//     PARA i := 5 HASTA 1; -1 HACER
+//
+// Sin el paso negativo, el ciclo de la cuenta regresiva no imprime NADA: `i`
+// arranca en 5, tiene que llegar a 1 subiendo de a uno, y ya arranco pasado.
+// No es que falle: es que no entra nunca.
+
+ACCION para ES
+    AMBIENTE
+        i: ENTERO;
+        n: ENTERO;
+        fact: ENTERO;
+    PROCESO
+        n := 5;
+
+        ESCRIBIR("-- tabla del ", n, " --");
+        PARA i := 1 HASTA 10 HACER
+            ESCRIBIR(n, " x ", i, " = ", n * i);
+        FIN_PARA
+
+        ESCRIBIR("-- cuenta regresiva --");
+        PARA i := 5 HASTA 1 HACER
+            ESCRIBIR(i);
+        FIN_PARA
+
+        fact := 1;
+        PARA i := 1 HASTA n HACER
+            fact := fact * i;
+        FIN_PARA
+        ESCRIBIR(n, "! = ", fact);
+FIN_ACCION
+
+// ── PISTA ───────────────────────────────────────────────────────────────────
+// Solo el ciclo del medio esta mal. Los otros dos estan bien y son la
+// referencia de como se escribe uno que si funciona.
+
+// ── SALIDA ESPERADA ─────────────────────────────────────────────────────────
+// -- tabla del 5 --
+// 5 x 1 = 5
+// 5 x 2 = 10
+// 5 x 3 = 15
+// 5 x 4 = 20
+// 5 x 5 = 25
+// 5 x 6 = 30
+// 5 x 7 = 35
+// 5 x 8 = 40
+// 5 x 9 = 45
+// 5 x 10 = 50
+// -- cuenta regresiva --
+// 5
+// 4
+// 3
+// 2
+// 1
+// 5! = 120

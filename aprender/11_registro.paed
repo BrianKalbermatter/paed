@@ -1,0 +1,61 @@
+// EJERCICIO 11 — REGISTRO: varios datos, una sola cosa
+//
+// Un alumno no son tres variables sueltas: es UN alumno con tres campos. El
+// REGISTRO junta datos de tipos distintos bajo un nombre, y se accede con punto:
+//
+//     alumno = REGISTRO
+//         nombre: AN(20);
+//         nota1: ENTERO;
+//     FIN_REGISTRO
+//
+//     a: alumno;        a.nombre := "Ada";
+//
+// Ojo: el tipo se declara UNA vez (`alumno = REGISTRO ... FIN_REGISTRO`) y
+// despues se declaran las variables de ese tipo (`a: alumno;`). Son dos cosas
+// distintas: el molde y la pieza.
+//
+// Este promedia mal. 8 y 9 no promedian 12.5.
+
+ACCION registro ES
+    AMBIENTE
+        alumno = REGISTRO
+            nombre: AN(20);
+            nota1: ENTERO;
+            nota2: ENTERO;
+        FIN_REGISTRO
+
+        a: alumno;
+        promedio: REAL;
+    PROCESO
+        LEER(a.nombre);
+        LEER(a.nota1);
+        LEER(a.nota2);
+
+        promedio := a.nota1 + a.nota2 / 2;
+
+        ESCRIBIR("alumno: ", a.nombre);
+        ESCRIBIR("notas:  ", a.nota1, " y ", a.nota2);
+        ESCRIBIR("promedio: ", promedio);
+
+        SI (promedio >= 6) ENTONCES
+            ESCRIBIR("promociona");
+        SINO
+            ESCRIBIR("va a final");
+        FIN_SI
+FIN_ACCION
+
+// ── PISTA ───────────────────────────────────────────────────────────────────
+// La division liga mas fuerte que la suma, asi que `a + b / 2` es `a + (b/2)`.
+// Vos queres dividir la SUMA. Ya viste como se fuerza el orden en el
+// ejercicio 4.
+
+// ── ENTRADA ─────────────────────────────────────────────────────────────────
+// Grace Hopper
+// 8
+// 9
+
+// ── SALIDA ESPERADA ─────────────────────────────────────────────────────────
+// alumno: Grace Hopper
+// notas:  8 y 9
+// promedio: 8.5
+// promociona

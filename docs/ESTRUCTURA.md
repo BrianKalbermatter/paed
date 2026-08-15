@@ -25,6 +25,7 @@ paed/
 │   └── wiki_paed.txt  documento histórico: las preguntas a la cátedra
 │
 ├── tests/             27 programas .paed + correr.sh
+├── aprender/          el tutorial: ejercicios ROTOS a propósito + solucion/
 ├── ejercicios/        parciales y simulacros — material de estudio, NO tests
 ├── helix/             resaltador tree-sitter
 ├── _void/             lo retirado — no entra en el build
@@ -55,6 +56,31 @@ No existe modo de regrabar la salida automáticamente, a propósito. Si un test
 falla, el runner muestra el diff y el bloque se corrige a mano leyéndolo.
 Regrabar sin leer es exactamente cómo un test deja de proteger: "arregla" el
 test en vez del bug.
+
+### Por qué `aprender/` no está en `tests/` ni en `ejercicios/`
+
+Son tres cosas distintas y conviene no confundirlas:
+
+| Carpeta | Qué es | Estado esperado |
+|---|---|---|
+| `tests/` | la batería que protege al lenguaje | **pasan todos** |
+| `aprender/` | el tutorial de `paed aprender` | **fallan todos** (vienen rotos) |
+| `ejercicios/` | parciales y simulacros, material de estudio | no se corren |
+
+`aprender/` usa **el mismo formato que `tests/`** — el `.paed` trae al final su
+bloque `ENTRADA` y su `SALIDA ESPERADA` — porque un ejercicio *es* un test, con
+la única diferencia de que viene roto a propósito. Un segundo formato para lo
+mismo envejecería sin que nadie se entere.
+
+Lo que sí tiene de más es `// ── PISTA ──`, y `aprender/solucion/` con la
+versión resuelta de cada uno. Las soluciones **no viajan en el binario**: son
+para que `make test-aprender` pueda demostrar dos cosas que importan — que
+ningún ejercicio pasa sin tocarlo, y que todos tienen solución que pasa.
+
+Los ejercicios sí viajan en el binario, embebidos por `aprender/generar.sh`
+igual que `sintaxis.json`. Por eso quien baja `paed` suelto de un release tiene
+el tutorial completo sin clonar nada, y por eso `paed aprender reset` puede
+existir: el original está adentro del ejecutable.
 
 ### Por qué `ejercicios/` no está en `tests/`
 

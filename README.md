@@ -24,6 +24,23 @@ Como ejecutarlo?
 $ paed promedio.paed
 ```
 
+## Aprenderlo
+
+Si es tu primera vez, el binario trae un tutorial adentro: 12 programas rotos a
+propósito, de menos a más. Arreglás uno, el tutor lo corre, y si la salida es la
+que el ejercicio pide, pasás al siguiente.
+
+```bash
+paed aprender init      # desempaca los ejercicios en ./paed-aprender
+paed aprender           # muestra el actual y por qué no pasa
+paed aprender --mirar   # igual, pero se recorre solo cada vez que guardás
+paed aprender pista     # cuando te trabás
+```
+
+No hay archivo de progreso: **el ejercicio actual es el primero que todavía no
+pasa**, y eso se calcula corriéndolos. Un archivo de estado sería una segunda
+verdad que se puede desincronizar del disco.
+
 ## Instalación
 
 ```bash
@@ -74,6 +91,7 @@ Nota IMPORTANTE: Aun se estan haciendo pruebas, puede que no funcione muy bien o
 | Documento | Qué hay adentro |
 |---|---|
 | [`docs/PAED.md`](docs/PAED.md) | La spec del lenguaje. **Es la única.** |
+| [`aprender/`](aprender/) | Los ejercicios del tutorial, y sus soluciones |
 | [`KANBAN.md`](KANBAN.md) | Qué está hecho y qué falta |
 | [`docs/ARCHIVOS.md`](docs/ARCHIVOS.md) | Organización de archivos, juego de archivos y plan |
 | [`docs/ESTRUCTURA.md`](docs/ESTRUCTURA.md) | Qué hay en cada carpeta del repo y por qué |

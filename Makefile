@@ -65,9 +65,23 @@ $(LANG_GEN): data/sintaxis.json
 	@sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' -e 's/^/"/' -e 's/$$/\\n"/' $< >> $@
 	@echo ';' >> $@
 
+# Los ejercicios del tutorial viajan adentro del binario por el mismo motivo
+# que sintaxis.json: `paed` tiene que ser UN archivo que se baja suelto y ya
+# trae todo. `paed aprender init` los desempaca en una carpeta de trabajo.
+#
+# La generacion vive en un script y no aca porque son N archivos con nombres
+# variables, y eso en sed puro es ilegible.
+APRENDER_GEN = lang/src/ejercicios_embebidos.c
+APRENDER_SRC = $(sort $(wildcard aprender/[0-9]*.paed))
+
+$(APRENDER_GEN): $(APRENDER_SRC) aprender/generar.sh
+	@mkdir -p $(dir $@)
+	@bash aprender/generar.sh > $@
+
 LANG_SRC = lang/src/parser.c lang/src/expr.c lang/src/interpreter.c \
-           lang/src/secuencia.c lang/src/archivo.c \
-           lang/src/plataforma.c $(LANG_GEN) lang/vendor/cjson/cJSON.c
+           lang/src/secuencia.c lang/src/archivo.c lang/src/aprender.c \
+           lang/src/plataforma.c $(LANG_GEN) $(APRENDER_GEN) \
+           lang/vendor/cjson/cJSON.c
 LANG_OBJ = $(LANG_SRC:%.c=$(BUILDDIR)/lang/%.o)
 CLI_OBJ  = $(BUILDDIR)/lang/lang/cli/main.o
 
@@ -153,6 +167,12 @@ $(WIN_BUILD)/%.o: %.c $(SELLO)
 # Corre toda la bateria de programas PAED contra la salida que cada uno declara.
 test: $(CLI)
 	@bash tests/correr.sh
+	@echo
+	@bash aprender/verificar.sh
+
+# El tutorial solo, cuando estas tocando los ejercicios y no el lenguaje.
+test-aprender: $(CLI)
+	@bash aprender/verificar.sh
 
 # ── Instalacion ────────────────────────────────────────────────────────────
 #
@@ -179,4 +199,4 @@ uninstall:
 clean clean-lang:
 	rm -rf $(BUILDDIR)
 
-.PHONY: all lang windows test install uninstall clean clean-lang FORCE_SELLO
+.PHONY: all lang windows test test-aprender install uninstall clean clean-lang FORCE_SELLO

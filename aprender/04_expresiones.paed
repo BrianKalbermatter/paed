@@ -1,0 +1,36 @@
+// EJERCICIO 4 — division entera, resto y prioridad
+//
+// PAED tiene TRES divisiones distintas y no son intercambiables:
+//
+//     /     division real      7 / 2   -> 3.5
+//     DIV   division entera    7 DIV 2 -> 3
+//     MOD   resto              7 MOD 2 -> 1
+//
+// Convertir 200 segundos a minutos con `/` te da 3.3333, que no es "3 minutos
+// y 20 segundos". Arreglalo con los operadores que corresponden.
+
+ACCION expresiones ES
+    AMBIENTE
+        segundos: ENTERO;
+        minutos: ENTERO;
+        resto: ENTERO;
+    PROCESO
+        segundos := 200;
+        minutos := segundos / 60;
+        resto := segundos - 60;
+        ESCRIBIR(segundos, " segundos son ", minutos, " minutos y ", resto, " segundos");
+        ESCRIBIR("2 + 3 * 4 = ", 2 + 3 * 4);
+        ESCRIBIR("(2 + 3) * 4 = ", (2 + 3) * 4);
+        ESCRIBIR("7 / 2 = ", 7 / 2, " pero 7 DIV 2 = ", 7 DIV 2);
+FIN_ACCION
+
+// ── PISTA ───────────────────────────────────────────────────────────────────
+// Los minutos enteros que entran en 200 segundos: division ENTERA.
+// Los segundos que sobran despues de sacar esos minutos: el RESTO.
+// Las dos ultimas lineas ya estan bien: estan para que veas la prioridad.
+
+// ── SALIDA ESPERADA ─────────────────────────────────────────────────────────
+// 200 segundos son 3 minutos y 20 segundos
+// 2 + 3 * 4 = 14
+// (2 + 3) * 4 = 20
+// 7 / 2 = 3.5 pero 7 DIV 2 = 3

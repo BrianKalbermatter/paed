@@ -1,0 +1,31 @@
+// EJERCICIO 3 — intercambiar dos variables
+//
+// `:=` asigna. `=` compara. No son lo mismo y no se pueden cambiar uno por otro.
+//
+// Este programa quiere intercambiar `a` y `b`, y los deja iguales. El bug es
+// clasico y vale la pena entenderlo, no memorizarlo: una asignacion PISA lo que
+// habia, y lo que habia no vuelve.
+//
+// La variable `aux` esta declarada y sin usar. Es una pista.
+
+ACCION asignacion ES
+    AMBIENTE
+        a: ENTERO;
+        b: ENTERO;
+        aux: ENTERO;
+    PROCESO
+        a := 10;
+        b := 25;
+        ESCRIBIR("antes:   a=", a, " b=", b);
+        a := b;
+        b := a;
+        ESCRIBIR("despues: a=", a, " b=", b);
+FIN_ACCION
+
+// ── PISTA ───────────────────────────────────────────────────────────────────
+// Segui las dos lineas con un papel. Despues de `a := b`, el 10 que tenia `a`
+// ¿donde quedo guardado? En ningun lado. Guardalo ANTES de pisarlo.
+
+// ── SALIDA ESPERADA ─────────────────────────────────────────────────────────
+// antes:   a=10 b=25
+// despues: a=25 b=10

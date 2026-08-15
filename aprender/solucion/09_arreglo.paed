@@ -1,0 +1,44 @@
+ACCION arreglo ES
+    AMBIENTE
+        A: ARREGLO[1..5] DE ENTERO;
+        i: ENTERO;
+        mayor: ENTERO;
+        suma: ENTERO;
+    PROCESO
+        PARA i := 1 HASTA 5 HACER
+            LEER(A[i]);
+        FIN_PARA
+
+        suma := 0;
+        mayor := A[1];
+        PARA i := 1 HASTA 5 HACER
+            suma := suma + A[i];
+            SI (A[i] > mayor) ENTONCES
+                mayor := A[i];
+            FIN_SI
+        FIN_PARA
+
+        ESCRIBIR("el arreglo tiene ", suma, " sumando todo");
+        ESCRIBIR("el mayor es ", mayor);
+        ESCRIBIR("al reves:");
+        PARA i := 5 HASTA 1; -1 HACER
+            ESCRIBIR(A[i]);
+        FIN_PARA
+FIN_ACCION
+
+// ── ENTRADA ─────────────────────────────────────────────────────────────────
+// 4
+// 17
+// 9
+// 2
+// 11
+
+// ── SALIDA ESPERADA ─────────────────────────────────────────────────────────
+// el arreglo tiene 43 sumando todo
+// el mayor es 17
+// al reves:
+// 11
+// 2
+// 9
+// 17
+// 4

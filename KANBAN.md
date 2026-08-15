@@ -70,6 +70,11 @@ kanban-plugin: board
 - [ ] Runner de tests en C en vez de `correr.sh`: hoy la batería **no puede correr en Windows**, aunque ya se cross-compila `paed.exe` #infra
 - [ ] Pushear a `origin`: hay commits locales sin subir en `master` #infra
 
+## Backlog — tutorial
+
+- [ ] Segunda tanda de ejercicios: `ARCHIVO`, corte de control, actualización secuencial — el ejercicio que toma la cátedra #tutorial
+- [ ] `paed aprender` no puede detectar un ciclo infinito por sí mismo: se apoya en `timeout` de coreutils, que en Windows no existe. Ahí un ejercicio colgado se sale con Ctrl-C #tutorial #infra
+
 ## En progreso
 
 ## Hecho
@@ -78,6 +83,11 @@ kanban-plugin: board
 - [x] **Bug: cualquier operador entre dos textos literales se imprimía crudo.** `ESCRIBIR("Ana" + "Beto")` daba `Ana" + "Beto`. `interpreter.c` tenía un atajo que imprimía sin evaluar cuando el argumento empezaba y terminaba con comilla, y esa condición la cumple una expresión entera. Se **sacó** el atajo en vez de ajustarlo: era una segunda implementación de lo que `primario()` ya hacía en `expr.c` #evaluador
 - [x] `igual_separador` ya no corta por el `=` de `<=`, `>=` y `==`. Solo afecta a los argumentos con nombre de una librería, pero ahí el bug era el mismo #parser
 - [x] Test `tests/comparaciones.paed`: los dos bugs, más `<=`/`>=`/`==`/`<>`, textos literales comparados y concatenados, un `=` adentro de un texto, y combinados con `Y`/`O` #infra
+- [x] **`paed aprender`: el tutorial adentro del binario** — 12 ejercicios rotos a propósito, al estilo de rustlings. Sin archivo de progreso: el ejercicio actual es el primero que no pasa, y se calcula corriéndolos, así el estado no puede contradecir al disco. El juez es el bloque `SALIDA ESPERADA`, el mismo formato que `tests/` — un ejercicio *es* un test que viene roto #tutorial
+- [x] Los ejercicios viajan embebidos, como `sintaxis.json`: quien baja `paed` suelto tiene el tutorial sin clonar el repo, y por eso `reset` puede restaurar el original #tutorial
+- [x] El ejercicio se corre como SUBPROCESO del propio binario: un ejercicio que revienta o se cuelga no se lleva puesto al tutor, y se juzga exactamente el comando que el alumno tipearía #tutorial
+- [x] `make test-aprender`: demuestra que ningún ejercicio pasa sin tocarlo y que todos tienen solución que pasa. Sin eso, un ejercicio ya resuelto es un hueco silencioso en la progresión #tutorial #infra
+
 - [x] Qué valor exacto vale `HV`. `DBL_MAX` lo hace incomparable de verdad pero se imprime feo; `999999999` es legible y alcanza para las claves de los ejercicios #decidir #f3-algoritmo
 - [x] ¿`HV` distingue mayúsculas (`hv`, `Hv`)? Las keywords no distinguen, y esto es una constante del lenguaje: debería seguir la misma regla #decidir #f3-algoritmo
 - [x] **`HV` (alto valor) como constante del lenguaje**, junto a `V`/`F` en `primario()` de `lang/src/expr.c`. No se declara, no se asigna, no ocupa entrada de variable. Hoy `SI (x <> HV)` da "la variable 'HV' no tiene valor todavía" #f3-algoritmo

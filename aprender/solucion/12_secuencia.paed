@@ -1,0 +1,32 @@
+ACCION secuencia ES
+    AMBIENTE
+        sec: SECUENCIA DE ENTERO;
+        v: ENTERO;
+        suma: ENTERO;
+        cuantos: ENTERO;
+    PROCESO
+        suma := 0;
+        cuantos := 0;
+
+        ARR(sec); AVZ(sec, v);
+        MIENTRAS (NFDS(sec)) HACER
+            ESCRIBIR("leo ", v);
+            suma := suma + v;
+            cuantos := cuantos + 1;
+            AVZ(sec, v);
+        FIN_MIENTRAS
+
+        ESCRIBIR("elementos: ", cuantos);
+        ESCRIBIR("suma: ", suma);
+FIN_ACCION
+
+// ── SECUENCIA sec ───────────────────────────────────────────────────────────
+// 5 8 13 21
+
+// ── SALIDA ESPERADA ─────────────────────────────────────────────────────────
+// leo 5
+// leo 8
+// leo 13
+// leo 21
+// elementos: 4
+// suma: 47

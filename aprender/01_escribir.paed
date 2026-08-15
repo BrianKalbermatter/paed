@@ -1,0 +1,23 @@
+// EJERCICIO 1 — ESCRIBIR y el ';'
+//
+// En PAED cada instruccion TERMINA en ';'. No es un separador entre
+// instrucciones: es un terminador, y por eso la ultima tambien lo lleva.
+//
+// Este programa no llega ni a arrancar. Arreglalo.
+
+ACCION escribir ES
+    PROCESO
+        ESCRIBIR("Hola, PAED");
+        ESCRIBIR("Cada instruccion termina en ';'")
+        ESCRIBIR("ESCRIBIR pega sus argumentos: ", 2, " + ", 2, " = ", 4);
+FIN_ACCION
+
+// ── PISTA ───────────────────────────────────────────────────────────────────
+// El parser te dice la linea exacta. Mirala y fijate que le falta al final.
+// ESCRIBIR pega sus argumentos SIN separador: por eso los espacios se ponen
+// a mano, adentro de los textos.
+
+// ── SALIDA ESPERADA ─────────────────────────────────────────────────────────
+// Hola, PAED
+// Cada instruccion termina en ';'
+// ESCRIBIR pega sus argumentos: 2 + 2 = 4

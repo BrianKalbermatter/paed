@@ -1,0 +1,29 @@
+// EJERCICIO 2 — una variable no vale nada hasta que le asignas algo
+//
+// Declararla en el AMBIENTE le reserva el nombre, no le da un valor. Usar una
+// variable antes de asignarle algo es un error de ejecucion, no un cero.
+//
+// El orden de las instrucciones importa. Arreglalo.
+
+ACCION valor ES
+    AMBIENTE
+        total: ENTERO;
+        precio: ENTERO;
+        cantidad: ENTERO;
+    PROCESO
+        total := precio * cantidad;
+        precio := 150;
+        cantidad := 3;
+        ESCRIBIR("precio unitario: ", precio);
+        ESCRIBIR("cantidad: ", cantidad);
+        ESCRIBIR("total: ", total);
+FIN_ACCION
+
+// ── PISTA ───────────────────────────────────────────────────────────────────
+// Un programa se ejecuta de arriba hacia abajo. Cuando la linea del `total`
+// corre, ¿ya paso algo que le haya dado un valor a `precio`?
+
+// ── SALIDA ESPERADA ─────────────────────────────────────────────────────────
+// precio unitario: 150
+// cantidad: 3
+// total: 450

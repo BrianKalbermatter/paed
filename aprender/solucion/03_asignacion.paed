@@ -1,0 +1,18 @@
+ACCION asignacion ES
+    AMBIENTE
+        a: ENTERO;
+        b: ENTERO;
+        aux: ENTERO;
+    PROCESO
+        a := 10;
+        b := 25;
+        ESCRIBIR("antes:   a=", a, " b=", b);
+        aux := a;
+        a := b;
+        b := aux;
+        ESCRIBIR("despues: a=", a, " b=", b);
+FIN_ACCION
+
+// ── SALIDA ESPERADA ─────────────────────────────────────────────────────────
+// antes:   a=10 b=25
+// despues: a=25 b=10

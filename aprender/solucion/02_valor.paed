@@ -1,0 +1,18 @@
+ACCION valor ES
+    AMBIENTE
+        total: ENTERO;
+        precio: ENTERO;
+        cantidad: ENTERO;
+    PROCESO
+        precio := 150;
+        cantidad := 3;
+        total := precio * cantidad;
+        ESCRIBIR("precio unitario: ", precio);
+        ESCRIBIR("cantidad: ", cantidad);
+        ESCRIBIR("total: ", total);
+FIN_ACCION
+
+// ── SALIDA ESPERADA ─────────────────────────────────────────────────────────
+// precio unitario: 150
+// cantidad: 3
+// total: 450

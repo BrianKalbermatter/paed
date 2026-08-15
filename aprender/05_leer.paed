@@ -1,0 +1,39 @@
+// EJERCICIO 5 — LEER pide datos de afuera
+//
+// LEER consume UNA LINEA POR DESTINO. `LEER(a, b)` se come dos lineas, no una
+// linea partida al medio: por eso un nombre con espacios entra entero.
+//
+// Los datos de este ejercicio viven en el bloque ENTRADA de mas abajo. Hay tres
+// lineas ahi, y el programa solo lee dos: la tercera nunca se usa y `ciudad`
+// queda sin valor.
+
+ACCION leer ES
+    AMBIENTE
+        nombre: AN(30);
+        edad: ENTERO;
+        ciudad: AN(30);
+    PROCESO
+        ESCRIBIR("Como te llamas?");
+        LEER(nombre);
+        ESCRIBIR("Cuantos anios tenes?");
+        LEER(edad);
+        ESCRIBIR("De donde sos?");
+        ESCRIBIR("Hola ", nombre, ", de ", ciudad, ".");
+        ESCRIBIR("El anio que viene cumplis ", edad + 1, ".");
+FIN_ACCION
+
+// ── PISTA ───────────────────────────────────────────────────────────────────
+// Preguntar no es leer. Despues del ESCRIBIR que pregunta de donde sos falta
+// la instruccion que efectivamente trae el dato.
+
+// ── ENTRADA ─────────────────────────────────────────────────────────────────
+// Ana Gomez
+// 24
+// Rosario
+
+// ── SALIDA ESPERADA ─────────────────────────────────────────────────────────
+// Como te llamas?
+// Cuantos anios tenes?
+// De donde sos?
+// Hola Ana Gomez, de Rosario.
+// El anio que viene cumplis 25.

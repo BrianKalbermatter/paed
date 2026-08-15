@@ -1,0 +1,61 @@
+// EJERCICIO 9 — los arreglos de AED arrancan en 1
+//
+// Se declara diciendo DESDE DONDE HASTA DONDE:
+//
+//     A: ARREGLO[1..5] DE ENTERO;
+//
+// Ese `1..5` no es decoracion: es el rango REAL de indices validos. A[0] no
+// existe y A[6] tampoco. En C los arreglos arrancan en 0; en el pseudocodigo de
+// la catedra arrancan donde vos digas, y la convencion es 1.
+//
+// Este programa revienta en la primera vuelta del primer ciclo.
+
+ACCION arreglo ES
+    AMBIENTE
+        A: ARREGLO[1..5] DE ENTERO;
+        i: ENTERO;
+        mayor: ENTERO;
+        suma: ENTERO;
+    PROCESO
+        PARA i := 0 HASTA 4 HACER
+            LEER(A[i]);
+        FIN_PARA
+
+        suma := 0;
+        mayor := A[1];
+        PARA i := 1 HASTA 5 HACER
+            suma := suma + A[i];
+            SI (A[i] > mayor) ENTONCES
+                mayor := A[i];
+            FIN_SI
+        FIN_PARA
+
+        ESCRIBIR("el arreglo tiene ", suma, " sumando todo");
+        ESCRIBIR("el mayor es ", mayor);
+        ESCRIBIR("al reves:");
+        PARA i := 5 HASTA 1; -1 HACER
+            ESCRIBIR(A[i]);
+        FIN_PARA
+FIN_ACCION
+
+// ── PISTA ───────────────────────────────────────────────────────────────────
+// El mensaje de error te dice el rango valido. El ciclo que carga el arreglo
+// tiene que recorrer EXACTAMENTE ese rango — y fijate que los otros dos ciclos
+// del programa ya lo hacen bien.
+
+// ── ENTRADA ─────────────────────────────────────────────────────────────────
+// 4
+// 17
+// 9
+// 2
+// 11
+
+// ── SALIDA ESPERADA ─────────────────────────────────────────────────────────
+// el arreglo tiene 43 sumando todo
+// el mayor es 17
+// al reves:
+// 11
+// 2
+// 9
+// 17
+// 4
