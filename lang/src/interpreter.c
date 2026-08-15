@@ -625,15 +625,22 @@ static int exec_instr(const PAEDProgram *prog, const PAEDInstr *in) {
     if (strcasecmp(p, "ESCRIBIR") == 0) {
         for (int i = 0; i < in->arg_count; i++) {
             const char *v = in->args[i].val;
-            size_t n = strlen(v);
 
-            if (n >= 2 && v[0] == '"' && v[n - 1] == '"') {
-                printf("%.*s", (int)(n - 2), v + 1);   // texto literal, sin comillas
-                continue;
-            }
-
-            // Lo que no es literal se EVALUA: antes ESCRIBIR(cont_pal)
-            // imprimia "cont_pal", el nombre, en vez del valor.
+            // TODO argumento se evalua, incluido el que parece un texto pelado.
+            //
+            // Aca habia un atajo: si el argumento empezaba y terminaba con
+            // comilla, se imprimia el pedazo del medio sin pasar por el
+            // evaluador. La condicion era demasiado floja — `"Ana" + "Beto"`
+            // tambien empieza y termina con comilla, asi que la expresion
+            // entera se tomaba por un literal y se imprimia `Ana" + "Beto`.
+            // Lo mismo con `"Ana" = "Ana"` y con cualquier operador entre dos
+            // textos literales.
+            //
+            // Se saca en vez de ajustarle la condicion porque era una SEGUNDA
+            // implementacion de lo que primario() ya hace en expr.c, y con las
+            // mismas reglas: saca las comillas, respeta PAED_VAL_MAX y acepta
+            // las simples igual que las dobles. Dos caminos para lo mismo es
+            // exactamente como uno de los dos se queda atras sin que se note.
             Valor val;
             char  buf[PAED_VAL_MAX];
             if (expr_eval(v, &env, &val) == 0) {

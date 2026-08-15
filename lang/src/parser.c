@@ -460,15 +460,44 @@ static void parse_asignacion(PAEDProgram *p, char *linea, int lineno, char *op) 
 // Busca el '=' que separa clave de valor, SALTEANDO lo que este entre
 // comillas. Con strchr pelado, ESCRIBIR("a = b") se partia por el '=' de
 // adentro del texto y el literal quedaba destrozado.
+//
+// Tampoco cuentan los '=' que son parte de OTRO operador. Sin esto,
+// ESCRIBIR("x ", a <= b) partia por el '=' de '<=' y el argumento quedaba
+// hecho pedazos. Los tres casos son '<=', '>=' y '=='; el '<>' no lleva '='.
 static char *igual_separador(char *s) {
     int en_texto = 0;
     char comilla = 0;
     for (char *c = s; *c; c++) {
         if (!en_texto && (*c == '"' || *c == '\'')) { en_texto = 1; comilla = *c; continue; }
         if (en_texto) { if (*c == comilla) en_texto = 0; continue; }
-        if (*c == '=') return c;
+        if (*c == '=') {
+            if (c > s && (c[-1] == '<' || c[-1] == '>' || c[-1] == '=')) continue;
+            if (c[1] == '=') { c++; continue; }
+            return c;
+        }
     }
     return NULL;
+}
+
+// ¿Este procedimiento admite argumentos con nombre (`clave = valor`)?
+//
+// Solo si DECLARA parametros. Y es la respuesta a un bug que estuvo dando
+// vueltas: hasta ahora se buscaba un '=' en TODO argumento de TODO
+// procedimiento, asi que `ESCRIBIR("x ", 3 = 3)` se partia en clave='3' y
+// valor='3', se tiraba la clave, y el resultado impreso era '3' en vez de 'V'.
+// El '=' de comparacion desaparecia sin un solo mensaje de error.
+//
+// El corte es limpio porque las dos familias no se tocan: los procedimientos
+// del LENGUAJE (ESCRIBIR, LEER, ARR, AVZ...) son variadicos y declaran
+// "params": [] — reciben expresiones, y ahi un '=' solo puede ser el operador
+// de igualdad. Los de una LIBRERIA (escena.json: CUBO, MOVER...) declaran sus
+// parametros con nombre y no son variadicos — ahi un '=' separa clave de valor.
+//
+// Se mira lo que el procedimiento DECLARA y no una lista de nombres en C, por
+// el mismo motivo de siempre: la definicion del lenguaje vive en el JSON.
+static int proc_admite_clave_valor(cJSON *def) {
+    cJSON *params = cJSON_GetObjectItem(def, "params");
+    return cJSON_IsArray(params) && cJSON_GetArraySize(params) > 0;
 }
 
 // ── Consola o archivo: cual de las dos formas es ──────────────────────────────
@@ -857,8 +886,13 @@ static void parse_instruction(PAEDProgram *p, char *linea, int lineno) {
     int   variadico = proc_es_variadico(def);
     int   hubo_error = 0;
 
+    // Si el procedimiento no declara parametros, sus argumentos son
+    // EXPRESIONES y no pares 'clave = valor': ni se busca el separador, para
+    // que el '=' de comparacion llegue entero al evaluador.
+    int clave_valor = proc_admite_clave_valor(def);
+
     for (int i = 0; i < n_partes; i++) {
-        char *igual = igual_separador(partes[i]);
+        char *igual = clave_valor ? igual_separador(partes[i]) : NULL;
 
         if (!igual) {
             // Nada se ignora en silencio: o es variadico, o es un error.

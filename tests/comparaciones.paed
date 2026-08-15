@@ -1,0 +1,86 @@
+// Comparaciones DENTRO de los argumentos de ESCRIBIR.
+//
+// Este archivo existe por dos bugs que convivieron mucho tiempo y que se
+// tapaban entre si. Los dos hacian lo peor que puede hacer un interprete: dar
+// un resultado equivocado sin un solo mensaje de error.
+//
+//   1. `ESCRIBIR("x ", 3 = 3)` imprimia `3`, y `3 = 4` imprimia `4`.
+//
+//      El parser buscaba un '=' en TODO argumento de TODO procedimiento, para
+//      leerlo como `clave = valor`. Partia `3 = 3` en clave='3' y valor='3',
+//      tiraba la clave, y el '=' de comparacion desaparecia. Ahora la forma
+//      `clave = valor` solo se busca en los procedimientos que DECLARAN
+//      parametros — o sea los de una libreria (escena.json), nunca los del
+//      lenguaje, que son variadicos y reciben expresiones.
+//
+//      Nunca se vio antes porque adentro de `SI (...)` andaba bien: ahi la
+//      condicion no pasa por el troceado de argumentos.
+//
+//   2. `ESCRIBIR("Ana" + "Beto")` imprimia `Ana" + "Beto`.
+//
+//      El interprete tenia un atajo: si el argumento empezaba y terminaba con
+//      comilla, imprimia el medio sin evaluar. `"Ana" + "Beto"` cumple esa
+//      condicion. El atajo era una segunda implementacion de lo que primario()
+//      ya hacia en expr.c, asi que se saco en vez de ajustarlo.
+
+ACCION comparaciones ES
+    AMBIENTE
+        s: AN(10);
+        n: ENTERO;
+    PROCESO
+        s := "Ana";
+        n := 3;
+
+        ESCRIBIR("-- el '=' como comparacion, no como clave = valor --");
+        ESCRIBIR("3 = 3      ", 3 = 3);
+        ESCRIBIR("3 = 4      ", 3 = 4);
+        ESCRIBIR("(3 = 3)    ", (3 = 3));
+        ESCRIBIR("n = 3      ", n = 3);
+        ESCRIBIR("2 + 2 = 4  ", 2 + 2 = 4);
+
+        ESCRIBIR("-- los otros comparadores no se parten por su '=' --");
+        ESCRIBIR("3 <= 4     ", 3 <= 4);
+        ESCRIBIR("5 >= 9     ", 5 >= 9);
+        ESCRIBIR("3 == 3     ", 3 == 3);
+        ESCRIBIR("3 <> 4     ", 3 <> 4);
+
+        ESCRIBIR("-- operadores entre dos textos LITERALES --");
+        ESCRIBIR("igual      ", "Ana" = "Ana");
+        ESCRIBIR("distinto   ", "ana" = "Ana");
+        ESCRIBIR("menor      ", "Ana" < "Beto");
+        ESCRIBIR("concatena  ", "Ana" + "Beto");
+        ESCRIBIR("variable   ", s = "Ana");
+
+        ESCRIBIR("-- un '=' adentro de un texto sigue siendo texto --");
+        ESCRIBIR("a = b, y c = d");
+        ESCRIBIR("mezcla: a = b ", 1 = 1);
+
+        ESCRIBIR("-- combinados con Y / O --");
+        ESCRIBIR("y          ", (3 = 3) Y (4 = 4));
+        ESCRIBIR("o          ", (3 = 9) O (4 = 4));
+FIN_ACCION
+
+// ── SALIDA ESPERADA ─────────────────────────────────────────────────────────
+// -- el '=' como comparacion, no como clave = valor --
+// 3 = 3      V
+// 3 = 4      F
+// (3 = 3)    V
+// n = 3      V
+// 2 + 2 = 4  V
+// -- los otros comparadores no se parten por su '=' --
+// 3 <= 4     V
+// 5 >= 9     F
+// 3 == 3     V
+// 3 <> 4     V
+// -- operadores entre dos textos LITERALES --
+// igual      V
+// distinto   F
+// menor      V
+// concatena  AnaBeto
+// variable   V
+// -- un '=' adentro de un texto sigue siendo texto --
+// a = b, y c = d
+// mezcla: a = b V
+// -- combinados con Y / O --
+// y          V
+// o          V

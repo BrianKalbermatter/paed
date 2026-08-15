@@ -49,7 +49,6 @@ kanban-plugin: board
 
 - [ ] **Errores ESTATICOS que se reportan tarde, en runtime.** El parser ya tiene el AMBIENTE y ya sabe que `'"hola"'` no es un destino de LEER, que un registro no tiene tal campo, y que una SECUENCIA DE SALIDA se abre con CREAR y no con ARR. Hoy todos esos saltan al EJECUTAR. Moverlos al parser es el arreglo de fondo: ahi reportar de a muchos SI corresponde, porque son independientes entre si #parser
 - [ ] **Cobertura perdida por el corte de ejecución (2026-08-14)**: `leer_errores`, `secuencia_errores`, `archivos_formas` y `archivos_modos` eran CATALOGOS que fijaban ~20 mensajes de error en una sola corrida. Desde que la ejecución corta en el primero, solo se verifica ese. No se partieron en 20 archivos a propósito: si los errores estáticos se mueven al parser (item de arriba), los catálogos vuelven a funcionar solos #parser
-- [ ] **Trampa encontrada el 2026-08-14**: `ESCRIBIR("x: ", a = b)` NO compara — cae en la sintaxis de argumentos con nombre (`clave = valor`, la de `MOVER(nombre = fantasma)`) y termina imprimiendo solo `b`. Con paréntesis (`(a = b)`) anda bien. Debería avisar, o al menos quedar documentado #parser
 - [ ] Declaración múltiple `A,B,SUMA: entero`. Es la forma del único ejemplo con autoridad de cátedra (`AED_2021_UnI.pdf:10`) y hoy da "nombre de variable invalido" #parser
 - [ ] `FUNCION`/`PROCEDIMIENTO` anidados dentro de `AMBIENTE` #parser
 - [ ] Nombre de `ACCION` con espacios (`ACCION Ejercicio de Parcial ES`) #parser
@@ -75,6 +74,10 @@ kanban-plugin: board
 
 ## Hecho
 
+- [x] **Bug: el `=` de comparación desaparecía adentro de un argumento.** `ESCRIBIR("x ", 3 = 3)` imprimía `3` y `3 = 4` imprimía `4`. El parser buscaba `clave = valor` en TODO argumento de TODO procedimiento, partía la comparación y tiraba el lado izquierdo. Ahora esa forma solo se busca en procedimientos que **declaran parámetros** — los de una librería (`escena.json`), nunca los del lenguaje, que son variádicos y reciben expresiones. Adentro de `SI (...)` andaba bien, y por eso sobrevivió tanto #evaluador #parser
+- [x] **Bug: cualquier operador entre dos textos literales se imprimía crudo.** `ESCRIBIR("Ana" + "Beto")` daba `Ana" + "Beto`. `interpreter.c` tenía un atajo que imprimía sin evaluar cuando el argumento empezaba y terminaba con comilla, y esa condición la cumple una expresión entera. Se **sacó** el atajo en vez de ajustarlo: era una segunda implementación de lo que `primario()` ya hacía en `expr.c` #evaluador
+- [x] `igual_separador` ya no corta por el `=` de `<=`, `>=` y `==`. Solo afecta a los argumentos con nombre de una librería, pero ahí el bug era el mismo #parser
+- [x] Test `tests/comparaciones.paed`: los dos bugs, más `<=`/`>=`/`==`/`<>`, textos literales comparados y concatenados, un `=` adentro de un texto, y combinados con `Y`/`O` #infra
 - [x] Qué valor exacto vale `HV`. `DBL_MAX` lo hace incomparable de verdad pero se imprime feo; `999999999` es legible y alcanza para las claves de los ejercicios #decidir #f3-algoritmo
 - [x] ¿`HV` distingue mayúsculas (`hv`, `Hv`)? Las keywords no distinguen, y esto es una constante del lenguaje: debería seguir la misma regla #decidir #f3-algoritmo
 - [x] **`HV` (alto valor) como constante del lenguaje**, junto a `V`/`F` en `primario()` de `lang/src/expr.c`. No se declara, no se asigna, no ocupa entrada de variable. Hoy `SI (x <> HV)` da "la variable 'HV' no tiene valor todavía" #f3-algoritmo
