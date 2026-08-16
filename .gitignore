@@ -15,11 +15,6 @@ lib/
 # Binario temporal del generador de sintaxis
 Frankly/tools/gen_sintaxis
 
-# Resaltado de PAED para Helix: es configuracion del editor de cada uno, no
-# parte del proyecto. Si lo necesitas en otra maquina, copia la carpeta a mano y
-# corre ./instalar.sh — no viaja por git a proposito.
-helix/
-
 # Los .csv que los programas CREAN al correr. Son datos generados, no fuente: el
 # test se los fabrica solo, justamente para no depender de ningun archivo
 # guardado en el repo.

@@ -79,6 +79,18 @@ typedef struct {
 // la posicion de lectura ni los descriptores.
 void arch_reset(void);
 
+// La carpeta donde vive el .paed. El .csv se crea al lado: un parcial es una
+// carpeta con el programa y sus datos.
+//
+// Vive aca y no en el interprete porque no la usa solo el: el asistente de
+// archivos tiene que crear el .csv en el MISMO lugar donde el interprete lo va
+// a buscar despues. Dos copias de esta cuenta serian dos lugares distintos, y
+// el asistente crearia un archivo que el programa despues no encuentra.
+//
+// Se miran las dos barras porque el mismo binario se cross-compila para
+// Windows, donde el separador es '\\'.
+void arch_dir_del_programa(const char *path_paed, char *out, size_t n);
+
 // Anota un archivo declarado en el AMBIENTE. `dir` es la carpeta del .paed: el
 // .csv se crea al lado del programa, con el nombre de la variable.
 //

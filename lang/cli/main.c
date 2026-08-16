@@ -23,6 +23,8 @@
 #include <string.h>
 
 #include <paed/aprender.h>
+#include <paed/asistente.h>
+#include <paed/colores.h>
 #include <paed/parser.h>
 #include <paed/interpreter.h>
 #include <paed/plataforma.h>
@@ -341,11 +343,50 @@ static void ayuda(void) {
     printf("paed %s — el pseudocodigo AED de la catedra, ejecutable\n\n", PAED_VERSION);
     printf("  paed <archivo.paed>        corre un programa\n");
     printf("  paed aprender              el tutorial: ejercicios rotos, de menos a mas\n");
+    printf("  paed asistente <archivo>   el menu de archivos: que tipo es cada uno\n");
     printf("  paed install [destino]     se instala (por defecto /usr/local o ~/.local)\n");
     printf("  paed uninstall [destino]   se borra (por defecto de donde se esta corriendo)\n");
     printf("  paed --version             la version\n");
     printf("  paed --help                esto\n\n");
-    printf("  --lib <nombre>             carga una libreria que no es del lenguaje\n\n");
+    printf("  --lib <nombre>             carga una libreria que no es del lenguaje\n");
+    printf("  --colores <archivo>        muestra el programa coloreado en la terminal\n");
+    printf("  --tokens <archivo>         un token por linea: linea col largo rol texto\n\n");
+}
+
+// ── Que hacer con el archivo ────────────────────────────────────────────────
+typedef enum {
+    MODO_EJECUTAR = 0,
+    MODO_COLORES,     // --colores: para MIRARLO, con ANSI
+    MODO_TOKENS,      // --tokens:  para que lo lea otro programa (editorBim)
+} Modo;
+
+// Donde va escribiendo el pintor. El resaltador entrega TOKENS y no el archivo
+// entero, asi que los espacios entre token y token los repone aca, mirando la
+// columna del proximo. Es lo mismo que hace un editor: el color va sobre el
+// texto, y los huecos no llevan color porque no son nada.
+typedef struct { int linea; int col; } Pintor;
+
+static void pintar_ansi(const PAEDToken *tok, void *ud) {
+    Pintor *p = (Pintor *)ud;
+
+    while (p->linea < tok->linea) { putchar('\n'); p->linea++; p->col = 1; }
+    while (p->col   < tok->col)   { putchar(' ');  p->col++; }
+
+    const char *ansi = paed_rol_ansi(tok->rol);
+    // Los roles sin color (la puntuacion) salen tal cual, sin ensuciar la
+    // salida con un reset que no apaga nada.
+    if (*ansi) printf("%s%s%s", ansi, tok->texto, paed_ansi_reset());
+    else       printf("%s", tok->texto);
+
+    p->col += tok->largo;
+}
+
+// Una linea por token, separado por tabs. Es la forma en que editorBim va a
+// consumir esto: sin ANSI, sin adornos, y con linea/columna/largo para poder
+// pintar el buffer sin volver a leer el archivo.
+static void imprimir_token(const PAEDToken *tok, void *ud) {
+    (void)ud;
+    printf("%d\t%d\t%d\t%s\t%s\n", tok->linea, tok->col, tok->largo, tok->rol, tok->texto);
 }
 
 int main(int argc, char **argv) {
@@ -366,6 +407,11 @@ int main(int argc, char **argv) {
         // adentro argv[0] es "aprender" y argv[1] su subcomando.
         if (strcmp(argv[1], "aprender") == 0)
             return paed_aprender(argc - 1, argv + 1);
+
+        // El asistente de archivos. Mismo trato que 'aprender': no abre un
+        // .paed para ejecutarlo, asi que no pasa por el parseo de argumentos.
+        if (strcmp(argv[1], "asistente") == 0)
+            return paed_asistente(argc - 1, argv + 1);
 
         if (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-v") == 0 ||
             strcmp(argv[1], "-version") == 0 || strcmp(argv[1], "version") == 0) {
@@ -395,7 +441,8 @@ int main(int argc, char **argv) {
     // lenguaje (--lib escena lee escena.json del directorio de datos). Sirve
     // para VALIDAR un programa que la usa; ejecutarla es otra cosa, y para eso
     // hace falta el host que implemente esos procedimientos.
-    const char *lib = NULL;
+    const char *lib  = NULL;
+    Modo        modo = MODO_EJECUTAR;
 
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "--lib") == 0) {
@@ -405,6 +452,8 @@ int main(int argc, char **argv) {
             }
             lib = argv[++i];
         }
+        else if (strcmp(argv[i], "--colores") == 0) modo = MODO_COLORES;
+        else if (strcmp(argv[i], "--tokens")  == 0) modo = MODO_TOKENS;
         else if (!path) path = argv[i];
         else {
             fprintf(stderr, "paed: argumento de mas: %s\n", argv[i]);
@@ -432,7 +481,24 @@ int main(int argc, char **argv) {
     }
 
     PAEDProgram prog;
-    if (paed_parse_file(path, &prog) != 0) {
+    int parse_rc = paed_parse_file(path, &prog);
+
+    // ── Resaltado ───────────────────────────────────────────────────────────
+    // Va ANTES de mirar parse_rc, y a proposito: un archivo con errores tiene
+    // que colorearse igual — es cuando mas se lo necesita. El parser junta los
+    // errores y sigue leyendo, asi que el AMBIENTE ya esta cargado y los
+    // archivos y los tipos del programador se reconocen lo mismo.
+    if (modo == MODO_COLORES || modo == MODO_TOKENS) {
+        Pintor pintor = { .linea = 1, .col = 1 };
+        paed_colorear_archivo(path, &prog,
+                              modo == MODO_COLORES ? pintar_ansi : imprimir_token,
+                              &pintor);
+        if (modo == MODO_COLORES) printf("%s\n", paed_ansi_reset());
+        paed_syntax_free();
+        return 0;
+    }
+
+    if (parse_rc != 0) {
         paed_print_errors(&prog);
         paed_syntax_free();
         return 1;

@@ -44,6 +44,15 @@ static const char *solo_nombre(const char *ruta) {
     return ultima;
 }
 
+void arch_dir_del_programa(const char *path_paed, char *out, size_t n) {
+    const char *ultima = NULL;
+    for (const char *c = path_paed; *c; c++)
+        if (*c == '/' || *c == '\\') ultima = c;
+
+    if (!ultima) { out[0] = '\0'; return; }
+    snprintf(out, n, "%.*s", (int)(ultima - path_paed), path_paed);
+}
+
 Archivo *arch_buscar(const char *nombre) {
     for (int i = 0; i < g_count; i++)
         if (strcasecmp(g_archivos[i].nombre, nombre) == 0) return &g_archivos[i];

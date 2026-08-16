@@ -95,19 +95,10 @@ void interp_set_secuencia(PaedSecuenciaDatos fn, void *ud) {
     secdatos_ud = ud;
 }
 
-// La carpeta donde vive el .paed. El .csv se crea al lado: un parcial es una
-// carpeta con el programa y sus datos.
-//
-// Se miran las dos barras porque el mismo binario se cross-compila para
-// Windows, donde el separador es '\\'.
-static void dir_del_programa(const char *path, char *out, size_t n) {
-    const char *ultima = NULL;
-    for (const char *c = path; *c; c++)
-        if (*c == '/' || *c == '\\') ultima = c;
-
-    if (!ultima) { out[0] = '\0'; return; }
-    snprintf(out, n, "%.*s", (int)(ultima - path), path);
-}
+// Donde vive el .csv lo decide arch_dir_del_programa, en archivo.c. Estuvo aca
+// hasta que el asistente de archivos necesito la misma cuenta: el asistente
+// CREA el .csv y el interprete lo BUSCA, asi que si cada uno la hacia por su
+// lado, el dia que una cambiara el archivo creado no aparecia.
 
 static const PAEDRegistro *registro_de(const PAEDProgram *prog, const char *tipo);
 
@@ -752,7 +743,7 @@ static int declarar_ambiente(const PAEDProgram *prog) {
         // lee DESDE el.
         if (d->es_archivo) {
             char dir[PAED_PATH_MAX];
-            dir_del_programa(prog->path, dir, sizeof(dir));
+            arch_dir_del_programa(prog->path, dir, sizeof(dir));
 
             Archivo *a = arch_declarar(d->name, dir);
             if (!a) {

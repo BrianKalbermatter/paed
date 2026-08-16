@@ -165,6 +165,132 @@ void paed_syntax_free(void) {
     if (g_escena) { cJSON_Delete(g_escena); g_escena = NULL; }
 }
 
+// ── Consultar las categorias de sintaxis.json ────────────────────────────────
+//
+// El parser no necesita esto para parsear: sabe que 'MIENTRAS' abre un bucle
+// porque lo compara donde corresponde. Lo necesita el RESALTADOR, que hace la
+// pregunta al reves — "esta palabra suelta, ¿que es?" — y no puede tener su
+// propia lista de keywords, porque esa fue exactamente la desincronizacion que
+// mato a la version anterior (ver _void/README.md).
+//
+// Vive aca, y no en colores.c, por un motivo simple: `g_syntax` es static de
+// este archivo. Sacarlo afuera para que otro lo lea seria abrir la puerta a que
+// cualquiera modifique la definicion del lenguaje.
+
+// Devuelve el nombre de la categoria a la que pertenece la palabra
+// ('estructura', 'tipos', 'bucles'...), o NULL si no es palabra del lenguaje.
+// No distingue mayusculas: en PAED 'MIENTRAS' y 'mientras' son la misma.
+const char *paed_categoria_de_palabra(const char *palabra) {
+    if (!palabra || !*palabra || paed_syntax_load() != 0) return NULL;
+
+    cJSON *cat = NULL;
+    cJSON_ArrayForEach(cat, cJSON_GetObjectItem(g_syntax, "categorias")) {
+        cJSON *nombre = cJSON_GetObjectItem(cat, "nombre");
+        if (!cJSON_IsString(nombre)) continue;
+
+        cJSON *p = NULL;
+        cJSON_ArrayForEach(p, cJSON_GetObjectItem(cat, "palabras")) {
+            if (cJSON_IsString(p) && strcasecmp(p->valuestring, palabra) == 0)
+                return nombre->valuestring;
+        }
+    }
+    return NULL;
+}
+
+// Igual que la de arriba, pero para los SIMBOLOS: busca la palabra mas LARGA de
+// sintaxis.json que sea prefijo de `s` y la devuelve por `largo`.
+//
+// El largo importa: ':=' y ':' arrancan igual, y '<=' y '<' tambien. Si ganara
+// la corta, el resaltado partiria el operador al medio y pintaria ':' de un
+// color y '=' de otro. Es el mismo problema que 'FIN_SI' contra 'SI'.
+const char *paed_categoria_de_simbolo(const char *s, int *largo) {
+    if (largo) *largo = 0;
+    if (!s || !*s || paed_syntax_load() != 0) return NULL;
+
+    const char *mejor_cat = NULL;
+    size_t      mejor_len = 0;
+
+    cJSON *cat = NULL;
+    cJSON_ArrayForEach(cat, cJSON_GetObjectItem(g_syntax, "categorias")) {
+        cJSON *nombre = cJSON_GetObjectItem(cat, "nombre");
+        if (!cJSON_IsString(nombre)) continue;
+
+        cJSON *p = NULL;
+        cJSON_ArrayForEach(p, cJSON_GetObjectItem(cat, "palabras")) {
+            if (!cJSON_IsString(p)) continue;
+            // Solo simbolos: las palabras con letras las resuelve la funcion de
+            // arriba, que ademas exige que la palabra este entera.
+            if (isalpha((unsigned char)p->valuestring[0]) || p->valuestring[0] == '_')
+                continue;
+
+            size_t len = strlen(p->valuestring);
+            if (len > mejor_len && strncmp(s, p->valuestring, len) == 0) {
+                mejor_len = len;
+                mejor_cat = nombre->valuestring;
+            }
+        }
+    }
+
+    if (largo) *largo = (int)mejor_len;
+    return mejor_cat;
+}
+
+// El color que sintaxis.json le puso a una categoria ('azul', 'gris'...), o
+// NULL. Es un NOMBRE, no un codigo: como se dibuja ese nombre lo decide quien
+// pinta — la terminal con ANSI, o editorBim con lo que use.
+const char *paed_categoria_color(const char *categoria) {
+    if (!categoria || paed_syntax_load() != 0) return NULL;
+
+    cJSON *cat = NULL;
+    cJSON_ArrayForEach(cat, cJSON_GetObjectItem(g_syntax, "categorias")) {
+        cJSON *nombre = cJSON_GetObjectItem(cat, "nombre");
+        if (cJSON_IsString(nombre) && strcmp(nombre->valuestring, categoria) == 0) {
+            cJSON *color = cJSON_GetObjectItem(cat, "color");
+            return cJSON_IsString(color) ? color->valuestring : NULL;
+        }
+    }
+    return NULL;
+}
+
+// Las organizaciones de archivo, tal como las define sintaxis.json.
+//
+// Un enum en C seria mas rapido de escribir y estaria mal: el dia que la
+// catedra sume una organizacion habria que tocar el enum, el parser y el
+// asistente, y las tres se desincronizan igual que se desincronizaron las tres
+// listas de keywords que mataron a la version anterior.
+int paed_organizaciones(PAEDOrganizacion *out, int max) {
+    if (!out || max <= 0 || paed_syntax_load() != 0) return -1;
+
+    cJSON *archivos = cJSON_GetObjectItem(g_syntax, "archivos");
+    cJSON *orgs     = cJSON_GetObjectItem(archivos, "organizaciones");
+
+    int n = 0;
+    cJSON *o = NULL;
+    cJSON_ArrayForEach(o, orgs) {
+        if (n >= max) break;
+
+        cJSON *nombre = cJSON_GetObjectItem(o, "nombre");
+        if (!cJSON_IsString(nombre)) continue;   // entrada rota: se saltea
+
+        cJSON *etiq  = cJSON_GetObjectItem(o, "etiqueta");
+        cJSON *claus = cJSON_GetObjectItem(o, "clausula");
+        cJSON *camp  = cJSON_GetObjectItem(o, "campos");
+        cJSON *desc  = cJSON_GetObjectItem(o, "descripcion");
+
+        out[n].nombre      = nombre->valuestring;
+        out[n].etiqueta    = cJSON_IsString(etiq) ? etiq->valuestring : nombre->valuestring;
+        // 'clausula': null en el JSON — es el caso de secuencial, que no lleva
+        // ninguna. cJSON lo entrega como un nodo de tipo NULL, no como string.
+        out[n].clausula    = cJSON_IsString(claus) ? claus->valuestring : NULL;
+        out[n].campos      = cJSON_IsString(camp)  ? camp->valuestring  : "ninguno";
+        out[n].descripcion = cJSON_IsString(desc)  ? desc->valuestring  : "";
+        out[n].implementado = cJSON_IsTrue(cJSON_GetObjectItem(o, "implementado"));
+        out[n].en_asistente = cJSON_IsTrue(cJSON_GetObjectItem(o, "en_asistente"));
+        n++;
+    }
+    return n;
+}
+
 static cJSON *buscar_proc(cJSON *raiz, const char *nombre) {
     if (!raiz) return NULL;
     cJSON *p = NULL;

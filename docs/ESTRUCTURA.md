@@ -27,7 +27,6 @@ paed/
 ├── tests/             27 programas .paed + correr.sh
 ├── aprender/          el tutorial: ejercicios ROTOS a propósito + solucion/
 ├── ejercicios/        parciales y simulacros — material de estudio, NO tests
-├── helix/             resaltador tree-sitter
 ├── _void/             lo retirado — no entra en el build
 ├── Makefile
 └── VERSION
@@ -135,7 +134,7 @@ intérprete retirado.
 | `Frankly/core/`, `stdlib/` | `_void/` | Solo los usaba el intérprete bash |
 | `Frankly/tools/` | `_void/tools/` | Generaba las tres cosas de abajo |
 | `Frankly/generated/paed_keywords.h` | `_void/generated/` | **Nadie en `lang/` lo incluye** |
-| `Frankly/syntaxes/`, `syntax/`, `ftdetect/` | `_void/` | El resaltado hoy es tree-sitter, en `helix/` |
+| `Frankly/syntaxes/`, `syntax/`, `ftdetect/` | `_void/` | Tres listas de keywords desincronizadas — ver `_void/README.md` |
 | `Frankly/DOC.txt` | `_void/DOC.txt` | Él mismo dice que `PAED.md` le gana |
 
 La carpeta `Frankly/` ya no existe.

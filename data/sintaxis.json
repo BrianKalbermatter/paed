@@ -204,6 +204,24 @@
       "patron": "[0-9]+"
     },
     {
+      "nombre": "acciones",
+      "color": "dorado",
+      "scope": "entity.name.function.paed",
+      "descripcion": "el <nombre> de ACCION <nombre> ES. No tiene 'palabras': sale de PAEDProgram.name, o sea del programa que se esta mirando"
+    },
+    {
+      "nombre": "tipos_usuario",
+      "color": "verde-esmeralda",
+      "scope": "entity.name.type.paed",
+      "descripcion": "los REGISTRO que declaro el programador. No tiene 'palabras' porque no son del lenguaje: salen de PAEDProgram.registros[], que llena el parser leyendo el AMBIENTE. Es lo que un resaltador aparte NO puede saber"
+    },
+    {
+      "nombre": "archivos",
+      "color": "naranja-fuerte",
+      "scope": "variable.other.archivo.paed",
+      "descripcion": "variables declaradas 'ARCHIVO DE X'. Salen de PAEDDecl.es_archivo. Van de otro color a proposito: son el disparador del asistente de archivos (fase 4)"
+    },
+    {
       "nombre": "variables",
       "color": "blanco-crema",
       "scope": "variable.other.paed",
@@ -349,27 +367,34 @@
   ],
   "archivos": {
     "descripcion": "Como esta ORGANIZADO un archivo. La organizacion no tiene palabra clave propia: la dice la clausula que sigue al tipo. Sin clausula es secuencial. Vive aca y no en el C para que el parser y el asistente del editor lean la misma definicion.",
+    "en_asistente_descripcion": "'implementado' dice si el INTERPRETE la sabe ejecutar. 'en_asistente' dice si el MENU la ofrece hoy, y son dos cosas distintas: 'ordenado' ya se ejecuta pero todavia no se ofrece, porque el asistente arranca por la mas simple. Poner en_asistente en true es lo unico que hace falta para que aparezca en el menu — no se toca una linea de C.",
     "organizaciones": [
       {
         "nombre": "secuencial",
+        "etiqueta": "Archivo Secuencial",
         "clausula": null,
         "campos": "ninguno",
         "descripcion": "secuencial, sin orden garantizado",
-        "implementado": true
+        "implementado": true,
+        "en_asistente": true
       },
       {
         "nombre": "ordenado",
+        "etiqueta": "Archivo Secuencial Ordenado",
         "clausula": "ORDENADO POR",
         "campos": "lista",
         "descripcion": "secuencial, ordenado por una clave que puede ser compuesta",
-        "implementado": true
+        "implementado": true,
+        "en_asistente": false
       },
       {
         "nombre": "indexado",
+        "etiqueta": "Archivo Indexado",
         "clausula": "INDEXADO POR",
         "campos": "uno",
         "descripcion": "acceso directo por clave",
-        "implementado": false
+        "implementado": false,
+        "en_asistente": false
       }
     ],
     "separadores_clave": [

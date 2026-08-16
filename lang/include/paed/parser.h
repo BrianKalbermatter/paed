@@ -234,6 +234,52 @@ int  paed_syntax_load_lib(const char *nombre);
 
 void paed_syntax_free(void);
 
+// ── Preguntarle a sintaxis.json que es una palabra ───────────────────────────
+//
+// Estas tres NO las usa el parser: las usa el resaltador (colores.c). El parser
+// pregunta "¿esta linea empieza con MIENTRAS?"; el resaltador pregunta al reves,
+// "esta palabra suelta, ¿que es?". Sin esto, el resaltador tendria que llevar su
+// PROPIA lista de keywords — y esa duplicacion es la que mato a la version
+// anterior del lenguaje (ver _void/README.md).
+
+// La categoria a la que pertenece la palabra ('bucles', 'tipos', 'estructura'),
+// o NULL si no es del lenguaje. No distingue mayusculas.
+const char *paed_categoria_de_palabra(const char *palabra);
+
+// Igual pero para simbolos, y devuelve por `largo` cuantos bytes ocupa el que
+// encontro. Busca el MAS LARGO que sea prefijo de `s`, para que ':=' le gane a
+// ':' y '<=' a '<'. Devuelve NULL y largo 0 si ahi no arranca ningun simbolo.
+const char *paed_categoria_de_simbolo(const char *s, int *largo);
+
+// El color que sintaxis.json le puso a la categoria ('azul', 'gris'...). Es un
+// NOMBRE, no un codigo ANSI: como se dibuja lo decide quien pinta.
+const char *paed_categoria_color(const char *categoria);
+
+// ── Las organizaciones de archivo ────────────────────────────────────────────
+//
+// Como esta ORGANIZADO un archivo: secuencial, ordenado o indexado. Vive en
+// sintaxis.json y no en un enum de C a proposito — agregar una organizacion
+// nueva tiene que hacerla aparecer sola en el asistente, sin recompilar.
+#define PAED_MAX_ORGANIZACIONES 8
+
+typedef struct {
+    const char *nombre;        // "secuencial", "ordenado", "indexado"
+    const char *etiqueta;      // como se lee en el menu: "Archivo Secuencial"
+    // La clausula que va DESPUES del tipo: "ORDENADO POR", "INDEXADO POR".
+    // NULL cuando la organizacion no lleva ninguna, que es el caso de
+    // secuencial: se declara `arch: ARCHIVO DE reg;` y nada mas.
+    const char *clausula;
+    const char *campos;        // "ninguno", "uno", "lista"
+    const char *descripcion;
+    int         implementado;  // ¿el INTERPRETE la sabe ejecutar?
+    int         en_asistente;  // ¿el MENU la ofrece hoy? Ver sintaxis.json
+} PAEDOrganizacion;
+
+// Llena `out` con las organizaciones de sintaxis.json y devuelve cuantas puso,
+// o -1 si no pudo leer la definicion del lenguaje. Los punteros apuntan
+// adentro de sintaxis.json: valen mientras no se llame paed_syntax_free().
+int paed_organizaciones(PAEDOrganizacion *out, int max);
+
 // La definicion del lenguaje que viene adentro del binario, como texto JSON.
 // Sirve para escribirla al instalar: `paed install` no necesita tener el
 // sintaxis.json al lado porque lo lleva puesto.
