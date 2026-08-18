@@ -4,15 +4,34 @@ kanban-plugin: board
 
 ---
 
+## PROXIMO — subacciones (2026-08-18)
+
+> **Es EL bloqueante.** El 2026-08-17 se decidió que la cátedra manda y PAED se
+> acomodó a sus grafías: de los 26 templates oficiales de
+> `UTN-FRRe/isi-aed/Pseudocodigo` pasaron a parsear **9** (antes 2).
+> **15 de los 17 que faltan están bloqueados por esto y nada más.**
+>
+> Sin subacciones no se puede escribir ni un corte de control ni una
+> actualización, que son la mitad del parcial.
+
+- [ ] **`SUBACCION` / `PROCEDIMIENTO` / `FUNCION` declaradas en el `AMBIENTE`.** La forma de los templates: la firma termina en `;`, adentro llevan su propio `Proceso` o `Algoritmo`, y cierran con `Fin;` o `Fin_Proc;` — **no** con `FIN_PROCEDIMIENTO` #subacciones
+- [ ] **Llamada SIN paréntesis**: `LEER_ARCH1;` y `Corte_2` son la forma del corpus. Hoy caen en "instruccion sin parentesis: se esperaba PROCEDIMIENTO(...)" #subacciones
+- [ ] **Pila de llamadas y ámbito local.** Un `PARA` adentro de una subacción llamada dos veces no puede pisarse con el de afuera #subacciones
+- [ ] **Parámetros con modo `E` / `S` / `ES` / `VAR`.** `VAR` es el que más aparece en el código real: `Procedimiento InicializarSecuencia(VAR sec_local: SECUENCIA de caracter)` #subacciones
+- [ ] **Retorno de `FUNCION` por asignación al nombre**: `Suma := Total;` adentro de `Funcion Suma(...)`. Y poder usarla en una expresión: `Escribir('La suma es: ', Suma(b, c))` #subacciones
+- [ ] Test: un corte de control de dos niveles escrito con subacciones, como lo escribe `CORTE DE CONTROL [TEMPLATE Rev2].txt`. Es el que prueba que la cosa sirve de verdad #subacciones
+- [ ] Test: la actualización secuencial unitaria de `ACTUALIZACION INC UNI [TEMPLATE].txt`, con `LEER_arch_mae`, `IGUALES`, `DISTINTOS` y `PASO_DIRECTO` #subacciones
+
+## PROXIMO — lo otro que falta para los templates
+
+- [ ] **Matrices: `ARREGLO[1..3, 1..3] DE ENTERO`** y el acceso `M[i, j]`. Es lo único que bloquea a `ARREGLOS_Conceptos.txt`. **Es del TP 3**, así que no corre prisa hasta que se dé arreglos en la cátedra #parser
+- [ ] `HV` declarado como constante: los templates escriben `HV = 99999999;` en el `AMBIENTE`. Hoy PAED lo tiene como **tipo de valor propio** y lo rechaza si se declara. Hay que **aceptar la declaración sin romper la semántica**: las claves de los parciales son texto, y `strcmp("99999999", "F1-Ibuprofeno")` da que HV es MENOR — justo al revés de lo que HV significa (PAED.md §2.8) #decidir #f3-algoritmo
+- [ ] `ABRIR(arch, lectura)`, la grafía de la wiki Cap. 5. La de cátedra (`ABRIR E/`) ya anda con la barra opcional; esta es la que falta #parser
+
 ## Decisiones pendientes
 
-- [ ] Sintaxis de `ABRIR`: la wiki escribe `ABRIR(arch, lectura)` y la cátedra `Abrir E/(arch)` (`TEORIA_COMPLETA.txt:1104`). **Son incompatibles.** Hoy está implementada la de cátedra #decidir
-- [ ] `SEGUN` — hay un conflicto que resolver antes de implementarlo #decidir
-- [ ] `REPETIR`/`HASTA` — cero apariciones reales en el corpus, solo declaradas en `sintaxis.json`. Confirmar que existan antes de implementar #decidir
 - [ ] `-2 ** 2` da 4 porque la tabla de prioridad pone los unarios ARRIBA de la potencia. En casi todos los lenguajes da -4. ¿Es lo que quiere AED? (`TEORIA_COMPLETA.txt:361-371`) #decidir
 - [ ] `VARIABLES` como sub-sección de `AMBIENTE`: aparece en `AED_2021_UnI.pdf:10` y en ninguna otra fuente. Confirmar si es obligatoria antes de implementar #decidir
-- [ ] `FIN ACCION` con espacio: hoy se rechaza a propósito (§10.7), pero hay evidencia de primera mano de cátedra. Revisar #decidir
-- [ ] El `;` omitido en la última sentencia: la cátedra lo usa como separador, el parser lo exige como terminador (§10.8, §11.1) #decidir
 
 ## Backlog — Fase 1: la declaración parsea
 
@@ -49,8 +68,6 @@ kanban-plugin: board
 
 - [ ] **Errores ESTATICOS que se reportan tarde, en runtime.** El parser ya tiene el AMBIENTE y ya sabe que `'"hola"'` no es un destino de LEER, que un registro no tiene tal campo, y que una SECUENCIA DE SALIDA se abre con CREAR y no con ARR. Hoy todos esos saltan al EJECUTAR. Moverlos al parser es el arreglo de fondo: ahi reportar de a muchos SI corresponde, porque son independientes entre si #parser
 - [ ] **Cobertura perdida por el corte de ejecución (2026-08-14)**: `leer_errores`, `secuencia_errores`, `archivos_formas` y `archivos_modos` eran CATALOGOS que fijaban ~20 mensajes de error en una sola corrida. Desde que la ejecución corta en el primero, solo se verifica ese. No se partieron en 20 archivos a propósito: si los errores estáticos se mueven al parser (item de arriba), los catálogos vuelven a funcionar solos #parser
-- [ ] Declaración múltiple `A,B,SUMA: entero`. Es la forma del único ejemplo con autoridad de cátedra (`AED_2021_UnI.pdf:10`) y hoy da "nombre de variable invalido" #parser
-- [ ] `FUNCION`/`PROCEDIMIENTO` anidados dentro de `AMBIENTE` #parser
 - [ ] Nombre de `ACCION` con espacios (`ACCION Ejercicio de Parcial ES`) #parser
 - [ ] `CONSTANTE` #parser
 - [ ] Una instrucción no puede partirse en dos líneas — el parser lee línea por línea. Un `ESCRIBIR` largo hay que dejarlo en una sola #parser
@@ -68,7 +85,6 @@ kanban-plugin: board
 - [ ] Los tests traen su propia ruta en el bloque `SALIDA ESPERADA`, porque los errores del parser la imprimen. Mover `tests/` los rompe a todos. Hoy no molesta, pero está a la vista #infra
 - [ ] El objeto del CLI se compila en `build/lang/lang/cli/main.o`, con `lang` repetido. Cosmético #infra
 - [ ] Runner de tests en C en vez de `correr.sh`: hoy la batería **no puede correr en Windows**, aunque ya se cross-compila `paed.exe` #infra
-- [ ] Pushear a `origin`: hay commits locales sin subir en `master` #infra
 
 ## Backlog — tutorial
 
@@ -78,6 +94,26 @@ kanban-plugin: board
 ## En progreso
 
 ## Hecho
+
+- [x] **La cátedra manda — 2026-08-17.** Decisión: cuando PAED y la cátedra se contradicen, se corrige PAED. De los 26 templates oficiales parseaban **2**; ahora parsean **9**. Un lenguaje que dice ser el pseudocódigo de la cátedra y no puede correr el código de la cátedra no es el pseudocódigo de la cátedra. Ver `docs/PAED.md` §15 #decidir #parser
+- [x] **Dos fuentes de verdad nuevas, con MÁS peso que la wiki**: los 27 templates oficiales de `github.com/UTN-FRRe/isi-aed/tree/master/Pseudocodigo` y la guía de TPs de `aed-frre.github.io`. No son prosa sobre el lenguaje: son el lenguaje. Cuando un template contradice a la wiki o a una decisión de PAED, gana el template #decidir #docs
+- [x] **Capa de traducción de grafías**: la tabla `GRAFIAS[]` y `normalizar_catedra()` en `parser.c`, que corren sobre cada línea antes que todo lo demás. Los cierres se analizan en cuatro puntos distintos del parser; con un `if` por variante en cada punto, agregar una grafía obliga a tocar cuatro lugares y el día que se olvida uno la misma palabra anda en un contexto y no en el otro. Solo se traducen líneas que son UNA palabra clave sola, así que ningún `;` de instrucción corre peligro #parser
+- [x] **El paso del `PARA` va tras COMA** (`Para c := 1 hasta 10, 1 hacer`), la forma de `Para.txt`, `SUBSECUENCIA.txt` y `ARREGLOS_Conceptos.txt`. El `;` que usaba PAED sigue valiendo. El separador se busca a nivel superior, así la coma de `f(a, b)` no parte el `PARA` #parser
+- [x] **El `;` del final pasa a ser OPCIONAL.** Sigue obligatorio como SEPARADOR entre sentencias del mismo renglón, que es el trabajo por el que estaba: el caso que protegía (`s: SECUENCIA DE ENTERO; n: ENTERO;` dejando a `s` con tipo basura) lo cubre el corte por `;`, no el `;` del final #parser
+- [x] `ALGORITMO` = `PROCESO` y `CONTRARIO` = `SINO` #parser
+- [x] Los cierres de la cátedra: `FinSi;` `FSI;` `FIN SI;` `FinMientras;` `FMientras;` `FinPara;` `FinSegun;` `fin_reg;` `FinReg` `freg;` #parser
+- [x] `Accion X ES;` con `;`, el `ES` **opcional** (`accion archivo_corte;` de CORTE DE CONTROL Rev2), y `FinAccion.` con punto #parser
+- [x] Comentarios `{entre llaves}` y `* entre asteriscos *`, cuando **abren la línea**. La restricción no es caprichosa: `d: {1..31}` es un tipo rango y `a := b * c` es multiplicación, así que en el medio de una línea los dos caracteres ya significan otra cosa #parser
+- [x] `Esc` / `ESC` / `GRABAR` como alias de `ESCRIBIR`. Viven en `data/sintaxis.json` y **no en el C**, por la misma razón que las organizaciones de archivo: con dos listas, un día el parser y el asistente del editor dicen cosas distintas. El parser guarda el nombre canónico, así que el intérprete nunca ve un alias #parser
+- [x] `ABRIRe(arch)` y `ABRIRs(arch)`: la barra del modo pasa a ser **opcional**. Dos barras sigue siendo error — ahí no hay una forma de la cátedra que interpretar, hay un modo escrito mal #parser
+- [x] `NOFDA` / `NoFDA` / `NOFDS` como `NFDA` / `NFDS`. (`No FDA(arch)` con espacio ya andaba solo: `NO` es el operador lógico y `FDA` la función) #evaluador
+- [x] **`REPETIR ... HASTA [QUE] cond`** — el ciclo post-test (`Repetir.txt`). La condición dice cuándo TERMINAR, al revés que la del `MIENTRAS`, y el cuerpo siempre corre al menos una vez. Test: `tests/catedra_repetir.paed` #parser #evaluador
+- [x] **`SEGUN ... FIN_SEGUN`** con etiquetas múltiples (`'B', 'M':`), `CONTRARIO` y `CONTRARIO:` como rama por defecto, y **sin caída** de una rama a la siguiente. Las ramas se encadenan al parsear (campo `siguiente` en `PAEDInstr`), así un `SEGUN` anidado no se mezcla con el de afuera. Usa `expr_comparar()` para elegir rama con la MISMA semántica que un `SI ... = ...`. Test: `tests/catedra_segun.paed` #parser #evaluador
+- [x] **`SEGUN` sí es de cátedra.** `sintaxis.json` decía que "solo aparece como prosa" — estaba equivocado: está en `Segun.txt` y en `ACT INDEX [TEMPLATE].txt`. La nota se escribió antes de que existieran esas fuentes #decidir
+- [x] **Nombres con `ñ` y tildes**: `año` es un campo en `REGISTRO.txt`, `ARCHIVO_CREAR.txt` y `ARCHIVO_LEER.txt`. Se aceptan los bytes UTF-8 sin decodificar el punto de código: los nombres se comparan y se guardan como bytes. Las keywords siguen siendo ASCII puro, así que ningún nombre con tilde puede chocar con una. Test: `tests/catedra_utf8.paed` #parser #evaluador
+- [x] **Bug: la comilla SIMPLE no delimitaba texto en el troceador de argumentos.** Una coma adentro de `'...'` cortaba el argumento al medio y salía "falta la comilla de cierre". La comilla simple es la forma de la cátedra (`AED_2021_UnI.pdf:10`), o sea que la forma correcta era justo la que no andaba: `ESCRIBIR('Ingrese un valor entero, vamos a...')` —una línea de `Si.txt`— no parseaba. Ahora se recuerda CUÁL comilla abrió, no un toggle. Test: `tests/catedra_comilla_simple.paed` #parser
+- [x] **El ejercicio 1 del tutorial enseñaba el `;` terminador**, y desde el cambio pasaba sin tocarlo: el alumno lo abría, no cambiaba nada y el verificador le decía que estaba bien. Reescrito alrededor del `;` que SEPARA, que sí sigue siendo cierto #tutorial
+- [x] Pushear a `origin`: hecho el 2026-08-17, cinco commits #infra
 
 - [x] **Bug: el `=` de comparación desaparecía adentro de un argumento.** `ESCRIBIR("x ", 3 = 3)` imprimía `3` y `3 = 4` imprimía `4`. El parser buscaba `clave = valor` en TODO argumento de TODO procedimiento, partía la comparación y tiraba el lado izquierdo. El troceado `clave = valor` ahora solo se busca en procedimientos que **declaran parámetros** — los de una librería (`escena.json`), nunca los del lenguaje, que son variádicos. Adentro de `SI (...)` andaba bien, y por eso sobrevivió tanto #evaluador #parser
 - [x] **Los `.paed` se leen igual que en la cátedra.** `AMBIENTE`, `PROCESO` y `FIN_ACCION` van **sin sangría**, al mismo nivel que `ACCION`, como los dibuja `TEORIA_COMPLETA.txt:201-206`. Se reescribieron los 12 ejercicios, sus 12 soluciones y `ejercicios/control_ventas.paed` — solo espacios, `git diff -w` da vacío. Los ejercicios embebidos se regeneraron, si no `paed aprender reset` restauraba la sangría vieja #tutorial #docs
