@@ -1,4 +1,4 @@
-# PAED — Especificación del lenguaje v4.0
+# PAED — Especificación del lenguaje v4.2
 
 **PAED es el pseudocódigo AED de la cátedra. Nada más que eso.**
 
@@ -23,10 +23,16 @@ La sintaxis de PAED **no se inventa y no se deduce del código existente**.
 
 | # | Fuente | Ruta | Por qué |
 |---|---|---|---|
-| 1 | **Material de cátedra** | `paed/solutions/AED_Teoria/*.pdf` | Oficial, elaborado por los docentes |
-| 2 | **La wiki** | `paed/data/wiki.txt`, `paed/data/OnlySintaxis.md` | Escrita por Brian verificando contra la cátedra |
+| 1 | **Templates oficiales** | `github.com/UTN-FRRe/isi-aed/tree/master/Pseudocodigo` | 27 archivos de código escritos por la cátedra. La mejor evidencia que existe: no es prosa sobre el lenguaje, es el lenguaje |
+| 2 | **Guía oficial de TPs** | `https://aed-frre.github.io/` | Los ejercicios, numerados `[TP].[ejercicio]` |
+| 3 | **Material de cátedra** | `paed/solutions/AED_Teoria/*.pdf`, diapositivas Temas 7–13 | Oficial, elaborado por los docentes |
+| 4 | **La wiki** | `apuntes/AED/Teoria/wiki.txt`, `OnlySintaxis.md` | Escrita por Brian verificando contra la cátedra |
 
 Nada más es autoridad. Punto.
+
+Las fuentes 1 y 2 se incorporaron el **2026-08-17** y son las de mayor peso:
+cuando un template oficial contradice a la wiki o a una decisión de PAED, gana
+el template. Ver §15.
 
 ### 0.1 Lo que NO define la sintaxis
 
@@ -1232,18 +1238,29 @@ de línea — nunca se ignora.
 | Asignación `:=` | ✅ |
 | `SI` / `SINO` / `FIN_SI`, anidados | ✅ |
 | `MIENTRAS` / `FIN_MIENTRAS`, anidados | ✅ |
-| `PARA ... HASTA ... [; paso] HACER`, incluso en reversa | ✅ |
+| `PARA ... HASTA ... [, paso] HACER`, incluso en reversa (`;` también vale) | ✅ §15 |
 | Expresiones y operadores de comparación | ✅ |
 | `ARREGLO[desde..hasta] DE <tipo>`, en expresión y como destino | ✅ |
 | `ESCRIBIR` que evalúa sus argumentos | ✅ |
 | Keywords en minúscula o mezcladas (`accion`, `MiEnTrAs`) | ✅ §10.1 |
-| Declaración múltiple `A,B: ENTERO` | ❌ §11.2 |
+| Declaración múltiple `A,B: ENTERO` | ✅ |
 | `VARIABLES` dentro de `AMBIENTE` | ❌ §11.2 |
 | `FIN ACCION` con espacio | ❌ a propósito, §10.7 |
-| `;` omitido en la última sentencia | ❌ §11.1 |
+| `FinAccion.` con punto, `Accion X ES;`, `ES` opcional | ✅ §15 |
+| `ALGORITMO` en vez de `PROCESO` | ✅ §15 |
+| `CONTRARIO` en vez de `SINO` | ✅ §15 |
+| `FinSi;` `FSI;` `FinMientras;` `FinPara;` `freg;` y demás cierres | ✅ §15 |
+| Comentarios `{ }` y `* *` que abren la línea | ✅ §15 |
+| `Esc` `ESC` `GRABAR` como `ESCRIBIR` | ✅ §15 |
+| `ABRIRe(arch)` / `ABRIRs(arch)`, sin barra | ✅ §15 |
+| `NOFDA` `NoFDA` `NOFDS` | ✅ §15 |
+| Nombres con `ñ` y tildes (`año`) | ✅ §15 |
+| Coma adentro de un texto con comilla simple | ✅ §15 — era un bug |
+| `;` omitido al final de una sentencia | ✅ §15 — es opcional |
 | Nombre de `ACCION` con espacios | ❌ |
-| `REPETIR` / `SEGUN` | ❌ |
-| `FUNCION` / `PROCEDIMIENTO` anidados en `AMBIENTE` | ❌ |
+| `REPETIR ... HASTA [QUE]` | ✅ §15 |
+| `SEGUN` / `FIN_SEGUN`, con etiquetas multiples y `CONTRARIO` | ✅ §15 |
+| `FUNCION` / `PROCEDIMIENTO` / `SUBACCION` en `AMBIENTE` | ❌ **el bloqueante que queda**, §15.3 |
 | `REGISTRO` / `FIN_REGISTRO` y acceso `pori.vx` | ✅ §2.2 |
 | Un campo que el registro no declara | ❌ rechazado, §2.2 |
 | Instrucción partida en dos líneas | ❌ el parser lee línea por línea |
@@ -1353,6 +1370,103 @@ sin errores, y aun así tiene sintaxis inválida:
 
 ---
 
+## 15. La cátedra manda — 2026-08-17
+
+Decisión del autor: **cuando PAED y la cátedra se contradicen, se corrige PAED.**
+
+Hasta esta fecha PAED aceptaba UNA forma de cada cosa y rechazaba las demás, con
+la idea de que una sola forma es más fácil de parsear. El problema es medible:
+de los **26 templates oficiales** de `UTN-FRRe/isi-aed/Pseudocodigo`, solo **2**
+parseaban. Un lenguaje que dice ser el pseudocódigo de la cátedra y no puede
+correr el código de la cátedra no es el pseudocódigo de la cátedra.
+
+Después del cambio parsean **9 de 26**. Los 17 que faltan están todos bloqueados
+por lo mismo: **subacciones** (§15.3).
+
+### 15.1 Lo que se acomodó a la cátedra
+
+| Punto | Antes | Ahora | Fuente |
+|---|---|---|---|
+| Paso del `PARA` | solo `; paso` | **`, paso`** y `; paso` | `Para.txt`, `SUBSECUENCIA.txt`, `ARREGLOS_Conceptos.txt` |
+| `;` al final de sentencia | obligatorio | **opcional** | `Si.txt` lo saltea; el `;` sigue siendo obligatorio como SEPARADOR |
+| Cierres de bloque con `;` | error | **se aceptan** | todos los templates escriben `FinSi;` |
+| `ALGORITMO` | no existía | **= `PROCESO`** | `Sino.txt`, `Mientras.txt`, `Para.txt`, `REGISTRO.txt` |
+| `CONTRARIO` | no existía | **= `SINO`** | `Sino.txt`, `Segun.txt` |
+| `FinSi` `FSI` `FinMientras` `FMientras` `FinPara` `FinSegun` `fin_reg` `freg` … | error | **se aceptan** | ver `GRAFIAS[]` en `parser.c` |
+| `Accion X ES;` | error | **se acepta** | `Si.txt`, `Mientras.txt`, `FUNCION.txt` |
+| `ES` de la cabecera | obligatorio | **opcional** | `CORTE DE CONTROL [TEMPLATE Rev2]` escribe `accion archivo_corte;` |
+| `FinAccion.` con punto | error | **se acepta** | todos los templates |
+| Comentarios `{ }` y `* *` | error | **se aceptan** (abriendo la línea) | `Para.txt`, `FUNCION.txt`; diapositivas Temas 12/13 |
+| `Esc(...)` `ESC(...)` `GRABAR(...)` | error | **= `ESCRIBIR`** | Temas 9/10, wiki Cap. 3 |
+| `ABRIRe(arch)` `ABRIRs(arch)` | error | **se aceptan** (barra opcional) | `ARCHIVO_LEER.txt`, `ARCHIVO_CREAR.txt`, MEZCLA, ACTUALIZACION |
+| `NOFDA` `NoFDA` `NOFDS` | error | **= `NFDA` / `NFDS`** | Tema 8, templates de MEZCLA |
+| `REPETIR ... HASTA [QUE]` | reservado | **implementado** | `Repetir.txt` |
+| `SEGUN ... FIN_SEGUN` | "solo aparece como prosa" | **implementado** | `Segun.txt`, `ACT INDEX [TEMPLATE].txt` — la nota de `sintaxis.json` estaba equivocada |
+| Nombres con `ñ` y tildes | error | **se aceptan** | `año` es un campo en `REGISTRO.txt`, `ARCHIVO_CREAR.txt`, `ARCHIVO_LEER.txt` |
+
+Y un **bug** que este trabajo destapó, que no era una diferencia de criterio sino
+algo roto: el troceador de argumentos respetaba la comilla **doble** pero no la
+**simple**, así que una coma adentro de un texto con comilla simple cortaba el
+argumento al medio. La comilla simple es justo la forma de la cátedra
+(`AED_2021_UnI.pdf:10`), o sea que la forma correcta era la que no andaba.
+`ESCRIBIR('Ingrese un valor entero, vamos a...')` —una línea de `Si.txt`— no
+parseaba. Lo fija `tests/catedra_comilla_simple.paed`.
+
+### 15.2 Cómo está hecho
+
+Una **capa de traducción** en `parser.c`: la tabla `GRAFIAS[]` y la función
+`normalizar_catedra()`, que corren sobre cada línea antes que cualquier otra
+cosa. Las variantes se traducen a UNA forma canónica y el resto del parser no
+cambia.
+
+Por qué así y no con un `if` más en cada lugar: los cierres se analizan en cuatro
+puntos distintos (`parse_bloque`, `parse_ambiente`, el cierre de `ACCION` y la
+pila). Con un `if` por variante en cada punto, agregar una grafía obliga a tocar
+cuatro lugares, y el día que se olvida uno la misma palabra anda en un contexto y
+no en el otro. Acá la lista está escrita **una sola vez** y se lee de un vistazo.
+
+Solo se traducen líneas que son **una palabra clave sola**. Una línea con código
+no se toca nunca, así que ningún `;` de una instrucción corre peligro.
+
+Los alias de procedimiento (`Esc`, `GRABAR`) viven en `data/sintaxis.json`, no en
+el C, por la misma razón que las organizaciones de archivo: con dos listas, un
+día el parser y el asistente del editor dicen cosas distintas. El parser guarda
+el nombre **canónico**, así que el intérprete nunca ve un alias.
+
+### 15.3 Lo que falta: SUBACCIONES
+
+Es el único bloqueante que queda, y bloquea **15 de los 17** templates que no
+parsean:
+
+```
+Procedimiento LEER_ARCH1;
+    LEER(arch1, reg1);
+    SI FDA(Arch1) ENTONCES
+        reg1.clave := HV;
+    FIN_SI;
+Fin_Proc;
+```
+
+Hace falta: declararlas dentro del `AMBIENTE`, parámetros con modo (`E`, `S`,
+`ES`, `VAR`), llamada **sin paréntesis** (`LEER_ARCH1;`), pila de llamadas,
+ámbito local, y el retorno por asignación al nombre en el caso de `FUNCION`.
+
+No es una grafía más: es una funcionalidad, y por eso quedó afuera de este
+trabajo en vez de entrar a medias. Sin ella no se puede escribir ni un corte de
+control ni una actualización, que son la mitad del parcial.
+
+Los otros dos que faltan: `ARREGLOS_Conceptos.txt` usa **matrices**
+(`ARREGLO[1..3, 1..3]`), que son del TP 3; y `MEZCLA EXC [TEMPLATE].txt` usa
+`[ACCIONES_ARCH1]` como marcador de "acá va tu lógica", que no es sintaxis.
+
+### 15.4 Lo que NO se tocó
+
+`HV`. Los templates lo declaran como constante numérica (`HV = 99999999;`) y
+PAED lo mantiene como **tipo de valor propio**, por el motivo de §2.8: las claves
+de los parciales son texto, y `strcmp("99999999", "F1-Ibuprofeno")` da que HV es
+**menor** — justo al revés de lo que HV significa. Aceptar la declaración de la
+cátedra sin romper la semántica correcta es trabajo aparte, anotado en el KANBAN.
+
 ## 14. Historial
 
 | Versión | Fecha | Cambio |
@@ -1361,4 +1475,5 @@ sin errores, y aun así tiene sintaxis inválida:
 | v2.0 | 2026-08-07 | Unificación en el dialecto AED. Vivía en `docs/paed_spec.md` |
 | v3.0 | 2026-08 | Reescritura corta al mudarse a `paed/Frankly/docs/` (hoy `docs/`) |
 | v4.0 | 2026-08-10 | Absorbe la v2.0 completa. Se separan **cátedra** / **decidido** / **implementado**, porque había decisiones documentadas que el parser no cumplía |
+| v4.2 | 2026-08-17 | **La cátedra manda** (§15). Se incorporan los templates oficiales y la guía de TPs como fuentes 1 y 2. Se aceptan todas las grafías del material, `REPETIR` y `SEGUN` pasan a implementados, y se arregla el bug de la comilla simple |
 | v4.1 | 2026-08-14 | El modo de apertura de `ABRIR` (§2.5, implementado) y el CSV como formato en disco (§2.6, decidido). El repositorio se reordena: la spec sale de `Frankly/docs/` a `docs/` — ver [`ESTRUCTURA.md`](ESTRUCTURA.md) |
