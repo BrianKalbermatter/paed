@@ -1718,7 +1718,8 @@ static int parse_bloque(PAEDProgram *p, char *linea, int lineno, Pila *pila) {
 
     // ── REPETIR ──
     //
-    // El ciclo POST-TEST de la catedra (template Repetir.txt). Es una cabecera
+    // El ciclo POST-TEST de la catedra (template Repetir.txt, ver PAED.md 0 para
+    // donde viven los templates). Es una cabecera
     // pelada: no lleva condicion, porque la condicion vive en el HASTA de abajo.
     if (kw_es(linea, "REPETIR")) {
         abrir(p, pila, PAED_REPETIR, "", lineno);

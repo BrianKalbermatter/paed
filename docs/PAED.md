@@ -23,7 +23,7 @@ La sintaxis de PAED **no se inventa y no se deduce del código existente**.
 
 | # | Fuente | Ruta | Por qué |
 |---|---|---|---|
-| 1 | **Templates oficiales** | `github.com/UTN-FRRe/isi-aed/tree/master/Pseudocodigo` | 27 archivos de código escritos por la cátedra. La mejor evidencia que existe: no es prosa sobre el lenguaje, es el lenguaje |
+| 1 | **Templates oficiales** | `github.com/UTN-FRRe/isi-aed/tree/master/Pseudocodigo` — copia local en `~/apuntes/AED/Teoria/EjerciciosParaVerSintaxis/isi-aed-master/isi-aed-master/Pseudocodigo/` | 27 archivos de código escritos por la cátedra. La mejor evidencia que existe: no es prosa sobre el lenguaje, es el lenguaje |
 | 2 | **Guía oficial de TPs** | `https://aed-frre.github.io/` | Los ejercicios, numerados `[TP].[ejercicio]` |
 | 3 | **Material de cátedra** | `paed/solutions/AED_Teoria/*.pdf`, diapositivas Temas 7–13 | Oficial, elaborado por los docentes |
 | 4 | **La wiki** | `apuntes/AED/Teoria/wiki.txt`, `OnlySintaxis.md` | Escrita por Brian verificando contra la cátedra |
@@ -33,6 +33,50 @@ Nada más es autoridad. Punto.
 Las fuentes 1 y 2 se incorporaron el **2026-08-17** y son las de mayor peso:
 cuando un template oficial contradice a la wiki o a una decisión de PAED, gana
 el template. Ver §15.
+
+**Cómo se citan.** A lo largo de este documento, del código y de los tests, un
+template se nombra por su archivo a secas — `Repetir.txt`, `Segun.txt`,
+`ACT INDEX [TEMPLATE].txt`. Todos viven en la carpeta `Pseudocodigo/` de la
+fuente 1. Los 27:
+
+```
+ACT INDEX BAJA FIS [TEMPLATE].txt   CORTE DE CONTROL [TEMPLATE].txt   REGISTRO.txt
+ACT INDEX [TEMPLATE].txt            CORTE DE CONTROL.txt              Repetir.txt
+ACTUALIZACION INC LOTE [TEMPLATE].txt   FUNCION.txt                   SECUENCIA.txt
+ACTUALIZACION INC UNI [TEMPLATE].txt    LISTA_CIRC                    SECUENCIA_NUM.txt
+ARCHIVO_CREAR.txt                   MEZCLA EXC [TEMPLATE].txt         Segun.txt
+ARCHIVO_LEER.txt                    MEZCLA INC [TEMPLATE].txt         Si.txt
+ARREGLOS_Conceptos.txt              Mientras.txt                      Sino.txt
+CORTE DE CONTROL LIBROS.txt         PROCEDIMIENTO1.txt                SUB SECUENCIA JER.txt
+CORTE DE CONTROL [TEMPLATE Rev2].txt    Para.txt                      SUBSECUENCIA.txt
+```
+
+`Repetir.txt` completo, para que se vea de dónde sale cuánto:
+
+```
+Accion REPETIR ES;
+
+Ambiente
+	c: entero;
+
+Algoritmo
+
+	c:= 1;
+
+	Repetir
+
+		Escribir (c);
+
+		c := c + 1;
+
+	Hasta que c > 10;
+
+FinAccion.
+```
+
+Quince líneas, seis reglas: la cabecera con `;`, `Algoritmo` en lugar de
+`Proceso`, `Repetir`, `Hasta que`, el `;` del cierre de bloque, y `FinAccion.`
+con punto.
 
 ### 0.1 Lo que NO define la sintaxis
 
