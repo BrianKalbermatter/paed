@@ -462,11 +462,24 @@ static int valida_valor(const char *tipo, const char *val) {
 // Parte el interior de los parentesis en argumentos, cortando SOLO en las comas
 // de nivel 0. Asi (0,2,5) sigue siendo un unico valor y no tres argumentos.
 static int split_args(char *inner, char *out[], int max, PAEDProgram *p, int line) {
-    int  n = 0, depth = 0, en_texto = 0;
+    int  n = 0, depth = 0;
     char *inicio = inner;
 
+    // Se recuerda CUAL comilla abrio el texto, no solo que hay uno abierto: asi
+    // 'no dijo "hola"' no se cierra en la comilla doble de adentro.
+    //
+    // BUG arreglado el 2026-08-17: antes solo la comilla DOBLE abria texto, asi
+    // que una coma adentro de un texto con comilla SIMPLE cortaba el argumento
+    // al medio. Y la comilla simple es justo la forma de la catedra
+    // (AED_2021_UnI.pdf:10), asi que 'Ingrese un valor entero, vamos a...' —
+    // una linea del template Si.txt — no parseaba.
+    char comilla = 0;
+
     for (char *c = inner; ; c++) {
-        if (*c == '"') en_texto = !en_texto;
+        if (!comilla && (*c == '"' || *c == '\'')) comilla = *c;
+        else if (comilla && *c == comilla)          comilla = 0;
+        int en_texto = comilla != 0;
+
         if (!en_texto && (*c == '(' || *c == '[')) depth++;
         if (!en_texto && (*c == ')' || *c == ']')) depth--;
 

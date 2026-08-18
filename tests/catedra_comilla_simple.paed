@@ -1,0 +1,42 @@
+// La comilla SIMPLE es la forma de la catedra (AED_2021_UnI.pdf:10 escribe
+// ESCRIBIR('Ingrese 2 numeros')), y los templates oficiales la usan siempre.
+//
+// BUG encontrado el 2026-08-17: el troceador de argumentos respetaba las
+// comillas DOBLES pero no las simples, asi que una coma adentro de un texto con
+// comilla simple cortaba el argumento al medio y salia "falta la comilla de
+// cierre". Es decir: la forma de la catedra era justo la que no andaba.
+//
+// Se nota con cualquier mensaje real: 'Ingrese un valor entero, vamos a...' de
+// Si.txt no parseaba.
+
+ACCION catedra_comilla_simple ES
+AMBIENTE
+    a: entero;
+
+PROCESO
+    a := 7;
+
+    // Una coma adentro del texto NO separa argumentos
+    ESCRIBIR('Ingrese un valor entero, vamos a verificar si es par...');
+
+    // Y sigue separando los argumentos DE VERDAD
+    ESCRIBIR('el valor es ', a, ', y su doble es ', a * 2);
+
+    // Los parentesis adentro del texto tampoco cuentan
+    ESCRIBIR('formato: (dia, mes, anio)');
+
+    // Y el punto y coma adentro del texto no parte la sentencia
+    ESCRIBIR('uno; dos'); ESCRIBIR('tres');
+
+    // Comilla doble y simple conviven
+    ESCRIBIR("doble, con coma"); ESCRIBIR('simple, con coma');
+FIN_ACCION
+
+// ── SALIDA ESPERADA ─────────────────────────────────────────────────────────
+// Ingrese un valor entero, vamos a verificar si es par...
+// el valor es 7, y su doble es 14
+// formato: (dia, mes, anio)
+// uno; dos
+// tres
+// doble, con coma
+// simple, con coma
