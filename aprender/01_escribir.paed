@@ -1,23 +1,30 @@
 // EJERCICIO 1 — ESCRIBIR y el ';'
 //
-// En PAED cada instruccion TERMINA en ';'. No es un separador entre
-// instrucciones: es un terminador, y por eso la ultima tambien lo lleva.
+// El ';' SEPARA instrucciones. Al final del renglon es opcional — la catedra lo
+// escribe de las dos formas y PAED acepta las dos — pero cuando ponés DOS
+// instrucciones en el MISMO renglon, el ';' del medio es obligatorio: es lo
+// unico que le dice al parser donde termina una y empieza la otra.
+//
+// La catedra usa mucho esa forma, y no por ahorrar lugar: ARR(sec) y su primer
+// AVZ(sec, v) van juntas en una linea porque son un solo gesto.
 //
 // Este programa no llega ni a arrancar. Arreglalo.
 
 ACCION escribir ES
 PROCESO
-    ESCRIBIR("Hola, PAED");
-    ESCRIBIR("Cada instruccion termina en ';'")
+    ESCRIBIR("Hola, PAED")
+    ESCRIBIR("El ';' separa: ") ESCRIBIR("dos instrucciones en un renglon")
     ESCRIBIR("ESCRIBIR pega sus argumentos: ", 2, " + ", 2, " = ", 4);
 FIN_ACCION
 
 // ── PISTA ───────────────────────────────────────────────────────────────────
-// El parser te dice la linea exacta. Mirala y fijate que le falta al final.
+// El parser te muestra el pedazo de linea que no supo leer, y ese pedazo
+// arranca JUSTO donde falta algo. Mirá con que caracter empieza.
 // ESCRIBIR pega sus argumentos SIN separador: por eso los espacios se ponen
 // a mano, adentro de los textos.
 
 // ── SALIDA ESPERADA ─────────────────────────────────────────────────────────
 // Hola, PAED
-// Cada instruccion termina en ';'
+// El ';' separa: 
+// dos instrucciones en un renglon
 // ESCRIBIR pega sus argumentos: 2 + 2 = 4
