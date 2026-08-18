@@ -808,6 +808,60 @@ static int asignar(const PAEDProgram *prog, const PAEDInstr *in) {
     return guardar_valor(prog, in, in->proc, paed_get_arg(in, "indice"), v);
 }
 
+// ¿Alguna de las etiquetas de esta rama del SEGUN es igual al selector?
+//
+// Las etiquetas van separadas por coma — "'B', 'M':" es la forma del template
+// ACT INDEX — y se cortan a NIVEL SUPERIOR: una coma adentro de un parentesis o
+// de un texto pertenece a la etiqueta y no separa nada.
+//
+// Cada etiqueta se EVALUA como expresion en vez de compararse como texto: asi
+// una constante o una variable valen de etiqueta igual que un literal, y '1' y
+// 1 no terminan siendo dos cosas distintas.
+static int caso_matchea(const char *etiquetas, const Valor *sel, Entorno *env,
+                        const PAEDProgram *prog, const PAEDInstr *caso, int *fallos) {
+    char buf[PAED_COND_MAX];
+    snprintf(buf, sizeof(buf), "%s", etiquetas);
+
+    char *ini  = buf;
+    int   prof = 0, en_texto = 0;
+
+    for (char *c = buf; ; c++) {
+        if (*c == '\'' || *c == '"') en_texto = !en_texto;
+        else if (!en_texto) {
+            if      (*c == '(' || *c == '[') prof++;
+            else if (*c == ')' || *c == ']') prof--;
+        }
+
+        if (*c && !(prof == 0 && !en_texto && *c == ',')) continue;
+
+        char fin = *c;
+        *c = '\0';
+
+        // trim a mano: el de parser.c no se exporta.
+        char *et = ini;
+        while (*et == ' ' || *et == '\t') et++;
+        for (size_t n = strlen(et); n > 0 && isspace((unsigned char)et[n - 1]); n = strlen(et))
+            et[n - 1] = '\0';
+
+        if (*et) {
+            Valor v;
+            if (expr_eval(et, env, &v) != 0) {
+                // Una etiqueta que no se puede evaluar es un error del programa,
+                // no una rama que "no matchea": callarlo haria que el SEGUN
+                // eligiera otra rama sin que nadie se entere.
+                runtime_error(prog, caso, env->error);
+                (*fallos)++;
+                return 0;
+            }
+            if (expr_comparar(sel, &v) == 0) return 1;
+        }
+
+        if (!fin) break;
+        ini = c + 1;
+    }
+    return 0;
+}
+
 int interp_exec(const PAEDProgram *prog) {
     env_init(&env);
     // Dos corridas en el mismo proceso (el editor corre el .paed cada vez que
@@ -946,6 +1000,67 @@ int interp_exec(const PAEDProgram *prog) {
 
             case PAED_FIN_MIENTRAS:
                 i = in->salto;   // volver a evaluar la condicion
+                break;
+
+            // SEGUN: se evalua la expresion UNA vez y se recorre la cadena de
+            // ramas comparando. La cadena la armo el parser, asi que un SEGUN
+            // anidado adentro de una rama no se mezcla con el de afuera.
+            case PAED_SEGUN: {
+                Valor sel;
+                if (expr_eval(in->cond, &env, &sel) != 0) {
+                    runtime_error(prog, in, env.error);
+                    fallos++;
+                    i = in->salto;   // al FIN_SEGUN: sin selector no hay rama que elegir
+                    break;
+                }
+
+                int destino = in->salto;   // el FIN_SEGUN, si no matchea ninguna
+                int defecto = -1;
+
+                for (int k = in->salto; k >= 0 && prog->instrs[k].kind == PAED_CASO;
+                     k = prog->instrs[k].siguiente) {
+                    const PAEDInstr *caso = &prog->instrs[k];
+
+                    // Sin etiquetas es la rama por defecto: se guarda y se
+                    // sigue, porque una rama con etiqueta le gana aunque este
+                    // escrita mas abajo.
+                    if (!caso->cond[0]) { defecto = k; continue; }
+
+                    if (caso_matchea(caso->cond, &sel, &env, prog, caso, &fallos)) {
+                        destino = k + 1;   // el cuerpo arranca despues del CASO
+                        defecto = -1;
+                        break;
+                    }
+                }
+
+                if (defecto >= 0) destino = defecto + 1;
+                i = destino;
+                break;
+            }
+
+            // Llegar a un CASO EJECUTANDO significa que la rama de arriba
+            // termino. Se sale del SEGUN: no hay caida de una rama a la
+            // siguiente, que es lo que hacen los dos templates de la catedra.
+            case PAED_CASO:
+                i = in->salto;
+                break;
+
+            case PAED_FIN_SEGUN:
+                i++;
+                break;
+
+            // REPETIR no hace nada por si mismo: solo marca donde empieza el
+            // cuerpo. El trabajo lo hace el HASTA de abajo.
+            case PAED_REPETIR:
+                i++;
+                break;
+
+            // POST-TEST: la condicion dice cuando TERMINAR, no cuando seguir,
+            // asi que es al reves que la del MIENTRAS. Y como se evalua DESPUES
+            // del cuerpo, el cuerpo siempre corrio al menos una vez.
+            case PAED_HASTA:
+                i = condicion(&env, prog, in, &ok) ? i + 1 : in->salto;
+                if (!ok) { fallos++; i++; }   // sin condicion confiable, se sale
                 break;
         }
 

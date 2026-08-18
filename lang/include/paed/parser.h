@@ -106,6 +106,11 @@ typedef enum {
     PAED_FIN_MIENTRAS,    // FIN_MIENTRAS
     PAED_PARA,            // PARA <var> := <desde> HASTA <hasta> HACER
     PAED_FIN_PARA,        // FIN_PARA
+    PAED_REPETIR,         // REPETIR
+    PAED_HASTA,           // HASTA [QUE] <condicion>   — cierra el REPETIR
+    PAED_SEGUN,           // SEGUN <expresion> HACER
+    PAED_CASO,            // <etiqueta>[, <etiqueta>]:  — una rama del SEGUN
+    PAED_FIN_SEGUN,       // FIN_SEGUN
 } PAEDKind;
 
 // Algunos procedimientos de AED se escriben IGUAL pero hacen cosas distintas
@@ -162,7 +167,21 @@ typedef struct {
     //   SINO          -> la de despues del FIN_SI
     //   MIENTRAS      -> la de despues del FIN_MIENTRAS (cuando la condicion es falsa)
     //   FIN_MIENTRAS  -> el MIENTRAS de arriba (para volver a evaluar)
+    //   HASTA         -> la primera del cuerpo del REPETIR (condicion falsa)
+    //   SEGUN         -> la PRIMERA rama (CASO), o el FIN_SEGUN si no hay ninguna
+    //   CASO          -> el FIN_SEGUN. Llegar a un CASO ejecutando significa que
+    //                    la rama de arriba termino, asi que sirve de corte: no
+    //                    hay caida de una rama a la siguiente.
     int     salto;
+
+    // Segunda salida, solo para el SEGUN: encadena las ramas.
+    //   CASO -> el CASO siguiente, o -1 si es el ultimo
+    // Un solo `salto` no alcanza porque el CASO necesita las dos cosas a la
+    // vez: donde seguir buscando si NO matchea, y donde salir si la rama de
+    // arriba se termino. Y encadenarlas al parsear evita que el interprete
+    // tenga que recorrer instrucciones adivinando cuales son de este SEGUN y
+    // cuales de uno anidado adentro.
+    int     siguiente;
 } PAEDInstr;
 
 typedef struct {

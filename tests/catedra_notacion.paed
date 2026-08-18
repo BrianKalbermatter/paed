@@ -1,0 +1,50 @@
+// Las grafias de la CATEDRA, tal como salen de los templates oficiales de
+// UTN-FRRe/isi-aed/Pseudocodigo. Decision del 2026-08-17: la catedra tiene la
+// razon, PAED se acomoda a ella.
+//
+// Cada linea de aca sale de un template concreto:
+//   Accion X ES;          Si.txt, Mientras.txt, FUNCION.txt
+//   Algoritmo             Sino.txt, Mientras.txt, Para.txt, REGISTRO.txt
+//   FinSi; FinMientras;   todos los templates cierran bloque con ';'
+//   Contrario             Sino.txt, Segun.txt
+//   hasta 10, 1 hacer     Para.txt, SUBSECUENCIA.txt, ARREGLOS_Conceptos.txt
+//   {comentario}          Para.txt, FUNCION.txt, SUBSECUENCIA.txt
+//   * comentario *        diapositivas Temas 12/13
+//   FinAccion.            todos los templates, con punto
+//   Esc(...)              diapositivas Temas 9/10, parciales
+Accion catedra_notacion ES;
+
+Ambiente
+    c, total: entero;
+
+Algoritmo
+
+    {el paso del PARA va tras COMA, no tras punto y coma}
+    total := 0;
+    Para c := 1 hasta 10, 1 hacer
+        total := total + c;
+    FinPara;
+
+    Esc('la suma de 1 a 10 es ', total);
+
+    * el SINO de la catedra se escribe CONTRARIO *
+    Si total MOD 2 = 0 Entonces
+        Esc('total PAR');
+    Contrario
+        Esc('total IMPAR');
+    FinSi;
+
+    c := 1;
+    Mientras c <= 3 hacer
+        Esc('vuelta ', c);
+        c := c + 1;
+    FinMientras;
+
+FinAccion.
+
+// ── SALIDA ESPERADA ─────────────────────────────────────────────────────────
+// la suma de 1 a 10 es 55
+// total IMPAR
+// vuelta 1
+// vuelta 2
+// vuelta 3

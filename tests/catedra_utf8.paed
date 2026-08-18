@@ -1,0 +1,35 @@
+// Nombres con ñ y tildes. La catedra los usa en sus templates oficiales:
+// 'año' es un campo en REGISTRO.txt, ARCHIVO_CREAR.txt y ARCHIVO_LEER.txt.
+//
+// Decision 2026-08-17: manda la catedra. Antes PAED los rechazaba con
+// "nombre de variable invalido: 'año'" y correr un template suyo obligaba a
+// reescribirlo.
+//
+// Las palabras CLAVE siguen siendo ASCII puro, asi que ningun nombre con tilde
+// puede chocar con una.
+
+ACCION catedra_utf8 ES
+AMBIENTE
+    fecha = REGISTRO
+        dia: 1..31;
+        mes: 1..12;
+        año: 1900..2999;
+    FIN_REGISTRO
+
+    nacimiento: fecha;
+    años_cumplidos: entero;
+
+PROCESO
+    nacimiento.dia := 4;
+    nacimiento.mes := 6;
+    nacimiento.año := 1998;
+
+    años_cumplidos := 2026 - nacimiento.año;
+
+    ESCRIBIR(nacimiento.dia, '/', nacimiento.mes, '/', nacimiento.año);
+    ESCRIBIR('cumplio ', años_cumplidos, ' años');
+FIN_ACCION
+
+// ── SALIDA ESPERADA ─────────────────────────────────────────────────────────
+// 4/6/1998
+// cumplio 28 años

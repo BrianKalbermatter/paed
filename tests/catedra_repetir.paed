@@ -1,0 +1,53 @@
+// REPETIR ... HASTA QUE — el ciclo POST-TEST de la catedra.
+//
+// Template oficial Repetir.txt:
+//
+//     Repetir
+//         Escribir (c);
+//         c := c + 1;
+//     Hasta que c > 10;
+//
+// La diferencia con MIENTRAS no es de estilo: el MIENTRAS evalua ANTES y puede
+// no entrar nunca; el REPETIR evalua DESPUES y entra siempre al menos una vez.
+// La wiki lo usa para las secuencias INDEFINIDAS PURAS con marca centinela,
+// donde el primer elemento hay que procesarlo si o si.
+//
+// Se aceptan 'HASTA QUE' (la del template) y 'HASTA' a secas (la de la wiki).
+
+ACCION catedra_repetir ES
+AMBIENTE
+    c, vueltas: entero;
+
+PROCESO
+    c := 1;
+    Repetir
+        Escribir('c vale ', c);
+        c := c + 1;
+    Hasta que c > 3;
+
+    // POST-TEST: entra aunque la condicion ya sea verdadera al empezar
+    vueltas := 0;
+    REPETIR
+        vueltas := vueltas + 1;
+    HASTA (vueltas >= 0);
+    ESCRIBIR('entro ', vueltas, ' vez aunque la condicion ya era verdadera');
+
+    // Y anidado adentro de un MIENTRAS
+    c := 0;
+    MIENTRAS c < 2 HACER
+        vueltas := 0;
+        REPETIR
+            vueltas := vueltas + 1;
+        HASTA QUE vueltas = 2;
+        ESCRIBIR('interno dio ', vueltas);
+        c := c + 1;
+    FIN_MIENTRAS
+FIN_ACCION
+
+// ── SALIDA ESPERADA ─────────────────────────────────────────────────────────
+// c vale 1
+// c vale 2
+// c vale 3
+// entro 1 vez aunque la condicion ya era verdadera
+// interno dio 2
+// interno dio 2

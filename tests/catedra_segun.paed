@@ -1,0 +1,62 @@
+// SEGUN ... FIN_SEGUN — la seleccion multiple de la catedra.
+//
+// Confirmado por DOS templates oficiales, no por prosa:
+//
+//   Segun.txt                    Segun c Hacer / 1: ... / Contrario / FinSegun;
+//   ACT INDEX [TEMPLATE].txt     SEGUN acc HACER / 'A': ALTA; / 'B','M': ... /
+//                                CONTRARIO: / FIN_SEGUN;
+//
+// De ahi salen las tres formas que este test fija:
+//   - varias etiquetas en una rama, separadas por coma
+//   - la rama por defecto escrita CONTRARIO, con o sin ':'
+//   - etiquetas de texto y de numero
+//
+// NO hay caida de una rama a la siguiente: cuando una rama termina, se sale del
+// SEGUN. Es lo que hacen los dos templates y lo que espera quien lo escribe.
+
+ACCION catedra_segun ES
+AMBIENTE
+    c: entero;
+    acc: AN(1);
+
+PROCESO
+    c := 3;
+    Segun c Hacer
+        1: Escribir('LUNES');
+        2: Escribir('MARTES');
+        3: Escribir('MIERCOLES');
+    Contrario
+        Escribir('fuera de rango');
+    FinSegun;
+
+    // La rama por defecto, cuando no matchea ninguna
+    c := 9;
+    SEGUN c HACER
+        1: ESCRIBIR('uno');
+        2: ESCRIBIR('dos');
+    CONTRARIO:
+        ESCRIBIR('ninguna: c vale ', c);
+    FIN_SEGUN
+
+    // Varias etiquetas por rama, y etiquetas de texto
+    acc := 'M';
+    SEGUN acc HACER
+        'A': ESCRIBIR('es un ALTA');
+        'B', 'M': ESCRIBIR('es una BAJA o una MODIFICACION');
+    CONTRARIO
+        ESCRIBIR('accion incorrecta');
+    FIN_SEGUN
+
+    // Sin rama por defecto y sin match: no hace nada y sigue
+    c := 100;
+    SEGUN c HACER
+        1: ESCRIBIR('no se imprime');
+    FIN_SEGUN
+    ESCRIBIR('siguio de largo');
+FIN_ACCION
+
+// ── SALIDA ESPERADA ─────────────────────────────────────────────────────────
+// MIERCOLES
+// ninguna: c vale 9
+// es una BAJA o una MODIFICACION
+// siguio de largo

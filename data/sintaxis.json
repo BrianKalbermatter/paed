@@ -24,7 +24,8 @@
       "HASTA",
       "SEGUN",
       "FIN_SEGUN"
-    ]
+    ],
+    "alias": "Grafias alternativas de la catedra para el mismo procedimiento. El parser las traduce al 'nombre' canonico al leer, asi que el interprete nunca ve un alias. Decision 2026-08-17: la catedra tiene la razon, PAED reconoce todas sus formas."
   },
   "categorias": [
     {
@@ -247,6 +248,10 @@
   "procedimientos": [
     {
       "nombre": "ESCRIBIR",
+      "alias": [
+        "ESC",
+        "GRABAR"
+      ],
       "grupo": "io",
       "efecto": "salida",
       "variadico": true,

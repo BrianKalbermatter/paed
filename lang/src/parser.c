@@ -299,8 +299,24 @@ static cJSON *buscar_proc(cJSON *raiz, const char *nombre) {
         // El nombre del procedimiento tampoco distingue mayusculas:
         // ESCRIBIR y escribir son el mismo.
         if (cJSON_IsString(n) && strcasecmp(n->valuestring, nombre) == 0) return p;
+
+        // Y las grafias alternativas de la catedra: Esc y GRABAR son ESCRIBIR.
+        // La lista vive en sintaxis.json y no aca por la misma razon que las
+        // organizaciones de archivo: con dos listas, un dia el parser y el
+        // asistente del editor dicen cosas distintas.
+        cJSON *a = NULL;
+        cJSON_ArrayForEach(a, cJSON_GetObjectItem(p, "alias"))
+            if (cJSON_IsString(a) && strcasecmp(a->valuestring, nombre) == 0) return p;
     }
     return NULL;
+}
+
+// El nombre CANONICO de un procedimiento, o NULL si no existe. El parser guarda
+// siempre este y nunca el alias que escribio el usuario: asi el interprete
+// compara contra "ESCRIBIR" y no tiene que conocer ninguna variante.
+static const char *proc_canonico(cJSON *def) {
+    cJSON *n = def ? cJSON_GetObjectItem(def, "nombre") : NULL;
+    return cJSON_IsString(n) ? n->valuestring : NULL;
 }
 
 // Primero el lenguaje, despues las librerias cargadas.
@@ -377,19 +393,77 @@ static char *trim(char *s) {
     return s;
 }
 
-// Corta el comentario // (respetando comillas) y el salto de linea.
+// Corta el comentario y el salto de linea. La catedra escribe comentarios de
+// TRES formas, y las tres estan en material oficial:
+//
+//     // hasta fin de linea      la wiki, y todos los .paed del repo
+//     { entre llaves }           templates de UTN-FRRe/isi-aed/Pseudocodigo
+//     * entre asteriscos *       diapositivas de los Temas 12 y 13
+//
+// Las dos ultimas solo se reconocen cuando ABREN LA LINEA, y no es una
+// limitacion caprichosa: los dos caracteres ya significan otra cosa en el medio
+// de una linea.
+//
+//     d: {1..31};        <- '{' despues de ':' es un tipo RANGO, no un comentario
+//     a := b * c;        <- '*' entre operandos es multiplicacion
+//     x := 2 ** 3;       <- y '**' es potencia
+//
+// Todos los comentarios con llave del material oficial ocupan su propio renglon
+// ({Asigno el valor a retornar}, {Avanzo el guion}), asi que la regla no pierde
+// ningun caso real y no puede comerse un tipo ni una cuenta.
 static void strip_comment(char *s) {
-    int en_texto = 0;
+    // El '{' o el '* ' de apertura pueden venir con sangria adelante.
+    char *ini = s;
+    while (*ini == ' ' || *ini == '\t') ini++;
+
+    if (*ini == '{') {
+        char *cierre = strchr(ini, '}');
+        // Sin '}' el comentario se come el resto de la linea, que es lo que el
+        // que lo escribio quiso decir.
+        if (cierre) memmove(ini, cierre + 1, strlen(cierre + 1) + 1);
+        else        *ini = '\0';
+        // Puede quedar codigo despues del comentario: se vuelve a mirar.
+        strip_comment(s);
+        return;
+    }
+
+    // '* ' con espacio: '*p' es desreferencia y '**' es potencia, ninguno abre
+    // comentario. Se pide el espacio para no confundirlos.
+    if (ini[0] == '*' && (ini[1] == ' ' || ini[1] == '\t')) { *ini = '\0'; return; }
+
+    char comilla = 0;
     for (char *c = s; *c; c++) {
-        if (*c == '"') en_texto = !en_texto;
-        if (!en_texto && c[0] == '/' && c[1] == '/') { *c = '\0'; return; }
+        if (!comilla && (*c == '"' || *c == '\'')) comilla = *c;
+        else if (comilla && *c == comilla)          comilla = 0;
+        if (!comilla && c[0] == '/' && c[1] == '/') { *c = '\0'; return; }
     }
 }
 
+// ¿Este byte puede ser parte de un nombre?
+//
+// Las letras ASCII, los digitos y el '_' de siempre, MAS cualquier byte de
+// UTF-8 multibyte (>= 0x80). La catedra escribe campos con ñ y con tildes —
+// 'año' aparece en REGISTRO.txt, ARCHIVO_CREAR.txt y ARCHIVO_LEER.txt, los tres
+// templates oficiales — y rechazarlos obligaria a reescribir sus programas para
+// correrlos.
+//
+// Se acepta el byte crudo sin decodificar el punto de codigo: los nombres se
+// comparan y se guardan como bytes, asi que alcanza con dejarlos pasar enteros.
+// Las palabras clave siguen siendo ASCII puro, asi que ningun nombre con ñ
+// puede chocar con una.
+static int byte_de_nombre(unsigned char c) {
+    return isalnum(c) || c == '_' || c >= 0x80;
+}
+
+// Igual, pero para el PRIMER byte: un nombre no puede empezar con digito.
+static int byte_inicial_de_nombre(unsigned char c) {
+    return isalpha(c) || c == '_' || c >= 0x80;
+}
+
 static int es_identificador(const char *s) {
-    if (!*s || (!isalpha((unsigned char)*s) && *s != '_')) return 0;
+    if (!*s || !byte_inicial_de_nombre((unsigned char)*s)) return 0;
     for (const char *c = s; *c; c++)
-        if (!isalnum((unsigned char)*c) && *c != '_') return 0;
+        if (!byte_de_nombre((unsigned char)*c)) return 0;
     return 1;
 }
 
@@ -400,15 +474,15 @@ static int es_identificador(const char *s) {
 // 'pori..vx' se siguen rechazando, y un numero como 1.5 nunca entra aca porque
 // no empieza con letra.
 static int es_campo(const char *s) {
-    if (!*s || (!isalpha((unsigned char)*s) && *s != '_')) return 0;
+    if (!*s || !byte_inicial_de_nombre((unsigned char)*s)) return 0;
 
     for (const char *c = s; *c; c++) {
         if (*c == '.') {
             // ni al principio, ni al final, ni dos seguidos
-            if (c == s || !(isalpha((unsigned char)c[1]) || c[1] == '_')) return 0;
+            if (c == s || !byte_inicial_de_nombre((unsigned char)c[1])) return 0;
             continue;
         }
-        if (!isalnum((unsigned char)*c) && *c != '_') return 0;
+        if (!byte_de_nombre((unsigned char)*c)) return 0;
     }
     return 1;
 }
@@ -513,6 +587,7 @@ static PAEDInstr *nueva_instr(PAEDProgram *p, PAEDKind kind, int lineno) {
     in->kind  = kind;
     in->line  = lineno;
     in->salto = -1;
+    in->siguiente = -1;
     return in;
 }
 
@@ -906,7 +981,12 @@ static int separar_modo(PAEDProgram *p, int lineno, char *nombre,
     }
     letras[nl] = '\0';
 
-    if (barras != 1) {
+    // La barra es OPCIONAL desde el 2026-08-17. Los templates oficiales de la
+    // catedra escriben 'ABRIRe(arch)' y 'ABRIRs(arch)' con el modo pegado y sin
+    // barra ninguna (ARCHIVO_LEER.txt, ARCHIVO_CREAR.txt, CORTE DE CONTROL,
+    // MEZCLA, ACTUALIZACION). Dos barras siguen siendo error: ahi no hay una
+    // forma de la catedra que interpretar, hay un modo escrito mal.
+    if (barras > 1) {
         add_error(p, lineno,
                   "'%s' tiene %d barras: el modo de apertura lleva UNA sola, "
                   "como en ABRIR E/(arch)", crudo, barras);
@@ -958,14 +1038,23 @@ static int separar_modo(PAEDProgram *p, int lineno, char *nombre,
 }
 
 static void parse_instruction(PAEDProgram *p, char *linea, int lineno) {
-    // 1. Toda instruccion termina en ';'
+    // 1. El ';' final es OPCIONAL desde el 2026-08-17.
+    //
+    // Antes era obligatorio. El material de catedra es inconsistente al
+    // respecto — la wiki lo pone en todas, AED_2021_UnI.pdf no lo pone en la
+    // ultima, y los templates oficiales lo saltean seguido (Si.txt escribe
+    // `Escribir('Ingrese un valor entero...')` sin ';' y la linea de abajo con
+    // ';') — y la decision del 2026-08-17 es que manda la catedra.
+    //
+    // Que sea opcional NO afloja nada: el ';' sigue siendo lo que SEPARA varias
+    // sentencias en un mismo renglon, que es el trabajo por el que estaba. El
+    // caso que protegia — `s: SECUENCIA DE ENTERO; n: ENTERO;` quedando con `s`
+    // de tipo basura — lo cubre el corte por ';', no el ';' del final.
     size_t len = strlen(linea);
-    if (len == 0 || linea[len - 1] != ';') {
-        add_error(p, lineno, "falta ';' al final de la instruccion");
-        return;
-    }
-    linea[len - 1] = '\0';
+    if (len > 0 && linea[len - 1] == ';') linea[len - 1] = '\0';
     linea = trim(linea);
+
+    if (!*linea) return;   // un ';' suelto no es una instruccion, pero tampoco un error
 
     // 2. ¿Es una asignacion? Lo es si hay ':=' y aparece ANTES del primer '(',
     //    para que 'x := f(y);' cuente como asignacion y 'AVZ(a, b);' no.
@@ -1005,6 +1094,12 @@ static void parse_instruction(PAEDProgram *p, char *linea, int lineno) {
     int  lleva_barra = strchr(nombre, '/') != NULL;
     int  modo_a_medias = 0;
 
+    // Sin barra NI espacio: 'ABRIRs(arch)', la forma de los templates. Se
+    // reconoce sacando letras por la derecha hasta dar con un procedimiento que
+    // admita modo. Se exige que el nombre entero NO sea ya un procedimiento
+    // valido, asi 'CERRAR(' nunca se lee como 'CERRA' + modo 'R'.
+    int modo_pegado = 0;
+
     if (!lleva_barra) {
         char *esp = nombre;
         while (*esp && !isspace((unsigned char)*esp)) esp++;
@@ -1012,10 +1107,18 @@ static void parse_instruction(PAEDProgram *p, char *linea, int lineno) {
             char primera[PAED_NAME_MAX];
             snprintf(primera, sizeof(primera), "%.*s", (int)(esp - nombre), nombre);
             modo_a_medias = modos_def(proc_def(primera)) != NULL;
+        } else if (!proc_def(nombre)) {
+            char corto[PAED_NAME_MAX];
+            snprintf(corto, sizeof(corto), "%s", nombre);
+            for (size_t n = strlen(corto); n > 1; n--) {
+                if (!isalpha((unsigned char)corto[n - 1])) break;
+                corto[n - 1] = '\0';
+                if (modos_def(proc_def(corto))) { modo_pegado = 1; break; }
+            }
         }
     }
 
-    if ((lleva_barra || modo_a_medias) &&
+    if ((lleva_barra || modo_a_medias || modo_pegado) &&
         separar_modo(p, lineno, nombre, modo, sizeof(modo)) != 0)
         return;
 
@@ -1058,7 +1161,10 @@ static void parse_instruction(PAEDProgram *p, char *linea, int lineno) {
     memset(instr, 0, sizeof(*instr));
     instr->kind  = PAED_LLAMADA;
     instr->salto = -1;
-    strncpy(instr->proc, nombre, PAED_NAME_MAX - 1);
+    // Se guarda el nombre CANONICO, no el que escribio el usuario: si puso
+    // 'Esc' o 'GRABAR', a partir de aca la instruccion dice 'ESCRIBIR'. El
+    // interprete no conoce ni tiene que conocer las grafias de la catedra.
+    strncpy(instr->proc, proc_canonico(def), PAED_NAME_MAX - 1);
     instr->line = lineno;
     snprintf(instr->modo, sizeof(instr->modo), "%s", modo);
 
@@ -1265,10 +1371,11 @@ static void parse_sentencias(PAEDProgram *p, char *linea, int lineno) {
 // de C con las llaves.
 
 typedef struct {
-    PAEDKind kind;   // PAED_SI o PAED_MIENTRAS
+    PAEDKind kind;   // PAED_SI, PAED_MIENTRAS, PAED_PARA, PAED_REPETIR o PAED_SEGUN
     int      line;   // donde se abrio, para poder decirlo en el error
     int      instr;  // que instruccion lo abrio, para parchearle el salto
     int      sino;   // indice del SINO si ya aparecio; -1 si no
+    int      ultimo_caso; // SEGUN: indice del ultimo CASO, para encadenar las ramas
 } Abierto;
 
 typedef struct {
@@ -1281,6 +1388,8 @@ static const char *nombre_kind(PAEDKind k) {
         case PAED_SI:       return "SI";
         case PAED_MIENTRAS: return "MIENTRAS";
         case PAED_PARA:     return "PARA";
+        case PAED_REPETIR:  return "REPETIR";
+        case PAED_SEGUN:    return "SEGUN";
         default:            return "?";
     }
 }
@@ -1347,7 +1456,7 @@ static void abrir(PAEDProgram *p, Pila *pila, PAEDKind kind,
         add_error(p, lineno, "demasiados bloques anidados (maximo %d)", PAED_MAX_BLOQUES);
         return;
     }
-    pila->items[pila->tope++] = (Abierto){ kind, lineno, p->instr_count - 1, -1 };
+    pila->items[pila->tope++] = (Abierto){ kind, lineno, p->instr_count - 1, -1, -1 };
 }
 
 // Devuelve 1 si la linea era de bloque (y ya la trato), 0 si no lo era.
@@ -1408,14 +1517,31 @@ static int parse_bloque(PAEDProgram *p, char *linea, int lineno, Pila *pila) {
         char *desde = trim(resto);
         char *hasta = trim(h + 5);
 
-        // El paso viene despues de un ';', y es opcional: sin el, vale 1.
+        // El paso es OPCIONAL: sin el, vale 1. Lo separa una coma o un ';'.
+        //
+        // La catedra usa la COMA — 'Para c := 1 hasta 10, 1 hacer' aparece en
+        // Para.txt, SUBSECUENCIA.txt y ARREGLOS_Conceptos.txt, y ni una sola
+        // vez con ';'. PAED habia elegido ';'; desde el 2026-08-17 acepta las
+        // dos, con la coma como forma de catedra.
+        //
+        // Se busca el separador de NIVEL SUPERIOR, no el primero que aparezca:
+        // en 'hasta f(a, b), 1' la coma de adentro del parentesis es del
+        // argumento y no del paso. Sin esta cuenta, ese PARA se partiria mal y
+        // el error saldria en un lugar que no tiene nada que ver.
         const char *paso = "1";
-        char *puntoycoma = strchr(hasta, ';');
-        if (puntoycoma) {
-            *puntoycoma = '\0';
-            char *pval = trim(puntoycoma + 1);
+        char *sep = NULL;
+        int   prof = 0;
+        for (char *c = hasta; *c; c++) {
+            if      (*c == '(' || *c == '[') prof++;
+            else if (*c == ')' || *c == ']') prof--;
+            else if (prof == 0 && (*c == ',' || *c == ';')) { sep = c; break; }
+        }
+        if (sep) {
+            char corte = *sep;
+            *sep = '\0';
+            char *pval = trim(sep + 1);
             if (!*pval) {
-                add_error(p, lineno, "el PARA tiene ';' pero no dice el incremento");
+                add_error(p, lineno, "el PARA tiene '%c' pero no dice el incremento", corte);
                 return 1;
             }
             paso  = pval;
@@ -1444,7 +1570,201 @@ static int parse_bloque(PAEDProgram *p, char *linea, int lineno, Pila *pila) {
             add_error(p, lineno, "demasiados bloques anidados (maximo %d)", PAED_MAX_BLOQUES);
             return 1;
         }
-        pila->items[pila->tope++] = (Abierto){ PAED_PARA, lineno, p->instr_count - 1, -1 };
+        pila->items[pila->tope++] = (Abierto){ PAED_PARA, lineno, p->instr_count - 1, -1, -1 };
+        return 1;
+    }
+
+    // ── SEGUN <expresion> HACER ──
+    //
+    // La seleccion multiple de la catedra. Confirmada por dos templates
+    // oficiales: Segun.txt y ACT INDEX [TEMPLATE].txt.
+    if (empieza_con(linea, "SEGUN")) {
+        char *cuerpo = cuerpo_cabecera(linea, "SEGUN", "HACER");
+        if (!cuerpo) {
+            add_error(p, lineno, "se esperaba: SEGUN <expresion> HACER");
+            return 1;
+        }
+        if (!*cuerpo) {
+            add_error(p, lineno, "al SEGUN le falta la expresion a comparar");
+            return 1;
+        }
+        abrir(p, pila, PAED_SEGUN, cuerpo, lineno);
+        return 1;
+    }
+
+    // ── FIN_SEGUN ──
+    if (kw_es(linea, "FIN_SEGUN")) {
+        if (pila->tope == 0 || pila->items[pila->tope - 1].kind != PAED_SEGUN) {
+            add_error(p, lineno, "FIN_SEGUN sin un SEGUN abierto");
+            return 1;
+        }
+        Abierto *a = &pila->items[pila->tope - 1];
+
+        PAEDInstr *in = nueva_instr(p, PAED_FIN_SEGUN, lineno);
+        if (!in) return 1;
+        int fin = p->instr_count - 1;
+
+        // Sin ninguna rama, el SEGUN salta derecho al final.
+        if (a->ultimo_caso < 0) p->instrs[a->instr].salto = fin;
+
+        // Cada rama sale por el final, y la ultima ademas cierra la cadena.
+        for (int k = a->instr + 1; k <= fin; k++)
+            if (p->instrs[k].kind == PAED_CASO) p->instrs[k].salto = fin;
+        if (a->ultimo_caso >= 0) p->instrs[a->ultimo_caso].siguiente = -1;
+
+        // La rama por defecto (SINO / CONTRARIO) se guardo en `sino`.
+        if (a->sino >= 0) p->instrs[a->sino].salto = fin;
+
+        pila->tope--;
+        return 1;
+    }
+
+    // ── Una rama del SEGUN: <etiqueta>[, <etiqueta>]: <sentencias> ──
+    //
+    // Se reconoce SOLO adentro de un SEGUN. Afuera, una linea con ':' es una
+    // declaracion o un error, y robarsela aca daria un mensaje incomprensible.
+    if (pila->tope > 0 && pila->items[pila->tope - 1].kind == PAED_SEGUN) {
+        Abierto *a = &pila->items[pila->tope - 1];
+
+        // La rama por defecto. 'CONTRARIO' ya llego aca convertido en 'SINO'
+        // por normalizar_catedra; 'CONTRARIO:' con dos puntos es la forma del
+        // template de ACT INDEX, asi que se acepta con y sin ellos.
+        if (kw_es(linea, "SINO") || kw_es(linea, "SINO:") ||
+            kw_es(linea, "CONTRARIO") || kw_es(linea, "CONTRARIO:")) {
+            if (a->sino >= 0) {
+                add_error(p, lineno, "el SEGUN de la linea %d ya tiene una rama por defecto",
+                          a->line);
+                return 1;
+            }
+            PAEDInstr *in = nueva_instr(p, PAED_CASO, lineno);
+            if (!in) return 1;
+            int idx = p->instr_count - 1;
+            in->cond[0] = '\0';                 // sin etiquetas = rama por defecto
+            in->siguiente = -1;
+            if (a->ultimo_caso >= 0) p->instrs[a->ultimo_caso].siguiente = idx;
+            else                     p->instrs[a->instr].salto = idx;
+            a->ultimo_caso = idx;
+            a->sino = idx;
+            return 1;
+        }
+
+        // Una rama con etiquetas. Los dos puntos que la abren son los primeros
+        // de NIVEL SUPERIOR: en "'a': ESCRIBIR('x: y')" el segundo esta adentro
+        // de un texto y no separa nada.
+        int prof = 0;
+        char comilla_et = 0;
+        char *dosp = NULL;
+        for (char *c = linea; *c; c++) {
+            if (!comilla_et && (*c == '\'' || *c == '"')) { comilla_et = *c; continue; }
+            if (comilla_et) { if (*c == comilla_et) comilla_et = 0; continue; }
+            if      (*c == '(' || *c == '[') prof++;
+            else if (*c == ')' || *c == ']') prof--;
+            else if (*c == ':' && prof == 0) {
+                if (c[1] == '=') break;          // ':=' es una asignacion, no una rama
+                dosp = c;
+                break;
+            }
+        }
+
+        if (dosp) {
+            *dosp = '\0';
+            char *etiquetas = trim(linea);
+            char *resto     = trim(dosp + 1);
+
+            if (!*etiquetas) {
+                add_error(p, lineno, "a la rama del SEGUN le faltan las etiquetas antes de ':'");
+                return 1;
+            }
+
+            // 'CONTRARIO: <sentencia>' — la rama por defecto con los dos puntos
+            // pegados, como en ACT INDEX [TEMPLATE].txt. Sin este caso,
+            // 'CONTRARIO' se leeria como el nombre de una variable y el error
+            // saldria recien al ejecutar.
+            if (kw_es(etiquetas, "SINO") || kw_es(etiquetas, "CONTRARIO")) {
+                if (a->sino >= 0) {
+                    add_error(p, lineno, "el SEGUN de la linea %d ya tiene una rama por defecto",
+                              a->line);
+                    return 1;
+                }
+                PAEDInstr *d = nueva_instr(p, PAED_CASO, lineno);
+                if (!d) return 1;
+                int didx = p->instr_count - 1;
+                d->cond[0]  = '\0';
+                d->siguiente = -1;
+                if (a->ultimo_caso >= 0) p->instrs[a->ultimo_caso].siguiente = didx;
+                else                     p->instrs[a->instr].salto = didx;
+                a->ultimo_caso = didx;
+                a->sino = didx;
+                if (*resto) parse_sentencias(p, resto, lineno);
+                return 1;
+            }
+
+            PAEDInstr *in = nueva_instr(p, PAED_CASO, lineno);
+            if (!in) return 1;
+            int idx = p->instr_count - 1;
+            strncpy(in->cond, etiquetas, PAED_COND_MAX - 1);
+            in->siguiente = -1;
+            if (a->ultimo_caso >= 0) p->instrs[a->ultimo_caso].siguiente = idx;
+            else                     p->instrs[a->instr].salto = idx;
+            a->ultimo_caso = idx;
+
+            // El cuerpo puede venir en la misma linea (que es como lo escriben
+            // los dos templates) o en las de abajo. Si viene, se parsea igual
+            // que cualquier otra sentencia.
+            if (*resto) parse_sentencias(p, resto, lineno);
+            return 1;
+        }
+    }
+
+    // ── REPETIR ──
+    //
+    // El ciclo POST-TEST de la catedra (template Repetir.txt). Es una cabecera
+    // pelada: no lleva condicion, porque la condicion vive en el HASTA de abajo.
+    if (kw_es(linea, "REPETIR")) {
+        abrir(p, pila, PAED_REPETIR, "", lineno);
+        return 1;
+    }
+
+    // ── HASTA [QUE] <condicion> ──
+    //
+    // Cierra el REPETIR. Se aceptan las dos formas del material:
+    //
+    //     Hasta que c > 10;     template Repetir.txt
+    //     HASTA (condicion)     la wiki
+    //
+    // No se pisa con el HASTA del PARA: ese vive DENTRO de la cabecera del
+    // PARA, que ya se trato mas arriba y nunca llega aca.
+    if (empieza_con(linea, "HASTA")) {
+        char *cond = trim(linea + 5);
+
+        // 'que' es opcional y no aporta nada mas que leerse bien.
+        if (empieza_con(cond, "QUE")) cond = trim(cond + 3);
+
+        // 'Hasta que c > 10;' trae el ';' de la catedra. Es un cierre de bloque,
+        // asi que se lo saca como a cualquier otro.
+        for (size_t n = strlen(cond); n > 0 &&
+             (cond[n - 1] == ';' || isspace((unsigned char)cond[n - 1])); n = strlen(cond))
+            cond[n - 1] = '\0';
+
+        if (!*cond) {
+            add_error(p, lineno, "al HASTA le falta la condicion: HASTA QUE <condicion>");
+            return 1;
+        }
+        if (pila->tope == 0 || pila->items[pila->tope - 1].kind != PAED_REPETIR) {
+            add_error(p, lineno, "HASTA sin un REPETIR abierto");
+            return 1;
+        }
+
+        Abierto *a = &pila->items[pila->tope - 1];
+        PAEDInstr *in = nueva_instr(p, PAED_HASTA, lineno);
+        if (!in) return 1;
+        strncpy(in->cond, cond, PAED_COND_MAX - 1);
+
+        // Condicion FALSA -> volver al cuerpo, que arranca justo despues del
+        // REPETIR. Es al reves que el MIENTRAS a proposito: aca la condicion
+        // dice cuando TERMINAR, no cuando seguir.
+        in->salto = a->instr + 1;
+        pila->tope--;
         return 1;
     }
 
@@ -1855,12 +2175,12 @@ static void declarar_una(PAEDProgram *p, char *nombre, char *tipo, int lineno) {
 // es_identificador("") y dan error con el nombre vacio a la vista. Tragarse una
 // coma de mas seria justo lo que este parser promete no hacer.
 static void parse_decl(PAEDProgram *p, char *linea, int lineno) {
+    // El ';' final es opcional, por el mismo motivo que en las instrucciones:
+    // la catedra lo escribe de las dos formas. El AMBIENTE de SECUENCIA.txt no
+    // lo lleva y el de REGISTRO.txt si.
     size_t len = strlen(linea);
-    if (len == 0 || linea[len - 1] != ';') {
-        add_error(p, lineno, "falta ';' al final de la declaracion");
-        return;
-    }
-    linea[len - 1] = '\0';
+    if (len > 0 && linea[len - 1] == ';') linea[len - 1] = '\0';
+    if (!*trim(linea)) return;
 
     char *dosp = strchr(linea, ':');
     if (!dosp) {
@@ -1889,6 +2209,102 @@ static void parse_decl(PAEDProgram *p, char *linea, int lineno) {
         if (!coma) break;
         n = coma + 1;
     }
+}
+
+// ── Las grafias de la catedra ────────────────────────────────────────────────
+//
+// La catedra escribe lo mismo de muchas formas: entre las diapositivas, los 27
+// templates oficiales de UTN-FRRe/isi-aed/Pseudocodigo y los parciales
+// resueltos, un mismo cierre aparece como FIN_SI, FinSi;, Fsi; y FIN SI;.
+//
+// Decision del 2026-08-17: LA CATEDRA TIENE LA RAZON. Antes PAED aceptaba una
+// sola forma de cada cosa y rechazaba las demas; ahora las reconoce a todas y
+// las traduce a UNA forma canonica antes de que el resto del parser las mire.
+//
+// Por que una capa de traduccion y no un 'if' mas en cada lugar: los cierres se
+// analizan en cuatro puntos distintos (parse_bloque, parse_ambiente, el cierre
+// de ACCION y la pila). Con un 'if' por variante en cada punto, agregar una
+// grafia obliga a tocar cuatro lugares y el dia que se olvida uno, la misma
+// palabra anda en un contexto y no en el otro. Aca la lista esta escrita una
+// sola vez y se lee de un vistazo.
+//
+// Solo se traducen lineas que son UNA palabra clave sola. Una linea con codigo
+// no se toca nunca, asi que ningun ';' de una instruccion corre peligro.
+
+typedef struct { const char *catedra; const char *paed; } Grafia;
+
+static const Grafia GRAFIAS[] = {
+    // El bloque de codigo: 'Algoritmo' sale de Sino.txt, Mientras.txt,
+    // Para.txt, REGISTRO.txt y de casi todos los parciales.
+    { "ALGORITMO",      "PROCESO"      },
+
+    // El SINO: 'Contrario' esta en Sino.txt y en Segun.txt.
+    { "CONTRARIO",      "SINO"         },
+
+    // Cierres de SI
+    { "FINSI",          "FIN_SI"       },
+    { "FIN SI",         "FIN_SI"       },
+    { "FSI",            "FIN_SI"       },
+
+    // Cierres de MIENTRAS
+    { "FINMIENTRAS",    "FIN_MIENTRAS" },
+    { "FIN MIENTRAS",   "FIN_MIENTRAS" },
+    { "FMIENTRAS",      "FIN_MIENTRAS" },
+
+    // Cierres de PARA
+    { "FINPARA",        "FIN_PARA"     },
+    { "FIN PARA",       "FIN_PARA"     },
+    { "FPARA",          "FIN_PARA"     },
+
+    // Cierres de SEGUN: 'FinSegun;' es la forma de Segun.txt.
+    { "FINSEGUN",       "FIN_SEGUN"    },
+    { "FIN SEGUN",      "FIN_SEGUN"    },
+
+    // Cierres de REGISTRO: 'freg;' y 'fin_reg;' salen del Tema 12 y del
+    // template de corte de control.
+    { "FINREGISTRO",    "FIN_REGISTRO" },
+    { "FIN REGISTRO",   "FIN_REGISTRO" },
+    { "FINREG",         "FIN_REGISTRO" },
+    { "FIN_REG",        "FIN_REGISTRO" },
+    { "FREG",           "FIN_REGISTRO" },
+};
+
+// Saca el terminador de una palabra clave sola: el ';' de 'FinSi;' y el '.' de
+// 'FinAccion.'. Los dos son de catedra y ninguno aporta informacion.
+//
+// Se aplica SOLO si lo que queda es una palabra (letras, digitos, '_' y a lo
+// sumo un espacio interno, para 'FIN SI'). Una instruccion como
+// 'ESCRIBIR(total);' tiene parentesis, asi que nunca entra aca y su ';' queda
+// intacto — que es exactamente lo que el resto del parser necesita.
+static void sacar_terminador(char *linea) {
+    size_t n = strlen(linea);
+    while (n > 0 && (linea[n - 1] == ';' || linea[n - 1] == '.' ||
+                     isspace((unsigned char)linea[n - 1])))
+        n--;
+    if (n == 0 || n == strlen(linea)) { linea[n] = '\0'; return; }
+
+    for (size_t i = 0; i < n; i++)
+        if (!isalnum((unsigned char)linea[i]) && linea[i] != '_' && linea[i] != ' ')
+            return;   // tiene algo que no es palabra: no se toca
+    linea[n] = '\0';
+}
+
+// Traduce la linea a la forma canonica de PAED. Devuelve el mismo puntero.
+//
+// `espacio` es lo que queda del buffer desde `linea`: la forma canonica puede
+// ser MAS LARGA que la que escribio el usuario ('FSI' -> 'FIN_SI'), asi que el
+// tamaño se pide en vez de suponerlo.
+static char *normalizar_catedra(char *linea, size_t espacio) {
+    sacar_terminador(linea);
+
+    for (size_t i = 0; i < sizeof(GRAFIAS) / sizeof(GRAFIAS[0]); i++)
+        if (kw_es(linea, GRAFIAS[i].catedra)) {
+            if (strlen(GRAFIAS[i].paed) + 1 > espacio) return linea;   // no entra: se deja como vino
+            memcpy(linea, GRAFIAS[i].paed, strlen(GRAFIAS[i].paed) + 1);
+            return linea;
+        }
+
+    return linea;
 }
 
 // ── Analisis del archivo completo ─────────────────────────────────────────────
@@ -2226,6 +2642,10 @@ int paed_parse_file(const char *path, PAEDProgram *out) {
         strip_comment(buf);
         char *linea = trim(buf);
         if (!*linea) continue;
+        // Las grafias de la catedra se traducen ACA, antes de que cualquier
+        // otra parte del parser mire la linea. Asi la lista de variantes vive
+        // en un solo lugar (GRAFIAS) y no repartida por cada bloque.
+        linea = normalizar_catedra(linea, sizeof(buf) - (size_t)(linea - buf));
 
         if (strncasecmp(linea, "ACCION", 6) == 0 && (linea[6] == ' ' || linea[6] == '\t')) {
             if (bloque != FUERA) {
@@ -2233,11 +2653,34 @@ int paed_parse_file(const char *path, PAEDProgram *out) {
                 continue;
             }
             char nombre[PAED_NAME_MAX] = {0}, es[8] = {0};
+
+            // 'Accion SUMA ES;' lleva ';' en los templates oficiales, y
+            // 'FinAccion.' lleva punto. Ninguno aporta nada: se sacan antes de
+            // leer el nombre para que no se peguen a la ultima palabra.
+            char cab[PAED_LINEA_MAX];
+            snprintf(cab, sizeof(cab), "%s", linea);
+            for (size_t n = strlen(cab); n > 0 &&
+                 (cab[n - 1] == ';' || cab[n - 1] == '.' ||
+                  isspace((unsigned char)cab[n - 1])); n = strlen(cab))
+                cab[n - 1] = '\0';
+
             // El literal "ACCION" dentro de sscanf tambien distingue
             // mayusculas. Ya se comprobo arriba con strncasecmp, asi que se
             // saltean esas 6 letras y se lee desde el nombre.
-            if (sscanf(linea + 6, "%63s %7s", nombre, es) != 2 || !kw_es(es, "ES")) {
+            //
+            // El 'ES' es OPCIONAL: 'accion archivo_corte;' es la forma del
+            // template CORTE DE CONTROL [TEMPLATE Rev2]. Si viene, tiene que
+            // ser 'ES' y no otra palabra — una segunda palabra cualquiera casi
+            // siempre es un nombre de accion con espacios, que sigue sin valer.
+            int campos = sscanf(cab + 6, "%63s %7s", nombre, es);
+            if (campos < 1) {
                 add_error(out, lineno, "se esperaba: ACCION <nombre> ES");
+                continue;
+            }
+            if (campos == 2 && !kw_es(es, "ES")) {
+                add_error(out, lineno,
+                          "se esperaba: ACCION <nombre> ES — '%s' no es 'ES'. "
+                          "El nombre de la ACCION no puede llevar espacios", es);
                 continue;
             }
             strncpy(out->name, nombre, PAED_NAME_MAX - 1);
@@ -2301,10 +2744,19 @@ int paed_parse_file(const char *path, PAEDProgram *out) {
                 add_error(out, lineno, "el cierre de ACCION no tiene un bloque PROCESO abierto");
             // FIN_ACCION no puede cerrar bloques que quedaron abiertos: se avisa
             // aca, con la linea de apertura, y no cuando ya no se sabe nada.
-            for (int i = pila.tope - 1; i >= 0; i--)
-                add_error(out, lineno, "falta FIN_%s: el %s de la linea %d quedo abierto",
-                          nombre_kind(pila.items[i].kind),
-                          nombre_kind(pila.items[i].kind), pila.items[i].line);
+            for (int i = pila.tope - 1; i >= 0; i--) {
+                // El REPETIR no cierra con FIN_REPETIR: cierra con HASTA. Decir
+                // "falta FIN_REPETIR" mandaria a escribir una palabra que no
+                // existe en el lenguaje.
+                if (pila.items[i].kind == PAED_REPETIR)
+                    add_error(out, lineno,
+                              "falta HASTA: el REPETIR de la linea %d quedo abierto",
+                              pila.items[i].line);
+                else
+                    add_error(out, lineno, "falta FIN_%s: el %s de la linea %d quedo abierto",
+                              nombre_kind(pila.items[i].kind),
+                              nombre_kind(pila.items[i].kind), pila.items[i].line);
+            }
             pila.tope = 0;
             bloque = CERRADO;
             continue;

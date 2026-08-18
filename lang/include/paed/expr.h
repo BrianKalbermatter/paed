@@ -103,6 +103,16 @@ Valor *env_elem(Entorno *e, const char *nombre, int indice);
 // Devuelve 0 si salio bien, -1 si no: el motivo queda en env->error.
 int expr_eval(const char *texto, Entorno *env, Valor *out);
 
+// Compara dos valores con las MISMAS reglas que el operador '=' del lenguaje:
+// numeros por valor, y si alguno de los dos es texto, los dos por ASCII.
+// Devuelve <0, 0 o >0 igual que strcmp.
+//
+// Se exporta para que el SEGUN elija su rama con la misma semantica que un
+// SI ... = ... . Con una comparacion propia, 'SEGUN x HACER 1:' y
+// 'SI x = 1 ENTONCES' podrian no coincidir, que es exactamente el tipo de
+// diferencia que nadie encuentra hasta que ya rompio algo.
+int expr_comparar(const Valor *a, const Valor *b);
+
 // Lee un valor como condicion. Un NUM cuenta como falso solo si es 0, y un
 // texto vacio cuenta como falso: asi una condicion nunca queda "indefinida".
 int valor_verdadero(const Valor *v);

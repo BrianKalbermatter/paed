@@ -13,7 +13,8 @@
 // ── Entorno ───────────────────────────────────────────────────
 
 void env_init(Entorno *e) {
-    memset(e, 0, sizeof(*e));
+    // memset() 
+    memset(e, 0, sizeof(*e)); 
 }
 
 // Busca la ENTRADA de la tabla, no su valor: env_buscar devuelve el escalar, y
@@ -206,6 +207,23 @@ static int palabra(Ctx *c, const char *kw) {
 
 static Valor eval_o(Ctx *c);   // el nivel mas bajo, para los parentesis
 
+// Las grafias de la catedra para el fin de archivo y de secuencia.
+//
+// El material escribe la negacion de tres formas, y las tres significan lo
+// mismo: NFDA(arch) en los ejercicios 2.2.x, NOFDA(arch) en el ejemplo Youtube
+// del Tema 8, y NoFDA(arch) en los templates de MEZCLA. ('No FDA(arch)', con
+// espacio, ya andaba solo: 'NO' es el operador logico y FDA la funcion.)
+//
+// Decision 2026-08-17: la catedra tiene la razon, se reconocen todas.
+static int es_fin_de(const char *nombre, const char *corta) {
+    char negada[16], negada_larga[16];
+    snprintf(negada,       sizeof(negada),       "N%s",  corta);   // NFDA
+    snprintf(negada_larga, sizeof(negada_larga), "NO%s", corta);   // NOFDA
+    return strcasecmp(nombre, corta)        == 0 ||
+           strcasecmp(nombre, negada)       == 0 ||
+           strcasecmp(nombre, negada_larga) == 0;
+}
+
 static Valor primario(Ctx *c) {
     espacios(c);
 
@@ -247,10 +265,10 @@ static Valor primario(Ctx *c) {
     }
 
     // Identificador: literal logico, funcion o variable
-    if (isalpha((unsigned char)*c->p) || *c->p == '_') {
+    if (isalpha((unsigned char)*c->p) || *c->p == '_' || (unsigned char)*c->p >= 0x80) {
         char nombre[PAED_NAME_MAX];
         size_t n = 0;
-        while (isalnum((unsigned char)*c->p) || *c->p == '_') {
+        while (isalnum((unsigned char)*c->p) || *c->p == '_' || (unsigned char)*c->p >= 0x80) {
             if (n < PAED_NAME_MAX - 1) nombre[n++] = *c->p;
             c->p++;
 
@@ -337,13 +355,13 @@ static Valor primario(Ctx *c) {
             // no se evalua: 'secAlu' no tiene ningun valor que evaluar, y
             // pasarlo por el evaluador daria "la variable 'secAlu' no tiene
             // valor todavia" — un mensaje que manda a mirar al lugar equivocado.
-            if (strcasecmp(nombre, "FDS") == 0 || strcasecmp(nombre, "NFDS") == 0) {
+            if (es_fin_de(nombre, "FDS")) {
                 int quiere_fin = (strcasecmp(nombre, "FDS") == 0);
 
                 espacios(c);
                 char sec[PAED_NAME_MAX];
                 size_t k = 0;
-                while (isalnum((unsigned char)*c->p) || *c->p == '_') {
+                while (isalnum((unsigned char)*c->p) || *c->p == '_' || (unsigned char)*c->p >= 0x80) {
                     if (k < PAED_NAME_MAX - 1) sec[k++] = *c->p;
                     c->p++;
                 }
@@ -374,13 +392,13 @@ static Valor primario(Ctx *c) {
             // FDA(arch) y NFDA(arch) preguntan por el ESTADO de un archivo,
             // igual que FDS por el de una secuencia: el argumento se lee como
             // NOMBRE y no se evalua, porque 'arch' no tiene ningun valor.
-            if (strcasecmp(nombre, "FDA") == 0 || strcasecmp(nombre, "NFDA") == 0) {
+            if (es_fin_de(nombre, "FDA")) {
                 int quiere_fin = (strcasecmp(nombre, "FDA") == 0);
 
                 espacios(c);
                 char arch[PAED_NAME_MAX];
                 size_t k = 0;
-                while (isalnum((unsigned char)*c->p) || *c->p == '_') {
+                while (isalnum((unsigned char)*c->p) || *c->p == '_' || (unsigned char)*c->p >= 0x80) {
                     if (k < PAED_NAME_MAX - 1) arch[k++] = *c->p;
                     c->p++;
                 }
@@ -533,6 +551,10 @@ static Valor suma(Ctx *c) {
 
 // Compara dos valores. Los textos van por ASCII, como dice la teoria:
 // 'A' < 'K' es verdadero. Devuelve <0, 0 o >0.
+static int comparar(const Valor *a, const Valor *b);
+
+int expr_comparar(const Valor *a, const Valor *b) { return comparar(a, b); }
+
 static int comparar(const Valor *a, const Valor *b) {
     // HV va PRIMERO, antes de mirar los tipos: es mayor que todo, y dos HV son
     // iguales entre si. Que este arriba de la rama de texto no es un detalle —

@@ -1,0 +1,50 @@
+// Las grafias de ARCHIVOS de la catedra. Decision 2026-08-17: la catedra tiene
+// la razon, PAED reconoce todas sus formas.
+//
+//   ABRIRs(arch) / ABRIRe(arch)   el modo PEGADO y SIN barra. Templates
+//                                 ARCHIVO_LEER.txt, ARCHIVO_CREAR.txt,
+//                                 CORTE DE CONTROL Rev2, MEZCLA, ACTUALIZACION.
+//   NOFDA(arch)                   ejemplo Youtube del Tema 8.
+//   NoFDA(arch)                   templates de MEZCLA EXC / MEZCLA INC.
+//   Esc(arch, reg) / GRABAR       abreviaturas de ESCRIBIR (Temas 9/10, wiki Cap.3).
+//
+// El archivo en disco toma el nombre de la VARIABLE, asi que leer y escribir
+// usan la misma.
+
+ACCION catedra_archivos ES
+AMBIENTE
+    persona = REGISTRO
+        nombre: AN(30);
+        edad:   ENTERO;
+    FIN_REGISTRO
+
+    arch: ARCHIVO DE persona;
+    reg:  persona;
+    cant: ENTERO;
+
+PROCESO
+    // CREAR deja el archivo abierto para SALIDA
+    CREAR(arch);
+    reg.nombre := 'Ana';  reg.edad := 30;
+    Esc(arch, reg);
+    reg.nombre := 'Beto'; reg.edad := 41;
+    GRABAR(arch, reg);
+    CERRAR(arch);
+
+    // Se lee con el modo pegado y NOFDA, las formas del Tema 8
+    ABRIRe(arch);
+    LEER(arch, reg);
+    cant := 0;
+    MIENTRAS NOFDA(arch) HACER
+        Esc(reg.nombre, ' tiene ', reg.edad);
+        cant := cant + 1;
+        LEER(arch, reg);
+    FIN_MIENTRAS
+    CERRAR(arch);
+    Esc('leidos: ', cant);
+FIN_ACCION
+
+// ── SALIDA ESPERADA ─────────────────────────────────────────────────────────
+// Ana tiene 30
+// Beto tiene 41
+// leidos: 2
