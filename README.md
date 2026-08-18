@@ -1,5 +1,8 @@
 # PAED
 
+LOS TRES TIPOS DE ORGANIZACIÓN que se estudian:
+  SECUENCIAL │ RELATIVA (o Directa) │ INDEXADA (o Secuencial Indexada)
+
 ## Que es esto?
     PseudoCodigo para la consola
     

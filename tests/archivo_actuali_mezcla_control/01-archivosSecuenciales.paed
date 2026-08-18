@@ -1,0 +1,41 @@
+//Se dispone de una secuencia de facturas con los siguientes datos:
+
+//    Nº de Factura
+//    Fecha
+//    Total
+
+//Se desea un listado de las facturas cuyas fechas sean posteriores a una fecha dada, y cuyos importes totales no alcancen los $1000, con el siguiente formato:
+
+//    Nro_Factura Fecha Importe_Total 
+
+ACCION facturas ES
+    AMBIENTE
+        fecha = REGISTRO
+            aaaa: N(4);
+            mm: 1..12;
+            dd: 1..31;
+        FIN_REGISTRO
+        
+        
+        factura = REGISTRO
+            nro_Facturas: ENTERO;
+            fechas: fecha; // Lo asignado a fechas deberia de tener un color tambien diferente
+            total: ENTERO;
+        FIN_REGISTRO
+        f: factura;
+        // Los archivos que se colocan deben estar tambien de otro color para que la ventana de la fase 4 se pueda abrir y colocar los archivos que se desean abrir en si
+        // archivoFacturas = (al escribir este tipo de variable archivo deberia de abrirse algo).
+        archivoFacturas: ARCHIVO DE f; // Esto deberia de tener un color diferente
+    PROCESO
+        ABRIR E/(archivoFacturas); // Abre el archivo
+        ESCRIBIR("Formato: nro_Factura, fecha, total"); 
+        LEER(arch, f); // Lo que hace esto es avanzar el archivo de registro
+        MIENTRAS(NFDS(archivoFacturas))HACER
+            ESCRIBIR(f.nro_Factura, f.fecha, f.total);
+            LEER(archivoFacturas, f);
+        FIN_MIENTRAS
+        CERRAR(archivoFacturas);
+FIN_ACCION
+
+
+

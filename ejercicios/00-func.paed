@@ -1,0 +1,10 @@
+// variables, corrigiendo variables que no funcionan, probando funciones y procedimiento dentro de PAED
+// Consigna:
+// Realice una función que dado un número devuelva su cuadrado. 
+ACCION var ES
+    AMBIENTE
+        v: ENTERO;
+        s: 
+    PROCESO
+FIN_ACCION
+
