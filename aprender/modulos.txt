@@ -1,0 +1,15 @@
+# Los modulos del tutorial.
+#
+# El numero de cada renglon es el PREFIJO del nombre de archivo del ejercicio:
+#
+#     0-03_asignacion.paed   ->   modulo 0   ->   "Introduccion"
+#
+# Igual que con los ejercicios, no hay ninguna lista aparte que mantener: el
+# orden lo da el numero y la pertenencia la da el nombre del archivo. Agregar
+# un modulo es agregar un renglon aca y dejar los .paed con ese prefijo.
+#
+# Formato:  <numero><espacios><nombre hasta el fin de linea>
+
+0  Introduccion
+1  Secuencias de datos elementales y subacciones
+2  Arreglos y archivos

@@ -1,0 +1,21 @@
+// EJERCICIO 0-1: Primero aprenderas a usar ESCRIBIR es una funcion muy
+// Completa las siguientes ESCRIBIRs.
+// No te preocupes por el salto de linea como lo hace otros lenguajes, aqui no se lo coloca. Salta simplemente solo a la siguiente linea.
+ACCION escribir ES
+    AMBIENTE
+    PROCESO
+        ESCRIBIR("Hola, PAED");
+        ESCRIBIR("Este es mi primera vez escribiendo en PAED ");
+        ESCRIBIR("Puedo escribir 2 Instrucciones en un renglon, colocando ';' en el medio"); ESCRIBIR("ASI!");
+        ESCRIBIR("ESCRIBIR ", 2, " + ", 2, " = ", 4);
+FIN_ACCION
+
+// ── PISTA ───────────────────────────────────────────────────────────────────
+// ESCRIBIR("");
+
+// ── SALIDA ESPERADA ─────────────────────────────────────────────────────────
+// Hola, PAED
+// Este es mi primera vez escribiendo en PAED 
+// Puedo escribir 2 Instrucciones en un renglon, colocando ';' en el medio
+// ASI!
+// ESCRIBIR 2 + 2 = 4

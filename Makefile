@@ -74,7 +74,7 @@ $(LANG_GEN): data/sintaxis.json
 APRENDER_GEN = lang/src/ejercicios_embebidos.c
 APRENDER_SRC = $(sort $(wildcard aprender/[0-9]*.paed))
 
-$(APRENDER_GEN): $(APRENDER_SRC) aprender/generar.sh
+$(APRENDER_GEN): $(APRENDER_SRC) aprender/modulos.txt aprender/generar.sh
 	@mkdir -p $(dir $@)
 	@bash aprender/generar.sh > $@
 

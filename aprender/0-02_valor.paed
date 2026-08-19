@@ -6,17 +6,17 @@
 // El orden de las instrucciones importa. Arreglalo.
 
 ACCION valor ES
-AMBIENTE
-    total: ENTERO;
-    precio: ENTERO;
-    cantidad: ENTERO;
-PROCESO
-    total := precio * cantidad;
-    precio := 150;
-    cantidad := 3;
-    ESCRIBIR("precio unitario: ", precio);
-    ESCRIBIR("cantidad: ", cantidad);
-    ESCRIBIR("total: ", total);
+    AMBIENTE
+        total: ENTERO;
+        precio: ENTERO;
+        cantidad: ENTERO;
+    PROCESO
+        total := precio * cantidad;
+        precio := 150;
+        cantidad := 3;
+        ESCRIBIR("precio unitario: ", precio);
+        ESCRIBIR("cantidad: ", cantidad);
+        ESCRIBIR("total: ", total);
 FIN_ACCION
 
 // ── PISTA ───────────────────────────────────────────────────────────────────

@@ -1,0 +1,44 @@
+// EJERCICIO — parametros por valor y por referencia
+//
+// TEMA: Pasar un dato PARA QUE LO LEAN y pasarlo PARA QUE LO MODIFIQUEN no es lo mismo.
+//       Confundirlos es el error clasico: la subaccion calcula bien y afuera no cambia nada.
+//
+// ── BLOQUEADO: EL INTERPRETE TODAVIA NO SOPORTA SUBACCIONES ─────────────────
+//
+// Esto NO es un ejercicio que falta escribir. Es una feature del lenguaje que
+// falta implementar. Hoy el parser rechaza:
+//
+//     PROCEDIMIENTO saludar(nombre: AN(20)) ES
+//     ...
+//     FIN_PROCEDIMIENTO
+//
+//     error: nombre de variable invalido: 'PROCEDIMIENTO saludar(nombre'
+//     error: procedimiento desconocido 'saludar'
+//
+// FUNCION, PROCEDIMIENTO y FIN_PROCEDIMIENTO YA son palabras reservadas en
+// data/sintaxis.json, pero lang/src/parser.c no las implementa: las lee como
+// si fueran una declaracion cualquiera del AMBIENTE.
+//
+// Por que importa mas que un ejercicio: sin subacciones no hay corte de
+// control, ni mezcla, ni actualizacion secuencial o indexada — que es
+// EXACTAMENTE de lo que son los parciales de AED. Es el bloqueante numero uno
+// del interprete, no un detalle.
+//
+// ── Cuando se destrabe ──────────────────────────────────────────────────────
+//
+//   1. implementar subacciones en lang/src/parser.c + lang/src/interpreter.c
+//   2. dejar un test en tests/ que las ejercite (regla de oro: nada entra a la
+//      spec sin un .paed que lo corra)
+//   3. recien ahi escribir este ejercicio, con su bloque SALIDA ESPERADA y su
+//      solucion en aprender/solucion/1-07_parametros.paed
+//
+// Mientras tanto el tutorial lo saltea: no lo desempaca, no lo cuenta y no
+// aparece en la lista.
+
+ACCION parametros ES
+    AMBIENTE
+    PROCESO
+FIN_ACCION
+
+// ── PISTA ───────────────────────────────────────────────────────────────────
+// (la pista que ve el alumno con `paed aprender pista`)

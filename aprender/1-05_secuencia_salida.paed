@@ -1,0 +1,29 @@
+// EJERCICIO — SECUENCIA DE SALIDA — generar una secuencia
+//
+// TEMA: Hasta aca las secuencias se leian. Esta se ESCRIBE: CREAR, ESCRIBIR uno por
+//       uno, CERRAR. Olvidarse el CERRAR es el error clasico.
+//
+// ── TODAVIA NO ESTA ESCRITO ─────────────────────────────────────────────────
+//
+// Este archivo es el molde. Mientras NO tenga su bloque
+// `// ── SALIDA ESPERADA`, el tutorial lo saltea y `make test` no le
+// pide solucion: podes ir llenando los ejercicios de a uno sin romper nada.
+//
+// Para activarlo:
+//   1. escribi el ACCION de abajo, con UN error a proposito — el ejercicio ES
+//      el error, y tiene que ser uno solo y del tema de este archivo
+//   2. agrega abajo el bloque SALIDA ESPERADA con lo que tiene que imprimir
+//   3. deja la version ARREGLADA en aprender/solucion/1-05_secuencia_salida.paed
+//   4. make
+//
+// Lo que ya tenes escrito sirve de ejemplo del formato: mira 0-03_asignacion.paed
+//
+// El interprete YA corre este tema, y hay un test que lo prueba: tests/secuencia_declaracion.paed
+
+ACCION secuencia_salida ES
+    AMBIENTE
+    PROCESO
+FIN_ACCION
+
+// ── PISTA ───────────────────────────────────────────────────────────────────
+// (la pista que ve el alumno con `paed aprender pista`)

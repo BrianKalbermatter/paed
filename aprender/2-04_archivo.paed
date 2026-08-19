@@ -1,0 +1,27 @@
+// EJERCICIO — declarar un ARCHIVO, abrirlo y leer un registro
+//
+// TEMA: Hasta aca los datos vivian mientras el programa corria. Un archivo es lo que
+//       queda DESPUES de que el programa termina.
+//
+// ── TODAVIA NO ESTA ESCRITO ─────────────────────────────────────────────────
+//
+// Este archivo es el molde. Mientras NO tenga su bloque
+// `// ── SALIDA ESPERADA`, el tutorial lo saltea y `make test` no le
+// pide solucion: podes ir llenando los ejercicios de a uno sin romper nada.
+//
+// Para activarlo:
+//   1. escribi el ACCION de abajo, con UN error a proposito — el ejercicio ES
+//      el error, y tiene que ser uno solo y del tema de este archivo
+//   2. agrega abajo el bloque SALIDA ESPERADA con lo que tiene que imprimir
+//   3. deja la version ARREGLADA en aprender/solucion/2-04_archivo.paed
+//   4. make
+//
+// Lo que ya tenes escrito sirve de ejemplo del formato: mira 0-03_asignacion.paed
+
+ACCION archivo ES
+    AMBIENTE
+    PROCESO
+FIN_ACCION
+
+// ── PISTA ───────────────────────────────────────────────────────────────
+// (la pista que ve el alumno con `paed aprender pista`)

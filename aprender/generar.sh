@@ -49,3 +49,38 @@ for par in "${nombres[@]}"; do
 done
 echo '};'
 echo "const int PAED_EJERCICIOS_N = $n;"
+echo
+
+# ── Los modulos ─────────────────────────────────────────────────────────────
+#
+# modulos.txt le pone nombre a cada prefijo: el ejercicio 1-03_cadenas.paed es
+# del modulo 1, y el modulo 1 se llama "Secuencias de datos elementales y
+# subacciones". Sin esto el tutorial solo podria decir "ejercicio 13 de 18", y
+# ese numero no le avisa a nadie que acaba de entrar en otro tema.
+#
+# Cada renglon util es:  <numero><espacios><nombre hasta el fin de linea>
+# Los que empiezan con '#' y los vacios se ignoran.
+if [ ! -f modulos.txt ]; then
+    echo "aprender/generar.sh: falta $(pwd)/modulos.txt" >&2
+    exit 1
+fi
+
+m=0
+echo 'const PaedModulo PAED_MODULOS[] = {'
+while IFS= read -r renglon || [ -n "$renglon" ]; do
+    renglon=${renglon%$'\r'}
+    case "$renglon" in ''|'#'*) continue ;; esac
+
+    num=${renglon%%[![:digit:]]*}
+    [ -n "$num" ] || { echo "aprender/generar.sh: renglon sin numero en modulos.txt: $renglon" >&2; exit 1; }
+
+    nombre=${renglon#"$num"}
+    # se le sacan los espacios de los dos lados sin llamar a nadie de afuera
+    nombre=${nombre#"${nombre%%[![:space:]]*}"}
+    nombre=${nombre%"${nombre##*[![:space:]]}"}
+
+    printf '    { %d, "%s" },\n' "$num" "$(printf '%s' "$nombre" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g')"
+    m=$((m + 1))
+done < modulos.txt
+echo '};'
+echo "const int PAED_MODULOS_N = $m;"

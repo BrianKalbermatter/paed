@@ -1,0 +1,27 @@
+// EJERCICIO — recorrer una SECUENCIA de punta a punta
+//
+// TEMA: El patron de recorrido de la catedra: ARR para arrancar, NFDS para preguntar
+//       si quedan datos, AVZ para pasar al siguiente. Sin ese trio no se recorre nada.
+//
+// ── TODAVIA NO ESTA ESCRITO ─────────────────────────────────────────────────
+//
+// Este archivo es el molde. Mientras NO tenga su bloque
+// `// ── SALIDA ESPERADA`, el tutorial lo saltea y `make test` no le
+// pide solucion: podes ir llenando los ejercicios de a uno sin romper nada.
+//
+// Para activarlo:
+//   1. escribi el ACCION de abajo, con UN error a proposito — el ejercicio ES
+//      el error, y tiene que ser uno solo y del tema de este archivo
+//   2. agrega abajo el bloque SALIDA ESPERADA con lo que tiene que imprimir
+//   3. deja la version ARREGLADA en aprender/solucion/1-02_recorrido.paed
+//   4. make
+//
+// Lo que ya tenes escrito sirve de ejemplo del formato: mira 0-03_asignacion.paed
+
+ACCION recorrido ES
+    AMBIENTE
+    PROCESO
+FIN_ACCION
+
+// ── PISTA ───────────────────────────────────────────────────────────────
+// (la pista que ve el alumno con `paed aprender pista`)

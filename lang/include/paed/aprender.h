@@ -48,11 +48,43 @@ int paed_aprender(int argc, char **argv);
 
 // Un ejercicio embebido, tal como lo genera el Makefile desde aprender/*.paed.
 typedef struct {
-    const char *nombre;      // "01_escribir.paed"
+    const char *nombre;      // "0-01_escribir.paed"
     const char *contenido;   // el archivo entero
 } PaedEjercicio;
 
 extern const PaedEjercicio PAED_EJERCICIOS[];
 extern const int           PAED_EJERCICIOS_N;
+
+// ── Los modulos ────────────────────────────────────────────────────────────
+//
+// El tutorial esta partido en temas, y el tema de un ejercicio se lee en su
+// propio nombre: "1-03_cadenas.paed" es del modulo 1. No hay tabla que ligue
+// ejercicios con modulos — el nombre del archivo ES la tabla, igual que el
+// numero del archivo ES el orden.
+//
+// Lo unico que hace falta guardar es COMO SE LLAMA cada modulo, y eso vive en
+// aprender/modulos.txt y viaja horneado igual que los ejercicios.
+//
+// Un ejercicio cuyo prefijo no figure en modulos.txt sigue siendo un
+// ejercicio: se muestra sin nombre de modulo y nada mas.
+typedef struct {
+    int         numero;      // 1
+    const char *nombre;      // "Secuencias de datos elementales y subacciones"
+} PaedModulo;
+
+extern const PaedModulo PAED_MODULOS[];
+extern const int        PAED_MODULOS_N;
+
+// ── Los moldes ─────────────────────────────────────────────────────────────
+//
+// Un ejercicio que todavia NO declara su bloque `// -- SALIDA ESPERADA` es un
+// MOLDE: esta en el repo con su nombre y su tema, pero no esta escrito. El
+// tutorial lo saltea entero — no lo desempaca, no lo cuenta, no lo muestra —
+// y `make test` no le pide solucion.
+//
+// Es lo que permite dejar la estructura completa del curso puesta desde el
+// principio y llenarla de a un ejercicio por vez, sin que el tutorial mienta
+// sobre cuantos ejercicios hay ni que el test se ponga rojo por algo que
+// todavia no existe.
 
 #endif // PAED_APRENDER_H
