@@ -1,0 +1,49 @@
+// Parametros que DEVUELVEN: S, ES y VAR.
+//
+// E copia y no devuelve. S no trae valor y devuelve. ES entra con valor y sale
+// modificado. VAR es la forma de los templates oficiales y significa lo mismo
+// que ES: por referencia.
+
+ACCION prueba_referencia ES
+AMBIENTE
+    a: ENTERO;
+    b: ENTERO;
+    t: ENTERO;
+
+PROCEDIMIENTO llenar(S destino: ENTERO)
+PROCESO
+    destino := 42;
+FIN_PROCEDIMIENTO
+
+PROCEDIMIENTO duplicar(ES v: ENTERO)
+PROCESO
+    v := v * 2;
+FIN_PROCEDIMIENTO
+
+PROCEDIMIENTO intercambiar(VAR x: ENTERO; VAR y: ENTERO)
+AMBIENTE
+    aux: ENTERO;
+PROCESO
+    aux := x;
+    x := y;
+    y := aux;
+FIN_PROCEDIMIENTO
+
+PROCESO
+    llenar(t);
+    ESCRIBIR("S: t quedo en ", t);
+
+    a := 7;
+    duplicar(a);
+    ESCRIBIR("ES: a quedo en ", a);
+
+    a := 1;
+    b := 2;
+    intercambiar(a, b);
+    ESCRIBIR("VAR: a=", a, " b=", b);
+FIN_ACCION
+
+// ── SALIDA ESPERADA ──
+// S: t quedo en 42
+// ES: a quedo en 14
+// VAR: a=2 b=1

@@ -1,0 +1,29 @@
+// Las grafias de la catedra para subacciones.
+//
+// Los templates oficiales escriben la firma con ';' al final, el bloque con
+// 'Algoritmo' en vez de 'PROCESO', y cierran con 'Fin_Proc;'. Todas valen.
+
+Accion prueba_notacion ES
+Ambiente
+    n: ENTERO;
+
+Procedimiento Inicializar(VAR v: ENTERO);
+    Algoritmo
+        v := 0;
+Fin_Proc;
+
+Funcion Triple(E x: ENTERO): ENTERO;
+    Algoritmo
+        Triple := x * 3;
+Fin_Funcion;
+
+Proceso
+    Inicializar(n);
+    Esc("n arranca en ", n);
+    n := Triple(4);
+    Esc("Triple(4) = ", n);
+FinAccion.
+
+// ── SALIDA ESPERADA ──
+// n arranca en 0
+// Triple(4) = 12

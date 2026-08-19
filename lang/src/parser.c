@@ -1067,6 +1067,29 @@ static void parse_instruction(PAEDProgram *p, char *linea, int lineno) {
 
     // 3. Nombre del procedimiento, hasta el '('
     if (!abre) {
+        // Una palabra sola es una llamada a subaccion SIN parentesis, que es
+        // como las llama el corpus: el template de corte de control escribe
+        // 'Inicializar', 'tratar_corte;' y 'corte_3;' sin ninguno.
+        //
+        // No se pregunta ACA si esa subaccion existe, por lo mismo que en la
+        // llamada con parentesis: puede estar declarada mas abajo. Se anota y
+        // chequear_subacciones() lo verifica al final. Si el nombre no es de
+        // nadie, el error sale ahi y dice exactamente eso.
+        if (es_identificador(linea)) {
+            if (p->instr_count >= PAED_MAX_INSTRS) {
+                add_error(p, lineno, "demasiadas instrucciones (maximo %d)", PAED_MAX_INSTRS);
+                return;
+            }
+            PAEDInstr *llam = &p->instrs[p->instr_count++];
+            memset(llam, 0, sizeof(*llam));
+            llam->kind         = PAED_LLAMADA;
+            llam->es_subaccion = 1;
+            llam->salto        = -1;
+            llam->line         = lineno;
+            strncpy(llam->proc, linea, PAED_NAME_MAX - 1);
+            return;
+        }
+
         add_error(p, lineno, "instruccion sin parentesis: se esperaba PROCEDIMIENTO(...)");
         return;
     }
@@ -1135,18 +1158,54 @@ static void parse_instruction(PAEDProgram *p, char *linea, int lineno) {
     }
     inner[ilen - 1] = '\0';
 
-    // 4. El procedimiento tiene que existir en sintaxis.json
+    // 4. El procedimiento tiene que existir: o en sintaxis.json, o como
+    //    subaccion declarada en este mismo programa.
     cJSON *def = proc_def(nombre);
     if (!def) {
-        // Se nombran los ARCHIVOS y no sus rutas: la ruta depende de donde se
-        // instalo PAED, y el mismo programa daria mensajes distintos en dos
-        // maquinas. Donde estan se pregunta una sola vez, con paed_datadir().
-        if (g_lib_nombre[0])
-            add_error(p, lineno, "procedimiento desconocido '%s' (no esta ni en %s ni en %s)",
-                      nombre, PAED_SYNTAX_FILE, g_lib_nombre);
-        else
-            add_error(p, lineno, "procedimiento desconocido '%s' (no esta en %s)",
-                      nombre, PAED_SYNTAX_FILE);
+        // No se pregunta ACA si la subaccion existe. Una subaccion puede llamar
+        // a otra declarada mas abajo, y el parser lee el archivo de una sola
+        // pasada: preguntarlo ahora daria "desconocido" por algo que aparece
+        // diez renglones despues. Se anota la llamada y se verifica al final,
+        // con el programa entero en la mano.
+        if (p->instr_count >= PAED_MAX_INSTRS) {
+            add_error(p, lineno, "demasiadas instrucciones (maximo %d)", PAED_MAX_INSTRS);
+            return;
+        }
+
+        PAEDInstr *llam = &p->instrs[p->instr_count];
+        memset(llam, 0, sizeof(*llam));
+        llam->kind         = PAED_LLAMADA;
+        llam->es_subaccion = 1;
+        llam->salto        = -1;
+        llam->line         = lineno;
+        snprintf(llam->modo, sizeof(llam->modo), "%s", modo);
+        strncpy(llam->proc, nombre, PAED_NAME_MAX - 1);
+
+        // Los argumentos de una subaccion son POSICIONALES: el primero va al
+        // primer parametro y asi. No son pares 'clave = valor' como los de los
+        // procedimientos del lenguaje, porque los nombres de los parametros los
+        // eligio el programador y no tienen por que ser publicos.
+        char *partes[PAED_MAX_ARGS];
+        int   n_partes = split_args(inner, partes, PAED_MAX_ARGS, p, lineno);
+        int   malo     = 0;
+
+        for (int i = 0; i < n_partes; i++) {
+            char *a = trim(partes[i]);
+            if (!*a) continue;
+            if (llam->arg_count >= PAED_MAX_ARGS) {
+                add_error(p, lineno, "demasiados argumentos en la llamada a '%s' (maximo %d)",
+                          nombre, PAED_MAX_ARGS);
+                malo = 1;
+                break;
+            }
+            if (copiar_valor(p, lineno, llam->args[llam->arg_count].val, a, nombre) != 0) {
+                malo = 1;
+                continue;
+            }
+            llam->arg_count++;
+        }
+
+        if (!malo) p->instr_count++;
         return;
     }
 
@@ -2183,6 +2242,24 @@ static void parse_decl(PAEDProgram *p, char *linea, int lineno) {
     if (len > 0 && linea[len - 1] == ';') linea[len - 1] = '\0';
     if (!*trim(linea)) return;
 
+    // 'HV = 99999999;' es como los templates de mezcla y de actualizacion
+    // declaran el centinela. Se ACEPTA y se IGNORA, y eso ultimo es lo
+    // importante: en PAED, HV es un valor de alto propio del lenguaje y tiene
+    // que seguir siendolo. Las claves de los parciales son TEXTO, y
+    // strcmp("99999999", "F1-Ibuprofeno") daria que HV es MENOR — justo al
+    // reves de lo que HV significa (ver PAED.md 2.8).
+    //
+    // Asi el programa del parcial se escribe TAL CUAL y ademas compara bien.
+    {
+        char copia[PAED_LINEA_MAX];
+        snprintf(copia, sizeof(copia), "%s", linea);
+        char *ig = strchr(copia, '=');
+        if (ig) {
+            *ig = '\0';
+            if (kw_es(trim(copia), "HV")) return;
+        }
+    }
+
     char *dosp = strchr(linea, ':');
     if (!dosp) {
         add_error(p, lineno, "declaracion invalida: se esperaba nombre: TIPO;");
@@ -2260,6 +2337,21 @@ static const Grafia GRAFIAS[] = {
     // Cierres de SEGUN: 'FinSegun;' es la forma de Segun.txt.
     { "FINSEGUN",       "FIN_SEGUN"    },
     { "FIN SEGUN",      "FIN_SEGUN"    },
+
+    // Cierres de subaccion. 'Fin_Proc;' y 'FinSubaccion.' salen de los
+    // templates oficiales; ver 05-notacion. 'Fin;' a secas NO entra aca: cierra
+    // tanto una subaccion como la ACCION, y traducirlo a ciegas romperia el
+    // cierre del programa. Se resuelve por contexto mas abajo.
+    { "FINFUNCION",       "FIN_FUNCION"       },
+    { "FIN FUNCION",      "FIN_FUNCION"       },
+    { "FFUNCION",         "FIN_FUNCION"       },
+    { "FINPROCEDIMIENTO", "FIN_PROCEDIMIENTO" },
+    { "FIN PROCEDIMIENTO","FIN_PROCEDIMIENTO" },
+    { "FIN_PROC",         "FIN_PROCEDIMIENTO" },
+    { "FINPROC",          "FIN_PROCEDIMIENTO" },
+    { "FPROC",            "FIN_PROCEDIMIENTO" },
+    { "FINSUBACCION",     "FIN_SUBACCION"     },
+    { "FIN SUBACCION",    "FIN_SUBACCION"     },
 
     // Cierres de REGISTRO: 'freg;' y 'fin_reg;' salen del Tema 12 y del
     // template de corte de control.
@@ -2612,7 +2704,306 @@ static void chequear_claves(PAEDProgram *p) {
     }
 }
 
-typedef enum { FUERA, CABECERA, AMBIENTE, PROCESO, CERRADO } Bloque;
+// ── Subacciones ─────────────────────────────────────────────────────────────
+//
+// Ver parser.h para la forma que tienen y por que el cuerpo va en el mismo
+// instrs[] que el PROCESO principal.
+
+const PAEDSubaccion *paed_subaccion(const PAEDProgram *prog, const char *nombre) {
+    for (int i = 0; i < prog->subaccion_count; i++)
+        if (strcasecmp(prog->subacciones[i].name, nombre) == 0)
+            return &prog->subacciones[i];
+    return NULL;
+}
+
+// El modo de un parametro, tal como lo escribe la catedra ADELANTE del nombre:
+// 'E a: ENTERO'. Devuelve -1 si la palabra no es un modo.
+//
+// VAR es 'por referencia' y es la forma que mas aparece en los templates
+// oficiales. Por referencia significa que entra con valor y sale modificado,
+// que es exactamente ES: no hace falta un cuarto modo.
+static int modo_de_param(const char *p) {
+    if (strcasecmp(p, "E")   == 0) return PAED_PARAM_E;
+    if (strcasecmp(p, "S")   == 0) return PAED_PARAM_S;
+    if (strcasecmp(p, "ES")  == 0) return PAED_PARAM_ES;
+    if (strcasecmp(p, "VAR") == 0) return PAED_PARAM_ES;
+    return -1;
+}
+
+// Un parametro suelto: '[MODO] nombre: TIPO'.
+//
+// El TIPO se guarda como texto y no se valida, igual que en el AMBIENTE: puede
+// traer espacios ('SECUENCIA de caracter') o parentesis ('AN(20)').
+static void parse_param(PAEDProgram *p, PAEDSubaccion *sub, char *texto, int lineno) {
+    char *t = trim(texto);
+    if (!*t) return;
+
+    if (sub->param_count >= PAED_MAX_PARAMS) {
+        add_error(p, lineno, "'%s' tiene mas de %d parametros",
+                  sub->name, PAED_MAX_PARAMS);
+        return;
+    }
+
+    char *dosp = strchr(t, ':');
+    if (!dosp) {
+        add_error(p, lineno,
+                  "parametro sin tipo en '%s': se escribe 'E nombre: TIPO' y falta ': TIPO' en '%s'",
+                  sub->name, t);
+        return;
+    }
+    *dosp = '\0';
+    char *tipo = trim(dosp + 1);
+    char *izq  = trim(t);
+
+    // A la izquierda de los dos puntos puede haber una palabra (el nombre) o
+    // dos (el modo y el nombre). Se parte por el primer espacio.
+    PAEDParam *pa = &sub->params[sub->param_count];
+    memset(pa, 0, sizeof(*pa));
+    pa->modo = PAED_PARAM_E;   // sin modo escrito, entra por valor
+
+    char *esp = izq;
+    while (*esp && !isspace((unsigned char)*esp)) esp++;
+
+    if (*esp) {
+        *esp = '\0';
+        int m = modo_de_param(izq);
+        if (m < 0) {
+            add_error(p, lineno,
+                      "'%s' no es un modo de parametro: los modos son E, S, ES y VAR",
+                      izq);
+            return;
+        }
+        pa->modo = (PAEDModoParam)m;
+        izq = trim(esp + 1);
+    }
+
+    if (!*izq) {
+        add_error(p, lineno, "parametro sin nombre en '%s'", sub->name);
+        return;
+    }
+    if (!es_identificador(izq)) {
+        add_error(p, lineno, "nombre de parametro invalido: '%s'", izq);
+        return;
+    }
+    for (int i = 0; i < sub->param_count; i++)
+        if (strcasecmp(sub->params[i].name, izq) == 0) {
+            add_error(p, lineno, "'%s' tiene dos parametros llamados '%s'", sub->name, izq);
+            return;
+        }
+    if (!*tipo) {
+        add_error(p, lineno, "el parametro '%s' no dice de que tipo es", izq);
+        return;
+    }
+
+    snprintf(pa->name, PAED_NAME_MAX, "%s", izq);
+    snprintf(pa->type, PAED_NAME_MAX, "%s", tipo);
+    sub->param_count++;
+}
+
+// ¿La linea abre una subaccion? Devuelve la palabra clave que uso, o NULL.
+static const char *abre_subaccion(const char *linea) {
+    if (empieza_con(linea, "FUNCION"))       return "FUNCION";
+    if (empieza_con(linea, "PROCEDIMIENTO")) return "PROCEDIMIENTO";
+    if (empieza_con(linea, "SUBACCION"))     return "SUBACCION";
+    return NULL;
+}
+
+// La cabecera entera:
+//
+//     FUNCION sumar(E a: ENTERO; E b: ENTERO): ENTERO
+//     PROCEDIMIENTO saludar(E nombre: AN(20))
+//     Procedimiento InicializarSecuencia(VAR sec: SECUENCIA de caracter);
+//
+// Devuelve la subaccion recien creada, o NULL si la cabecera no sirve.
+static PAEDSubaccion *parse_subaccion_cabecera(PAEDProgram *p, const char *kw,
+                                               char *linea, int lineno) {
+    if (p->subaccion_count >= PAED_MAX_SUBACCIONES) {
+        add_error(p, lineno, "demasiadas subacciones (maximo %d)", PAED_MAX_SUBACCIONES);
+        return NULL;
+    }
+
+    char cab[PAED_LINEA_MAX];
+    snprintf(cab, sizeof(cab), "%s", trim(linea + strlen(kw)));
+
+    // Los templates oficiales terminan la firma con ';' y algunos con '.'.
+    // Ninguno de los dos aporta nada: se sacan antes de leer.
+    for (size_t n = strlen(cab); n > 0 &&
+         (cab[n - 1] == ';' || cab[n - 1] == '.' ||
+          isspace((unsigned char)cab[n - 1])); n = strlen(cab))
+        cab[n - 1] = '\0';
+
+    PAEDSubaccion *sub = &p->subacciones[p->subaccion_count];
+    memset(sub, 0, sizeof(*sub));
+    sub->line       = lineno;
+    sub->es_funcion = (strcasecmp(kw, "FUNCION") == 0);
+    sub->inicio     = -1;
+    sub->fin        = -1;
+
+    // El nombre llega hasta el '(' de los parametros, o hasta el ':' del tipo
+    // de retorno, o hasta el final si no tiene ninguno de los dos.
+    char *par = strchr(cab, '(');
+    char *fin_nombre = par;
+    if (!fin_nombre) fin_nombre = strchr(cab, ':');
+
+    char nombre[PAED_LINEA_MAX];
+    if (fin_nombre) {
+        snprintf(nombre, sizeof(nombre), "%.*s", (int)(fin_nombre - cab), cab);
+    } else {
+        snprintf(nombre, sizeof(nombre), "%s", cab);
+    }
+    char *n = trim(nombre);
+
+    // 'SUBACCION corte_1 ES' — el 'ES' es de la catedra y es OPCIONAL, igual que
+    // en la cabecera de la ACCION. Se saca antes de leer el nombre para que no
+    // se le pegue y termine dando "nombre de subaccion invalido: 'corte_1 ES'".
+    size_t ln = strlen(n);
+    if (ln > 3 && strcasecmp(n + ln - 3, " ES") == 0) {
+        n[ln - 3] = '\0';
+        n = trim(n);
+    }
+
+    if (!*n) {
+        add_error(p, lineno, "falta el nombre despues de %s", kw);
+        return NULL;
+    }
+    if (!es_identificador(n)) {
+        add_error(p, lineno, "nombre de subaccion invalido: '%s'", n);
+        return NULL;
+    }
+    if (paed_subaccion(p, n)) {
+        add_error(p, lineno, "ya hay una subaccion llamada '%s'", n);
+        return NULL;
+    }
+    snprintf(sub->name, PAED_NAME_MAX, "%s", n);
+
+    // ── Los parametros ──
+    char *resto = NULL;
+    if (par) {
+        char *cierra = strrchr(par, ')');
+        if (!cierra) {
+            add_error(p, lineno, "falta ')' en los parametros de '%s'", sub->name);
+            return NULL;
+        }
+        *cierra = '\0';
+        resto   = cierra + 1;
+
+        // Los parametros se separan con ';' en la catedra. Se acepta ',' porque
+        // aparece igual en el corpus y confundirlos no cambia el significado.
+        char *lista = par + 1;
+        char *inicio = lista;
+        for (char *c = lista; ; c++) {
+            if (*c == ';' || *c == ',' || *c == '\0') {
+                char guardado = *c;
+                *c = '\0';
+                parse_param(p, sub, inicio, lineno);
+                if (guardado == '\0') break;
+                inicio = c + 1;
+            }
+        }
+    } else {
+        resto = strchr(cab, ':');
+    }
+
+    // ── El tipo de retorno ──
+    if (resto) {
+        char *dosp = strchr(resto, ':');
+        if (dosp) {
+            char *tipo = trim(dosp + 1);
+            if (!*tipo) {
+                add_error(p, lineno, "'%s' dice que devuelve algo pero no dice de que tipo",
+                          sub->name);
+            } else if (!sub->es_funcion) {
+                // Un PROCEDIMIENTO que declara tipo casi siempre queria ser una
+                // FUNCION. Decirlo asi ahorra la vuelta de "por que no devuelve".
+                add_error(p, lineno,
+                          "un PROCEDIMIENTO no devuelve nada, y '%s' declara que devuelve '%s': "
+                          "si tiene que devolver un valor es una FUNCION",
+                          sub->name, tipo);
+            } else {
+                snprintf(sub->retorno, PAED_NAME_MAX, "%s", tipo);
+            }
+        }
+    }
+
+    if (sub->es_funcion && !*sub->retorno) {
+        add_error(p, lineno,
+                  "'%s' es una FUNCION y no dice que tipo devuelve: se escribe "
+                  "FUNCION %s(...): TIPO", sub->name, sub->name);
+    }
+
+    p->subaccion_count++;
+    return sub;
+}
+
+// Los errores se reportan en el orden en que se ENCONTRARON, y algunos no se
+// encuentran leyendo: las claves, los modos y las llamadas a subacciones se
+// verifican al final, con el programa entero en la mano. Sin ordenar, esos
+// errores caen todos juntos despues de los demas, y quien lee el reporte
+// arregla la linea 30, vuelve a compilar, y recien ahi se entera de que la 9
+// tambien estaba mal.
+//
+// Es una insercion y no un qsort porque tiene que ser ESTABLE: dos errores de
+// la misma linea son independientes, y el orden entre ellos es el orden en que
+// se detectaron, que es el que mejor se lee.
+static void ordenar_errores(PAEDProgram *p) {
+    for (int i = 1; i < p->error_count; i++) {
+        PAEDError e = p->errors[i];
+        int j = i - 1;
+        while (j >= 0 && p->errors[j].line > e.line) {
+            p->errors[j + 1] = p->errors[j];
+            j--;
+        }
+        p->errors[j + 1] = e;
+    }
+}
+
+// Verifica TODAS las llamadas a subacciones de una sola vez, con el programa
+// entero leido. Va aparte del parseo linea por linea porque recien aca se sabe
+// que subacciones existen: una puede llamar a otra declarada mas abajo.
+static void chequear_subacciones(PAEDProgram *p) {
+    for (int i = 0; i < p->instr_count; i++) {
+        PAEDInstr *in = &p->instrs[i];
+        if (in->kind != PAED_LLAMADA || !in->es_subaccion) continue;
+
+        const PAEDSubaccion *sub = paed_subaccion(p, in->proc);
+        if (!sub) {
+            if (g_lib_nombre[0])
+                add_error(p, in->line,
+                          "procedimiento desconocido '%s' (no esta ni en %s ni en %s, "
+                          "y tampoco es una subaccion de este programa)",
+                          in->proc, PAED_SYNTAX_FILE, g_lib_nombre);
+            else
+                add_error(p, in->line,
+                          "procedimiento desconocido '%s' (no esta en %s ni es una "
+                          "subaccion de este programa)", in->proc, PAED_SYNTAX_FILE);
+            continue;
+        }
+
+        // Una FUNCION devuelve un valor: llamarla como instruccion suelta tira
+        // ese valor a la basura, y casi siempre significa que se quiso asignar.
+        if (sub->es_funcion)
+            add_error(p, in->line,
+                      "'%s' es una FUNCION y devuelve un valor: va adentro de una "
+                      "expresion (x := %s(...)), no como instruccion suelta",
+                      sub->name, sub->name);
+
+        if (in->arg_count != sub->param_count)
+            add_error(p, in->line,
+                      "'%s' lleva %d argumento(s) y se le pasaron %d",
+                      sub->name, sub->param_count, in->arg_count);
+
+        // El nombre canonico: la subaccion se guarda como la declaro el
+        // programador, no como la escribio quien la llama.
+        strncpy(in->proc, sub->name, PAED_NAME_MAX - 1);
+    }
+}
+
+// Los tres estados SUB_* son los mismos tres de arriba pero DENTRO de una
+// subaccion. Se duplican en vez de llevar una bandera aparte porque cada linea
+// del archivo cae en exactamente uno, y un estado que hay que cruzar con un
+// booleano para saber que significa es dos estados escritos mal.
+typedef enum { FUERA, CABECERA, AMBIENTE, PROCESO, CERRADO,
+               SUB_CABECERA, SUB_AMBIENTE, SUB_PROCESO } Bloque;
 
 int paed_parse_file(const char *path, PAEDProgram *out) {
     memset(out, 0, sizeof(*out));
@@ -2637,6 +3028,19 @@ int paed_parse_file(const char *path, PAEDProgram *out) {
     // Sub-estado del AMBIENTE: mientras hay un REGISTRO abierto, cada linea es
     // un CAMPO del tipo y no una declaracion de variable. NULL = no hay ninguno.
     PAEDRegistro *reg = NULL;
+
+    // La subaccion que se esta leyendo, NULL si ninguna. `bloque_antes_de_sub`
+    // es a donde se vuelve al cerrarla — CABECERA o AMBIENTE, segun donde
+    // estaba declarada.
+    PAEDSubaccion *sub                = NULL;
+    Bloque         bloque_antes_de_sub = CABECERA;
+
+    // parse_ambiente escribe siempre en out->decls[]. Las declaraciones de una
+    // subaccion son LOCALES, asi que se anota donde empiezan y al cerrarla se
+    // mudan a sub->locales[]. Es mas barato que darle un destino configurable
+    // a todo el parseo del AMBIENTE, y deja esa funcion sin saber que existen
+    // las subacciones.
+    int decl_base_sub = 0;
 
     while (fgets(buf, sizeof(buf), f)) {
         lineno++;
@@ -2689,7 +3093,109 @@ int paed_parse_file(const char *path, PAEDProgram *out) {
             continue;
         }
 
+        // ── Abre una subaccion ──
+        //
+        // Van declaradas ANTES del PROCESO principal: en la cabecera o dentro
+        // del AMBIENTE, que es donde las escriben los parciales.
+        const char *kw_sub = abre_subaccion(linea);
+        if (kw_sub) {
+            if (bloque == SUB_CABECERA || bloque == SUB_AMBIENTE || bloque == SUB_PROCESO) {
+                add_error(out, lineno,
+                          "falta FIN_%s: la subaccion '%s' de la linea %d quedo abierta "
+                          "y aca ya empieza otra",
+                          sub && !sub->es_funcion ? "PROCEDIMIENTO" : "FUNCION",
+                          sub ? sub->name : "?", sub ? sub->line : 0);
+                sub = NULL;
+                bloque = bloque_antes_de_sub;
+            }
+            if (bloque != CABECERA && bloque != AMBIENTE) {
+                add_error(out, lineno,
+                          "las subacciones van despues de ACCION y ANTES del PROCESO principal");
+                continue;
+            }
+            if (reg) {
+                add_error(out, lineno,
+                          "falta FIN_REGISTRO: el registro '%s' de la linea %d quedo "
+                          "abierto y aca ya empieza una subaccion", reg->name, reg->line);
+                reg = NULL;
+            }
+            bloque_antes_de_sub = bloque;
+            decl_base_sub       = out->decl_count;
+            sub                 = parse_subaccion_cabecera(out, kw_sub, linea, lineno);
+            // Si la cabecera no sirvio igual se entra al estado de subaccion:
+            // el motivo ya se reporto, y leer el cuerpo como si fuera del
+            // programa principal soltaria un error por cada linea de adentro.
+            bloque = SUB_CABECERA;
+            continue;
+        }
+
+        // ── Cierra una subaccion ──
+        // 'Fin;' a secas es de catedra y cierra una subaccion. NO esta en
+        // GRAFIAS[] a proposito: ahi se traduciria SIEMPRE, y 'Fin;' tambien
+        // cierra la ACCION entera en algunos templates. Se resuelve por
+        // CONTEXTO — solo cuenta como cierre de subaccion si hay una abierta.
+        int cierra_fin_solo = kw_es(linea, "FIN") &&
+                              (bloque == SUB_CABECERA || bloque == SUB_AMBIENTE ||
+                               bloque == SUB_PROCESO);
+
+        if (cierra_fin_solo || kw_es(linea, "FIN_FUNCION") ||
+            kw_es(linea, "FIN_PROCEDIMIENTO") || kw_es(linea, "FIN_SUBACCION")) {
+            if (bloque != SUB_CABECERA && bloque != SUB_AMBIENTE && bloque != SUB_PROCESO) {
+                add_error(out, lineno, "'%s' no cierra ninguna subaccion abierta", linea);
+                continue;
+            }
+            // El cierre tiene que decir lo mismo que la apertura. FIN_SUBACCION
+            // vale para las dos: es la forma generica de la catedra.
+            if (sub && !kw_es(linea, "FIN_SUBACCION") && !cierra_fin_solo) {
+                int cierra_funcion = kw_es(linea, "FIN_FUNCION");
+                if (cierra_funcion != sub->es_funcion)
+                    add_error(out, lineno,
+                              "'%s' es %s y se cierra con FIN_%s, no con %s",
+                              sub->name,
+                              sub->es_funcion ? "una FUNCION" : "un PROCEDIMIENTO",
+                              sub->es_funcion ? "FUNCION" : "PROCEDIMIENTO",
+                              linea);
+            }
+            for (int i = pila.tope - 1; i >= 0; i--)
+                add_error(out, lineno,
+                          "falta FIN_%s: el %s de la linea %d quedo abierto dentro de la subaccion",
+                          nombre_kind(pila.items[i].kind), nombre_kind(pila.items[i].kind),
+                          pila.items[i].line);
+            pila.tope = 0;
+
+            if (sub) {
+                if (sub->inicio < 0) {
+                    add_error(out, lineno, "la subaccion '%s' no tiene bloque PROCESO", sub->name);
+                    sub->inicio = out->instr_count;
+                }
+                sub->fin = out->instr_count;
+
+                // Las declaraciones que entraron mientras la subaccion estaba
+                // abierta son SUS locales: se mudan y se sacan de la tabla del
+                // programa principal.
+                for (int i = decl_base_sub; i < out->decl_count; i++) {
+                    if (sub->local_count >= PAED_MAX_LOCALES) {
+                        add_error(out, out->decls[i].line,
+                                  "la subaccion '%s' declara mas de %d variables locales",
+                                  sub->name, PAED_MAX_LOCALES);
+                        break;
+                    }
+                    sub->locales[sub->local_count++] = out->decls[i];
+                }
+                out->decl_count = decl_base_sub;
+            }
+
+            bloque = bloque_antes_de_sub;
+            sub    = NULL;
+            continue;
+        }
+
         if (kw_es(linea, "AMBIENTE")) {
+            if (bloque == SUB_CABECERA) {
+                decl_base_sub = out->decl_count;
+                bloque = SUB_AMBIENTE;
+                continue;
+            }
             if (bloque != CABECERA)
                 add_error(out, lineno, "AMBIENTE va justo despues de ACCION ... ES y antes de PROCESO");
             bloque = AMBIENTE;
@@ -2697,8 +3203,18 @@ int paed_parse_file(const char *path, PAEDProgram *out) {
         }
 
         if (kw_es(linea, "PROCESO")) {
+            // El PROCESO de una subaccion: acá empieza SU cuerpo dentro del
+            // instrs[] compartido.
+            if (bloque == SUB_CABECERA || bloque == SUB_AMBIENTE) {
+                if (sub) sub->inicio = out->instr_count;
+                bloque = SUB_PROCESO;
+                continue;
+            }
             if (bloque != CABECERA && bloque != AMBIENTE)
                 add_error(out, lineno, "PROCESO fuera de lugar");
+            // Donde arranca el programa de verdad. Todo lo que quedo antes en
+            // instrs[] es cuerpo de alguna subaccion y no se ejecuta solo.
+            out->proceso_inicio = out->instr_count;
             // Un REGISTRO no puede quedar abierto cruzando al PROCESO. Se dice
             // ACA, en la linea donde se nota, y no al final del archivo: el
             // ultimo renglon del .paed no tiene nada que ver con el problema.
@@ -2780,6 +3296,16 @@ int paed_parse_file(const char *path, PAEDProgram *out) {
             case CERRADO:
                 add_error(out, lineno, "instruccion despues de FIN_ACCION");
                 break;
+            case SUB_AMBIENTE: parse_ambiente(out, linea, lineno, &reg); break;
+            case SUB_PROCESO:
+                if (!parse_bloque(out, linea, lineno, &pila))
+                    parse_sentencias(out, linea, lineno);
+                break;
+            case SUB_CABECERA:
+                add_error(out, lineno,
+                          "instruccion antes del PROCESO de la subaccion '%s'",
+                          sub ? sub->name : "?");
+                break;
         }
     }
 
@@ -2790,12 +3316,17 @@ int paed_parse_file(const char *path, PAEDProgram *out) {
     // linea eso no se puede saber.
     chequear_claves(out);
     chequear_modos(out);
+    chequear_subacciones(out);
+    ordenar_errores(out);
 
     if (bloque == FUERA)  add_error(out, lineno, "falta ACCION <nombre> ES");
     if (bloque == CABECERA || bloque == AMBIENTE) add_error(out, lineno, "falta PROCESO");
     if (reg) add_error(out, lineno, "falta FIN_REGISTRO: el registro '%s' de la linea %d quedo abierto",
                        reg->name, reg->line);
     if (bloque == PROCESO) add_error(out, lineno, "falta el cierre: FIN_ACCION o FINACCION");
+    if (sub) add_error(out, lineno,
+                       "falta FIN_%s: la subaccion '%s' de la linea %d nunca se cerro",
+                       sub->es_funcion ? "FUNCION" : "PROCEDIMIENTO", sub->name, sub->line);
 
     return out->error_count == 0 ? 0 : -1;
 }

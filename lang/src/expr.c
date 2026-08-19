@@ -19,8 +19,16 @@ void env_init(Entorno *e) {
 
 // Busca la ENTRADA de la tabla, no su valor: env_buscar devuelve el escalar, y
 // para un arreglo eso no sirve (hay que llegar a los limites y al offset).
+// Se recorre DESDE EL FINAL a proposito. La tabla es una pila: cuando una
+// subaccion declara un parametro que se llama igual que una variable global, la
+// entrada de la subaccion es la mas nueva, y buscar de atras para adelante hace
+// que sea ella la que se encuentre. Eso es, exactamente, que una local tape a
+// una global.
+//
+// Con nombres unicos — que es todo lo que habia antes de las subacciones — da
+// el mismo resultado que recorrerla al derecho.
 static Variable *env_entrada(Entorno *e, const char *nombre) {
-    for (int i = 0; i < e->count; i++)
+    for (int i = e->count - 1; i >= 0; i--)
         if (strcmp(e->items[i].nombre, nombre) == 0)
             return &e->items[i];
     return NULL;
@@ -56,6 +64,45 @@ int env_set(Entorno *e, const char *nombre, Valor v) {
     snprintf(nueva->nombre, PAED_NAME_MAX, "%s", nombre);
     nueva->valor = v;
     return 0;
+}
+
+// Los ganchos al interprete para las FUNCION del propio programa. Ver expr.h.
+static PaedFnExiste g_fn_existe = NULL;
+static PaedFnLlamar g_fn_llamar = NULL;
+static void        *g_fn_ud     = NULL;
+
+void expr_set_funcion(PaedFnExiste existe, PaedFnLlamar llamar, void *ud) {
+    g_fn_existe = existe;
+    g_fn_llamar = llamar;
+    g_fn_ud     = ud;
+}
+
+int env_push(Entorno *e, const char *nombre, Valor v) {
+    if (e->count >= PAED_MAX_VARS) {
+        snprintf(e->error, PAED_MSG_MAX,
+                 "no entran mas variables (maximo %d): demasiadas llamadas anidadas?",
+                 PAED_MAX_VARS);
+        return -1;
+    }
+    Variable *nueva = &e->items[e->count++];
+    memset(nueva, 0, sizeof(*nueva));
+    snprintf(nueva->nombre, PAED_NAME_MAX, "%s", nombre);
+    nueva->valor = v;
+    return 0;
+}
+
+Valor *env_buscar_marco(Entorno *e, const char *nombre, int desde) {
+    if (desde < 0) desde = 0;
+    for (int i = e->count - 1; i >= desde; i--)
+        if (strcmp(e->items[i].nombre, nombre) == 0)
+            return &e->items[i].valor;
+    return NULL;
+}
+
+void env_truncar(Entorno *e, int count, int pool_usado) {
+    if (count < 0 || count > e->count) return;
+    e->count      = count;
+    e->pool_usado = pool_usado;
 }
 
 int env_existe(Entorno *e, const char *nombre) {
@@ -127,6 +174,9 @@ int valor_verdadero(const Valor *v) {
         case VAL_NUM:    return v->num != 0.0;
         case VAL_TEXTO:  return v->texto[0] != '\0';
         case VAL_ALTO:   return 1;   // HV no es cero ni vacio: es el tope
+        // Declarada y sin asignar. No deberia llegar aca: leerla ya dio "no
+        // tiene valor todavia". Se contesta falso para no inventar nada.
+        case VAL_VACIO:  return 0;
     }
     return 0;
 }
@@ -144,6 +194,11 @@ void valor_a_texto(const Valor *v, char *out, size_t out_size) {
         // 999999999 que hay que reconocer de memoria.
         case VAL_ALTO:
             snprintf(out, out_size, "HV");
+            break;
+        // Igual que arriba: si llegara a imprimirse, que se lea que no tiene
+        // valor y no un 0 que parece un dato.
+        case VAL_VACIO:
+            snprintf(out, out_size, "(sin valor)");
             break;
         case VAL_NUM:
             // Un entero se muestra sin coma: 4 y no 4.000000. En AED la
@@ -426,6 +481,46 @@ static Valor primario(Ctx *c) {
                 return LOG(quiere_fin ? a->fin : !a->fin);
             }
 
+            // ── Una FUNCION del propio programa ──
+            //
+            // Se pregunta ANTES que por las builtin porque estas pueden llevar
+            // VARIOS argumentos, y el camino de las builtin lee uno solo: con
+            // 'sumar(3, 5)' se comeria el 3 y despues se quejaria de que falta
+            // el ')' que en realidad esta, mandando a mirar la linea equivocada.
+            if (g_fn_existe && g_fn_existe(nombre, g_fn_ud)) {
+                Valor args[PAED_MAX_ARGS];
+                int   n_args = 0;
+
+                espacios(c);
+                if (*c->p != ')') {
+                    for (;;) {
+                        if (n_args >= PAED_MAX_ARGS) {
+                            falla(c, "demasiados argumentos en la llamada a %s (maximo %d)",
+                                  nombre, PAED_MAX_ARGS);
+                            return NUM(0);
+                        }
+                        args[n_args++] = eval_o(c);
+                        if (c->fallo) return NUM(0);
+                        espacios(c);
+                        if (*c->p != ',') break;
+                        c->p++;
+                    }
+                }
+                espacios(c);
+                if (*c->p != ')') { falla(c, "falta ')' al cerrar %s", nombre); return NUM(0); }
+                c->p++;
+
+                Valor out;
+                memset(&out, 0, sizeof(out));
+                char motivo[PAED_MSG_MAX] = {0};
+                if (!g_fn_llamar ||
+                    g_fn_llamar(nombre, args, n_args, &out, motivo, sizeof(motivo), g_fn_ud) != 0) {
+                    falla(c, "%s", motivo[0] ? motivo : "la funcion fallo");
+                    return NUM(0);
+                }
+                return out;
+            }
+
             Valor arg = {0};
             espacios(c);
             int hay_arg = (*c->p != ')');
@@ -443,6 +538,9 @@ static Valor primario(Ctx *c) {
         }
 
         Valor *v = env_buscar(c->env, nombre);
+        // Declarada pero sin asignar: existe en la tabla y aun asi no tiene
+        // valor. Se trata igual que si no existiera — es el mismo error.
+        if (v && v->tipo == VAL_VACIO) v = NULL;
         if (!v) {
             // env_buscar deja un motivo mejor cuando el nombre SI existe pero
             // es un arreglo usado sin indice. Solo si no dijo nada se cae al

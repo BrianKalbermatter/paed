@@ -1,0 +1,50 @@
+// Las formas que usa el TEMPLATE DE CORTE DE CONTROL, y sin las cuales no se
+// puede escribir uno.
+//
+//   1. llamada SIN parentesis:  tratar_corte;  y  corte_2  (ni siquiera el ';')
+//   2. SUBACCION <nombre> ES
+//   3. cierre con 'Fin;' a secas
+//
+// El template escribe:
+//
+//     Inicializar
+//     MIENTRAS NFDA(arch) HACER
+//         tratar_corte;
+//         LEER(arch, r);
+//     FIN_MIENTRAS
+//     corte_3;
+
+ACCION formas_catedra ES
+AMBIENTE
+    n: ENTERO;
+    total: ENTERO;
+
+SUBACCION inicializar ES
+PROCESO
+    n := 0;
+    total := 0;
+FIN_SUBACCION
+
+Procedimiento sumar_uno
+Proceso
+    n := n + 1;
+    total := total + n;
+Fin;
+
+SUBACCION emitir ES
+PROCESO
+    ESCRIBIR("n=", n, " total=", total);
+FIN_SUBACCION
+
+PROCESO
+    inicializar;
+    MIENTRAS (n < 4) HACER
+        sumar_uno;
+    FIN_MIENTRAS
+    emitir
+    ESCRIBIR("listo");
+FIN_ACCION
+
+// ── SALIDA ESPERADA ──
+// n=4 total=10
+// listo

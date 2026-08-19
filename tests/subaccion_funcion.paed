@@ -1,0 +1,30 @@
+// FUNCION: retorna asignandole al PROPIO NOMBRE, y se usa en una expresion.
+//
+// Lo que se prueba: el retorno por nombre, la llamada adentro de una
+// expresion, y que una funcion pueda llamar a otra.
+
+ACCION prueba_funcion ES
+AMBIENTE
+    r: ENTERO;
+
+FUNCION sumar(E a: ENTERO; E b: ENTERO): ENTERO
+PROCESO
+    sumar := a + b;
+FIN_FUNCION
+
+FUNCION doble(E n: ENTERO): ENTERO
+PROCESO
+    doble := sumar(n, n);
+FIN_FUNCION
+
+PROCESO
+    r := sumar(3, 5);
+    ESCRIBIR("sumar(3,5) = ", r);
+    ESCRIBIR("doble(7) = ", doble(7));
+    ESCRIBIR("anidado = ", sumar(doble(2), sumar(1, 1)));
+FIN_ACCION
+
+// ── SALIDA ESPERADA ──
+// sumar(3,5) = 8
+// doble(7) = 14
+// anidado = 6

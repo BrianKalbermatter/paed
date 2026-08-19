@@ -30,6 +30,12 @@
 // Cuantos campos puede tener la clave de un archivo. El corpus llega a cuatro
 // ('ordenado por clave3, clave2, clave1, clave0'), asi que 4 alcanza y sobra.
 #define PAED_MAX_CLAVE      4
+// Subacciones. Un corte de control de parcial usa cuatro o cinco (leer, corte
+// por cada nivel, tratar), asi que doce sobra. El limite existe porque
+// PAEDProgram va entero en la pila y ya pesa casi un mega.
+#define PAED_MAX_SUBACCIONES 12
+#define PAED_MAX_PARAMS       8
+#define PAED_MAX_LOCALES      8
 
 // El archivo con la definicion formal del lenguaje. Vive en el DIRECTORIO DE
 // DATOS, que se resuelve en runtime — ver paed_datadir().
@@ -182,6 +188,13 @@ typedef struct {
     // tenga que recorrer instrucciones adivinando cuales son de este SEGUN y
     // cuales de uno anidado adentro.
     int     siguiente;
+
+    // La llamada es a una SUBACCION del propio programa y no a un
+    // procedimiento de sintaxis.json. Se marca al parsear porque en ese
+    // momento todavia no se sabe si la subaccion existe — puede estar
+    // declarada mas abajo — y la verificacion se hace al final, con el archivo
+    // entero leido. Los argumentos van posicionales, con la clave vacia.
+    int     es_subaccion;
 } PAEDInstr;
 
 typedef struct {
@@ -208,6 +221,65 @@ typedef struct {
     int      line;
 } PAEDRegistro;
 
+// ── Subacciones: FUNCION y PROCEDIMIENTO ────────────────────────────────────
+//
+// Una subaccion es un bloque con nombre propio. La catedra tiene dos:
+//
+//     FUNCION sumar(E a: ENTERO; E b: ENTERO): ENTERO
+//     PROCESO
+//         sumar := a + b;        // retorna asignandole AL PROPIO NOMBRE
+//     FIN_FUNCION
+//
+//     PROCEDIMIENTO saludar(E nombre: AN(20))
+//     PROCESO
+//         ESCRIBIR('Hola, ', nombre);
+//     FIN_PROCEDIMIENTO
+//
+// La FUNCION devuelve un valor y se usa adentro de una expresion; el
+// PROCEDIMIENTO no devuelve nada y se llama como una instruccion suelta.
+//
+// ── Donde vive el cuerpo ────────────────────────────────────────────────────
+//
+// En el MISMO instrs[] que el PROCESO principal. Cada subaccion guarda su
+// rango [inicio, fin) y llamarla es correr ese rango — que es exactamente lo
+// que ya hace el interprete con un contador de programa, y por eso no hace
+// falta una segunda maquinaria para ejecutar subacciones.
+//
+// Como las subacciones se declaran ANTES del PROCESO principal, sus
+// instrucciones quedan al principio del array. Por eso PAEDProgram guarda
+// donde arranca el programa de verdad: `proceso_inicio`.
+
+// Como se pasa un parametro. La catedra escribe el modo ADELANTE del nombre:
+// `E a: ENTERO`.
+typedef enum {
+    PAED_PARAM_E = 0,   // Entrada:        se copia; lo que pase adentro no sale
+    PAED_PARAM_S,       // Salida:         no entra valor, sale el que quedo
+    PAED_PARAM_ES,      // Entrada/Salida: entra con valor y sale modificado
+} PAEDModoParam;
+
+typedef struct {
+    char          name[PAED_NAME_MAX];
+    char          type[PAED_NAME_MAX];
+    PAEDModoParam modo;
+} PAEDParam;
+
+typedef struct {
+    char      name[PAED_NAME_MAX];
+    int       es_funcion;                    // 1 FUNCION, 0 PROCEDIMIENTO
+    char      retorno[PAED_NAME_MAX];        // tipo que devuelve; vacio si no
+    PAEDParam params[PAED_MAX_PARAMS];
+    int       param_count;
+
+    // El AMBIENTE propio de la subaccion. Son variables LOCALES: nacen al
+    // entrar y mueren al salir, y mientras viven tapan a una global que se
+    // llame igual.
+    PAEDDecl  locales[PAED_MAX_LOCALES];
+    int       local_count;
+
+    int       inicio, fin;                   // rango en prog->instrs[]
+    int       line;
+} PAEDSubaccion;
+
 typedef struct {
     char      path[PAED_PATH_MAX];
     char      name[PAED_NAME_MAX];          // el <nombre> de ACCION <nombre> ES
@@ -219,7 +291,19 @@ typedef struct {
     int       instr_count;
     PAEDError errors [PAED_MAX_ERRORS];
     int       error_count;
+
+    PAEDSubaccion subacciones[PAED_MAX_SUBACCIONES];
+    int           subaccion_count;
+
+    // Donde arranca el PROCESO principal dentro de instrs[]. Todo lo que esta
+    // antes es cuerpo de alguna subaccion y NO se ejecuta al correr el
+    // programa: se ejecuta solo cuando alguien la llama.
+    int       proceso_inicio;
 } PAEDProgram;
+
+// Busca una subaccion por nombre, sin distinguir mayusculas (las keywords de
+// PAED tampoco las distinguen). Devuelve NULL si no existe.
+const PAEDSubaccion *paed_subaccion(const PAEDProgram *prog, const char *nombre);
 
 // ── Donde vive la definicion del lenguaje ────────────────────────────────────
 //

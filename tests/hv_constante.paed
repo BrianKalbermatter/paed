@@ -1,0 +1,29 @@
+// HV declarado como CONSTANTE, que es como lo escriben los templates de mezcla
+// y de actualizacion: 'HV = 99999999;' en el AMBIENTE.
+//
+// PAED lo ACEPTA y lo IGNORA. HV sigue siendo un valor de alto propio del
+// lenguaje, y tiene que seguir siendolo: las claves de los parciales son TEXTO,
+// y strcmp("99999999", "F1-Ibuprofeno") daria que HV es MENOR — justo al reves
+// de lo que HV significa.
+//
+// O sea: el programa del parcial se escribe tal cual y corre, y la comparacion
+// da lo correcto igual.
+
+ACCION hv_constante ES
+AMBIENTE
+    HV = 99999999;
+    clave: AN(20);
+
+PROCESO
+    clave := "F1-Ibuprofeno";
+    SI (clave < HV) ENTONCES
+        ESCRIBIR("HV gana contra texto, como tiene que ser");
+    FIN_SI
+    SI (100 < HV) ENTONCES
+        ESCRIBIR("y contra numeros tambien");
+    FIN_SI
+FIN_ACCION
+
+// ── SALIDA ESPERADA ──
+// HV gana contra texto, como tiene que ser
+// y contra numeros tambien

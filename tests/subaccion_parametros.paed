@@ -1,0 +1,35 @@
+// Parametros por valor (modo E): el argumento se COPIA.
+//
+// Lo que se prueba: que cada llamada vea sus propios valores, y que modificar
+// un parametro E adentro NO toque la variable del que llamo.
+
+ACCION prueba_parametros ES
+AMBIENTE
+    x: ENTERO;
+
+PROCEDIMIENTO mostrar(E a: ENTERO; E b: ENTERO)
+PROCESO
+    ESCRIBIR(a, " + ", b, " = ", a + b);
+FIN_PROCEDIMIENTO
+
+PROCEDIMIENTO pisar(E v: ENTERO)
+PROCESO
+    v := 99;
+    ESCRIBIR("adentro v vale ", v);
+FIN_PROCEDIMIENTO
+
+PROCESO
+    mostrar(2, 3);
+    mostrar(10, 20);
+    x := 5;
+    mostrar(x, x * 2);
+    pisar(x);
+    ESCRIBIR("afuera x sigue valiendo ", x);
+FIN_ACCION
+
+// ── SALIDA ESPERADA ──
+// 2 + 3 = 5
+// 10 + 20 = 30
+// 5 + 10 = 15
+// adentro v vale 99
+// afuera x sigue valiendo 5

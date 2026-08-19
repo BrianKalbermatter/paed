@@ -1,0 +1,34 @@
+// PROCEDIMIENTO sin parametros: el caso mas chico de punta a punta.
+//
+// Lo que se prueba: que la subaccion se declare, que su cuerpo NO se ejecute
+// donde esta escrito, y que la llamada salte adentro y vuelva a la linea que
+// sigue.
+
+ACCION prueba_procedimiento ES
+AMBIENTE
+    n: ENTERO;
+
+PROCEDIMIENTO saludar()
+PROCESO
+    ESCRIBIR("hola desde la subaccion");
+FIN_PROCEDIMIENTO
+
+PROCESO
+    ESCRIBIR("antes");
+    saludar();
+    ESCRIBIR("despues");
+    n := 2;
+    MIENTRAS (n > 0) HACER
+        saludar();
+        n := n - 1;
+    FIN_MIENTRAS
+    ESCRIBIR("fin");
+FIN_ACCION
+
+// ── SALIDA ESPERADA ──
+// antes
+// hola desde la subaccion
+// despues
+// hola desde la subaccion
+// hola desde la subaccion
+// fin
