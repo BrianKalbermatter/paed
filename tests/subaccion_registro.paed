@@ -1,0 +1,62 @@
+// Pasarle un REGISTRO a una subaccion.
+//
+// Un registro no es un valor suelto: el interprete lo APLANA en una variable
+// por campo ('r.leg', 'r.nom'). Pasarlo por parametro es pasar todos sus campos
+// de una, y devolverlo es devolverlos todos.
+//
+// Se prueba E (copia, no sale) y VAR (por referencia, sale modificado).
+
+ACCION prueba_registro ES
+AMBIENTE
+    alumno = REGISTRO
+        legajo: ENTERO;
+        nombre: AN(20);
+        nota: REAL;
+    FIN_REGISTRO
+
+    r: alumno;
+    otro: alumno;
+
+PROCEDIMIENTO mostrar(E a: alumno)
+PROCESO
+    ESCRIBIR(a.legajo, " ", a.nombre, " ", a.nota);
+FIN_PROCEDIMIENTO
+
+PROCEDIMIENTO pisar(E a: alumno)
+PROCESO
+    a.nota := 0;
+    ESCRIBIR("adentro la nota es ", a.nota);
+FIN_PROCEDIMIENTO
+
+PROCEDIMIENTO aprobar(VAR a: alumno)
+PROCESO
+    a.nota := 10;
+FIN_PROCEDIMIENTO
+
+FUNCION esta_aprobado(E a: alumno): LOGICO
+PROCESO
+    esta_aprobado := a.nota >= 6;
+FIN_FUNCION
+
+PROCESO
+    r.legajo := 101; r.nombre := "Ana"; r.nota := 8.5;
+    mostrar(r);
+
+    pisar(r);
+    ESCRIBIR("afuera la nota sigue en ", r.nota);
+
+    otro.legajo := 202; otro.nombre := "Beto"; otro.nota := 3;
+    aprobar(otro);
+    ESCRIBIR("despues de VAR: ", otro.nombre, " ", otro.nota);
+
+    SI (esta_aprobado(otro)) ENTONCES
+        ESCRIBIR(otro.nombre, " aprobo");
+    FIN_SI
+FIN_ACCION
+
+// ── SALIDA ESPERADA ──
+// 101 Ana 8.5
+// adentro la nota es 0
+// afuera la nota sigue en 8.5
+// despues de VAR: Beto 10
+// Beto aprobo

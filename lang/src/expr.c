@@ -236,6 +236,54 @@ static void espacios(Ctx *c) {
     while (*c->p && isspace((unsigned char)*c->p)) c->p++;
 }
 
+// Copia CRUDO el texto del argumento que arranca en el cursor, hasta la ',' o
+// el ')' que lo cierra. Cuenta los parentesis para no cortar en la coma de una
+// llamada anidada, y respeta las comillas para no cortar en la coma de un texto.
+//
+// No se evalua nada aca: ver PaedFnLlamar en expr.h para el porque.
+static int copiar_argumento(Ctx *c, char *out, size_t out_n, const char *nombre) {
+    espacios(c);
+
+    const char *ini    = c->p;
+    int         hondo  = 0;
+    char        comilla = 0;
+
+    while (*c->p) {
+        char ch = *c->p;
+
+        if (comilla) {
+            if (ch == comilla) comilla = 0;
+        } else if (ch == '\'' || ch == '"') {
+            comilla = ch;
+        } else if (ch == '(' || ch == '[') {
+            hondo++;
+        } else if (ch == ')' || ch == ']') {
+            if (ch == ')' && hondo == 0) break;
+            hondo--;
+        } else if (ch == ',' && hondo == 0) {
+            break;
+        }
+        c->p++;
+    }
+
+    size_t largo = (size_t)(c->p - ini);
+    while (largo > 0 && isspace((unsigned char)ini[largo - 1])) largo--;
+
+    if (largo == 0) {
+        falla(c, "argumento vacio en la llamada a %s", nombre);
+        return -1;
+    }
+    if (largo >= out_n) {
+        falla(c, "argumento demasiado largo en la llamada a %s", nombre);
+        return -1;
+    }
+
+    memcpy(out, ini, largo);
+    out[largo] = '\0';
+    return 0;
+}
+
+
 // Consume un simbolo si esta. Los mas largos se prueban primero desde el que
 // llama: si '<' se probara antes que '<=', "a <= b" se leeria como "a < (= b)".
 static int simbolo(Ctx *c, const char *s) {
@@ -488,8 +536,9 @@ static Valor primario(Ctx *c) {
             // 'sumar(3, 5)' se comeria el 3 y despues se quejaria de que falta
             // el ')' que en realidad esta, mandando a mirar la linea equivocada.
             if (g_fn_existe && g_fn_existe(nombre, g_fn_ud)) {
-                Valor args[PAED_MAX_ARGS];
-                int   n_args = 0;
+                char        textos[PAED_MAX_ARGS][PAED_VAL_MAX];
+                const char *args[PAED_MAX_ARGS];
+                int         n_args = 0;
 
                 espacios(c);
                 if (*c->p != ')') {
@@ -499,9 +548,10 @@ static Valor primario(Ctx *c) {
                                   nombre, PAED_MAX_ARGS);
                             return NUM(0);
                         }
-                        args[n_args++] = eval_o(c);
-                        if (c->fallo) return NUM(0);
-                        espacios(c);
+                        if (copiar_argumento(c, textos[n_args], PAED_VAL_MAX, nombre) != 0)
+                            return NUM(0);
+                        args[n_args] = textos[n_args];
+                        n_args++;
                         if (*c->p != ',') break;
                         c->p++;
                     }

@@ -165,9 +165,15 @@ int expr_eval(const char *texto, Entorno *env, Valor *out);
 // ¿`nombre` es una FUNCION declarada en este programa?
 typedef int (*PaedFnExiste)(const char *nombre, void *ud);
 
-// Corre la funcion con los argumentos ya evaluados. Devuelve 0 si salio bien,
-// -1 si no, y en ese caso deja el motivo en `error`.
-typedef int (*PaedFnLlamar)(const char *nombre, const Valor *args, int n,
+// Corre la funcion. Recibe el TEXTO de cada argumento, no su valor, y es a
+// proposito: un REGISTRO no tiene un valor suelto que se pueda pasar — el
+// interprete lo aplana en una variable por campo, asi que `mostrar(r)` necesita
+// el NOMBRE 'r' para poder leer 'r.legajo' y 'r.nombre'. Evaluarlo antes daria
+// "la variable 'r' no tiene valor todavia", que es verdad y no sirve para nada.
+//
+// El que evalua es el interprete, que es el unico que sabe que espera cada
+// parametro. Devuelve 0 si salio bien, -1 si no, con el motivo en `error`.
+typedef int (*PaedFnLlamar)(const char *nombre, const char *const *args, int n,
                             Valor *out, char *error, size_t error_n, void *ud);
 
 void expr_set_funcion(PaedFnExiste existe, PaedFnLlamar llamar, void *ud);

@@ -574,7 +574,16 @@ static long g_pasos = 0;
 // Cuantas llamadas anidadas se permiten. Una subaccion que se llama a si misma
 // sin condicion de corte se come la pila del proceso de C, y eso no es un error
 // del programa PAED: es un cuelgue del interprete. Se corta antes.
-#define PAED_MAX_ANIDADO 64
+//
+// El numero sale de una cuenta, no del aire: cada llamada apoya en la pila los
+// buffers de entrada y salida de los parametros REGISTRO —
+// PAED_MAX_PARAMS x PAED_MAX_CAMPOS x sizeof(Valor) x 2, o sea unos 38 KB — asi
+// que 32 niveles son ~1,2 MB de los 8 MB que da el sistema por defecto. Un corte
+// de control anida tres o cuatro, asi que sobra de lejos.
+//
+// Si algun dia se suben PAED_MAX_PARAMS o PAED_MAX_CAMPOS, esta cuenta se paga
+// multiplicada. Bajar este numero es la valvula.
+#define PAED_MAX_ANIDADO 32
 static int g_profundidad = 0;
 
 // ── Llamar a una subaccion ──────────────────────────────────────────────────
@@ -611,18 +620,18 @@ static Valor vacio(void) {
 // instrucciones.
 static const PAEDInstr *g_instr_actual = NULL;
 
-// El nucleo. Recibe los argumentos YA EVALUADOS porque los dos caminos que
-// llegan aca los consiguen distinto: la llamada suelta los saca del texto de la
-// instruccion, y la llamada dentro de una expresion los recibe del evaluador.
+// El nucleo de una llamada. Recibe el TEXTO de cada argumento, no su valor.
 //
-// `destinos` son los nombres de las variables del que llama, uno por parametro,
-// para poder devolverles el valor a los parametros S y ES. Es NULL cuando la
-// llamada viene de una expresion: ahi no hay variables donde escribir, y por
-// eso una FUNCION con parametros de salida se rechaza en vez de perderlos en
-// silencio.
+// Es a proposito, y el motivo es el REGISTRO: el interprete lo aplana en una
+// variable por campo, asi que 'r' a secas no tiene ningun valor y `mostrar(r)`
+// necesita el NOMBRE para poder leer 'r.legajo' y 'r.nombre'. Evaluar primero
+// daria "la variable 'r' no tiene valor todavia" — verdad, e inutil.
+//
+// `permite_salida` es 0 cuando la llamada viene de una expresion: ahi no hay a
+// donde devolver, asi que un parametro S o ES se rechaza en vez de perderse.
 static int llamar_subaccion(const PAEDProgram *prog, const PAEDInstr *in,
-                            const PAEDSubaccion *sub, const Valor *entra,
-                            const char *const *destinos, Valor *retorno) {
+                            const PAEDSubaccion *sub, const char *const *arg,
+                            int n, int permite_salida, Valor *retorno) {
     char msg[PAED_MSG_MAX];
 
     if (g_profundidad >= PAED_MAX_ANIDADO) {
@@ -632,26 +641,124 @@ static int llamar_subaccion(const PAEDProgram *prog, const PAEDInstr *in,
         runtime_error(prog, in, msg);
         return -1;
     }
+    if (n != sub->param_count) {
+        snprintf(msg, sizeof(msg), "'%s' lleva %d argumento(s) y se le pasaron %d",
+                 sub->name, sub->param_count, n);
+        runtime_error(prog, in, msg);
+        return -1;
+    }
 
-    // ── 1. el marco ──
+    // ── 1. leer lo que entra, EN EL ENTORNO DEL QUE LLAMA ──
     //
-    // De aca en mas todo lo que se declare es LOCAL: env_push crea una entrada
-    // nueva aunque ya exista una con ese nombre, y como env_buscar mira de atras
-    // para adelante, estos nombres TAPAN a los globales que se llamen igual.
+    // Todo esto pasa antes de abrir el marco. Si se hiciera despues, un
+    // argumento que se llama igual que un parametro leeria el parametro recien
+    // creado — vacio — en vez de su propia variable.
+    const PAEDRegistro *reg_de[PAED_MAX_PARAMS];
+    Valor               entra[PAED_MAX_PARAMS];
+    Valor               campos[PAED_MAX_PARAMS][PAED_MAX_CAMPOS];
+
+    memset(entra,  0, sizeof(entra));
+    memset(campos, 0, sizeof(campos));
+
+    for (int k = 0; k < sub->param_count; k++) {
+        const PAEDParam *pa = &sub->params[k];
+        reg_de[k] = registro_de(prog, pa->type);
+
+        int devuelve = (pa->modo != PAED_PARAM_E);
+
+        if (devuelve && !permite_salida) {
+            snprintf(msg, sizeof(msg),
+                     "'%s' se uso adentro de una expresion y su parametro '%s' devuelve un "
+                     "valor: una subaccion que devuelve por parametro se llama como instruccion",
+                     sub->name, pa->name);
+            runtime_error(prog, in, msg);
+            return -1;
+        }
+
+        // ── Parametro de tipo REGISTRO ──
+        if (reg_de[k]) {
+            if (!es_destino(arg[k])) {
+                snprintf(msg, sizeof(msg),
+                         "el parametro '%s' de '%s' es un REGISTRO, asi que hay que pasarle una "
+                         "variable de ese tipo, y '%s' no lo es",
+                         pa->name, sub->name, arg[k]);
+                runtime_error(prog, in, msg);
+                return -1;
+            }
+            if (pa->modo == PAED_PARAM_S) continue;   // no entra nada: lo llena adentro
+
+            for (int c = 0; c < reg_de[k]->campo_count; c++) {
+                char completo[PAED_NAME_MAX];
+                snprintf(completo, sizeof(completo), "%s.%s", arg[k], reg_de[k]->campos[c].name);
+
+                Valor *v = env_buscar(&env, completo);
+                if (!v) {
+                    snprintf(msg, sizeof(msg),
+                             "'%s' no es un registro '%s': no tiene el campo '%s'",
+                             arg[k], pa->type, reg_de[k]->campos[c].name);
+                    runtime_error(prog, in, msg);
+                    return -1;
+                }
+                campos[k][c] = *v;
+            }
+            continue;
+        }
+
+        // ── Parametro escalar ──
+        if (pa->modo == PAED_PARAM_S) continue;   // no trae valor: lo llena adentro
+
+        // ES y VAR son POR REFERENCIA: se pasa la variable, no su contenido, asi
+        // que todavia sin valor es legitimo. El template de la catedra
+        // 'InicializarSecuencia(VAR sec_local: ...)' existe justo para eso.
+        if (pa->modo == PAED_PARAM_ES && es_destino(arg[k])) {
+            Valor *actual = env_buscar(&env, arg[k]);
+            if (!actual || actual->tipo == VAL_VACIO) continue;
+        }
+
+        if (expr_eval(arg[k], &env, &entra[k]) != 0) {
+            runtime_error(prog, in, env.error);
+            return -1;
+        }
+    }
+
+    // A un parametro que devuelve hay que pasarle una VARIABLE: no se le puede
+    // asignar a '2 + 2'. Se chequea antes de entrar, asi el error sale con la
+    // llamada y no a la vuelta.
+    for (int k = 0; k < sub->param_count; k++) {
+        if (sub->params[k].modo == PAED_PARAM_E) continue;
+        if (!es_destino(arg[k])) {
+            snprintf(msg, sizeof(msg),
+                     "el parametro '%s' de '%s' devuelve un valor, asi que hay que pasarle una "
+                     "variable, y '%s' no lo es",
+                     sub->params[k].name, sub->name, arg[k]);
+            runtime_error(prog, in, msg);
+            return -1;
+        }
+    }
+
+    // ── 2. el marco ──
     int base_vars = env.count;
     int base_pool = env.pool_usado;
 
     for (int k = 0; k < sub->param_count; k++) {
-        if (!destinos && sub->params[k].modo != PAED_PARAM_E) {
-            snprintf(msg, sizeof(msg),
-                     "'%s' se uso adentro de una expresion y su parametro '%s' devuelve un "
-                     "valor: una funcion que devuelve por parametro se llama como instruccion",
-                     sub->name, sub->params[k].name);
-            runtime_error(prog, in, msg);
-            env_truncar(&env, base_vars, base_pool);
-            return -1;
+        int mal = 0;
+
+        if (reg_de[k]) {
+            // Un registro se pasa APLANADO, igual que se declara: una variable
+            // por campo. Adentro, 'a.nota' es una variable comun del marco.
+            for (int c = 0; c < reg_de[k]->campo_count && !mal; c++) {
+                char completo[PAED_NAME_MAX];
+                snprintf(completo, sizeof(completo), "%s.%s",
+                         sub->params[k].name, reg_de[k]->campos[c].name);
+                Valor v = (sub->params[k].modo == PAED_PARAM_S) ? vacio() : campos[k][c];
+                mal = (env_push(&env, completo, v) != 0);
+            }
+        } else {
+            Valor v = (sub->params[k].modo == PAED_PARAM_S) ? vacio() : entra[k];
+            mal = (env_push(&env, sub->params[k].name, v) != 0);
         }
-        if (env_push(&env, sub->params[k].name, entra[k]) != 0) {
+
+        if (mal) {
             runtime_error(prog, in, env.error);
             env_truncar(&env, base_vars, base_pool);
             return -1;
@@ -671,13 +778,25 @@ static int llamar_subaccion(const PAEDProgram *prog, const PAEDInstr *in,
             return -1;
         }
 
-        // Las locales nacen igual que las globales: declaradas y VACIAS. Que
-        // esten en la tabla desde el arranque es lo que hace que tapen a una
-        // global del mismo nombre desde el principio, y no recien cuando se les
-        // asigna algo.
-        int mal = d->es_arreglo
+        // Una local de tipo REGISTRO se aplana igual que una global.
+        const PAEDRegistro *rl = registro_de(prog, d->type);
+        int mal = 0;
+
+        if (rl) {
+            for (int c = 0; c < rl->campo_count && !mal; c++) {
+                char completo[PAED_NAME_MAX];
+                snprintf(completo, sizeof(completo), "%s.%s", d->name, rl->campos[c].name);
+                mal = (env_push(&env, completo, vacio()) != 0);
+            }
+        } else {
+            // Las locales nacen declaradas y VACIAS, igual que las globales: es
+            // lo que hace que tapen a una global del mismo nombre desde que se
+            // declaran, y no recien cuando se les asigna algo.
+            mal = d->es_arreglo
                 ? (env_declarar_arreglo(&env, d->name, d->desde, d->hasta) != 0)
                 : (env_push(&env, d->name, vacio()) != 0);
+        }
+
         if (mal) {
             runtime_error(prog, in, env.error);
             env_truncar(&env, base_vars, base_pool);
@@ -685,29 +804,31 @@ static int llamar_subaccion(const PAEDProgram *prog, const PAEDInstr *in,
         }
     }
 
-    // El nombre de la FUNCION nace vacio tambien: asi una funcion que se olvida
-    // de asignarle algo se detecta, en vez de devolver un cero inventado.
+    // El nombre de la FUNCION nace vacio: asi una que se olvida de asignarle
+    // algo se detecta, en vez de devolver un cero inventado.
     if (sub->es_funcion && env_push(&env, sub->name, vacio()) != 0) {
         runtime_error(prog, in, env.error);
         env_truncar(&env, base_vars, base_pool);
         return -1;
     }
 
-    // ── 2. el cuerpo ──
+    // ── 3. el cuerpo ──
     const PAEDInstr *guardada = g_instr_actual;
     g_profundidad++;
     int fallos = ejecutar_rango(prog, sub->inicio, sub->fin, NULL);
     g_profundidad--;
     g_instr_actual = guardada;
 
-    // ── 3. sacar lo que sale, TODAVIA con el marco abierto ──
+    // ── 4. sacar lo que sale, TODAVIA con el marco abierto ──
     Valor sale[PAED_MAX_PARAMS];
-    memset(sale, 0, sizeof(sale));
+    Valor sale_campos[PAED_MAX_PARAMS][PAED_MAX_CAMPOS];
+    memset(sale,        0, sizeof(sale));
+    memset(sale_campos, 0, sizeof(sale_campos));
 
     if (fallos == 0 && sub->es_funcion) {
-        // Se busca SOLO adentro del marco: si el programa tiene una variable
-        // global que se llama igual que la funcion, encontrarla seria dar por
-        // devuelto un valor que la funcion nunca asigno.
+        // Solo adentro del marco: si el programa tiene una global que se llama
+        // igual que la funcion, encontrarla seria dar por devuelto un valor que
+        // la funcion nunca asigno.
         Valor *r = env_buscar_marco(&env, sub->name, base_vars);
         if (!r || r->tipo == VAL_VACIO) {
             snprintf(msg, sizeof(msg),
@@ -722,23 +843,44 @@ static int llamar_subaccion(const PAEDProgram *prog, const PAEDInstr *in,
     if (fallos == 0) {
         for (int k = 0; k < sub->param_count; k++) {
             if (sub->params[k].modo == PAED_PARAM_E) continue;
-            Valor *v = env_buscar(&env, sub->params[k].name);
-            if (v) sale[k] = *v;
+
+            if (reg_de[k]) {
+                for (int c = 0; c < reg_de[k]->campo_count; c++) {
+                    char completo[PAED_NAME_MAX];
+                    snprintf(completo, sizeof(completo), "%s.%s",
+                             sub->params[k].name, reg_de[k]->campos[c].name);
+                    Valor *v = env_buscar(&env, completo);
+                    if (v) sale_campos[k][c] = *v;
+                }
+            } else {
+                Valor *v = env_buscar(&env, sub->params[k].name);
+                if (v) sale[k] = *v;
+            }
         }
     }
 
-    // ── 4. cerrar el marco ──
+    // ── 5. cerrar el marco ──
     env_truncar(&env, base_vars, base_pool);
 
-    // ── 5. y RECIEN AHORA escribir afuera ──
+    // ── 6. y RECIEN AHORA escribir afuera ──
     //
     // Mientras el marco estaba abierto, el nombre de afuera estaba tapado por el
-    // de adentro: escribirle le habria escrito a la copia local que estaba por
-    // desaparecer.
-    if (fallos == 0 && destinos) {
+    // de adentro: escribirle le habria escrito a la copia local.
+    if (fallos == 0) {
         for (int k = 0; k < sub->param_count; k++) {
             if (sub->params[k].modo == PAED_PARAM_E) continue;
-            if (env_set(&env, destinos[k], sale[k]) != 0) {
+
+            if (reg_de[k]) {
+                for (int c = 0; c < reg_de[k]->campo_count; c++) {
+                    char completo[PAED_NAME_MAX];
+                    snprintf(completo, sizeof(completo), "%s.%s",
+                             arg[k], reg_de[k]->campos[c].name);
+                    if (env_set(&env, completo, sale_campos[k][c]) != 0) {
+                        runtime_error(prog, in, env.error);
+                        return -1;
+                    }
+                }
+            } else if (env_set(&env, arg[k], sale[k]) != 0) {
                 runtime_error(prog, in, env.error);
                 return -1;
             }
@@ -748,73 +890,14 @@ static int llamar_subaccion(const PAEDProgram *prog, const PAEDInstr *in,
     return fallos == 0 ? 0 : -1;
 }
 
-// Llamada como INSTRUCCION suelta: `saludar(n);`. Los argumentos salen del
-// texto que guardo el parser.
+// Llamada como INSTRUCCION suelta: `saludar(n);` o `Inicializar`.
 static int llamar_desde_instruccion(const PAEDProgram *prog, const PAEDInstr *in,
                                     const PAEDSubaccion *sub) {
-    char msg[PAED_MSG_MAX];
+    const char *arg[PAED_MAX_ARGS];
+    for (int k = 0; k < in->arg_count && k < PAED_MAX_ARGS; k++)
+        arg[k] = in->args[k].val;
 
-    if (in->arg_count != sub->param_count) {
-        snprintf(msg, sizeof(msg), "'%s' lleva %d argumento(s) y se le pasaron %d",
-                 sub->name, sub->param_count, in->arg_count);
-        runtime_error(prog, in, msg);
-        return -1;
-    }
-
-    Valor       entra[PAED_MAX_PARAMS];
-    const char *destinos[PAED_MAX_PARAMS];
-    memset(entra, 0, sizeof(entra));
-
-    for (int k = 0; k < sub->param_count; k++) {
-        destinos[k] = in->args[k].val;
-
-        // Un parametro de SALIDA pura no trae valor de afuera: lo llena la
-        // subaccion. Evaluarlo daria "la variable no tiene valor todavia" por
-        // algo que es correcto.
-        if (sub->params[k].modo == PAED_PARAM_S) continue;
-
-        // ES y VAR son POR REFERENCIA: se pasa la variable, no su contenido.
-        // Que todavia no tenga valor es legitimo — el template de la catedra
-        // 'Procedimiento InicializarSecuencia(VAR sec_local: ...)' existe justo
-        // para eso: recibe la variable para llenarla. Entra vacia y listo.
-        //
-        // Un parametro E, en cambio, SI necesita valor: se copia lo que hay, y
-        // si no hay nada eso es un error de verdad.
-        if (sub->params[k].modo == PAED_PARAM_ES && es_destino(in->args[k].val)) {
-            Valor *actual = env_buscar(&env, in->args[k].val);
-            if (!actual || actual->tipo == VAL_VACIO) continue;
-        }
-
-        // Los argumentos se evaluan ANTES de abrir el marco: si se evaluaran
-        // despues, un argumento que se llama igual que un parametro leeria el
-        // parametro recien creado — vacio — en vez de su propia variable.
-        if (expr_eval(in->args[k].val, &env, &entra[k]) != 0) {
-            runtime_error(prog, in, env.error);
-            return -1;
-        }
-    }
-
-    // A un parametro que devuelve valor hay que pasarle una VARIABLE: no se le
-    // puede asignar a '2 + 2'. Se chequea antes de entrar, asi el error sale con
-    // la llamada y no a la vuelta.
-    //
-    // Se mira la FORMA del argumento y no si ya tiene valor. Un escalar
-    // declarado no existe en la tabla hasta que se le asigna algo, y pasarle una
-    // variable todavia vacia a un parametro S es exactamente para lo que S
-    // existe: el que devuelve el valor es el parametro.
-    for (int k = 0; k < sub->param_count; k++) {
-        if (sub->params[k].modo == PAED_PARAM_E) continue;
-        if (!es_destino(destinos[k])) {
-            snprintf(msg, sizeof(msg),
-                     "el parametro '%s' de '%s' devuelve un valor, asi que hay que pasarle una "
-                     "variable, y '%s' no lo es",
-                     sub->params[k].name, sub->name, destinos[k]);
-            runtime_error(prog, in, msg);
-            return -1;
-        }
-    }
-
-    return llamar_subaccion(prog, in, sub, entra, destinos, NULL);
+    return llamar_subaccion(prog, in, sub, arg, in->arg_count, 1, NULL);
 }
 
 // ── Los dos ganchos que usa expr.c ──────────────────────────────────────────
@@ -824,7 +907,7 @@ static int fn_existe(const char *nombre, void *ud) {
     return sub && sub->es_funcion;
 }
 
-static int fn_llamar(const char *nombre, const Valor *args, int n, Valor *out,
+static int fn_llamar(const char *nombre, const char *const *args, int n, Valor *out,
                      char *error, size_t error_n, void *ud) {
     const PAEDProgram   *prog = (const PAEDProgram *)ud;
     const PAEDSubaccion *sub  = paed_subaccion(prog, nombre);
@@ -833,19 +916,10 @@ static int fn_llamar(const char *nombre, const Valor *args, int n, Valor *out,
         snprintf(error, error_n, "'%s' no es una funcion de este programa", nombre);
         return -1;
     }
-    if (n != sub->param_count) {
-        snprintf(error, error_n, "'%s' lleva %d argumento(s) y se le pasaron %d",
-                 sub->name, sub->param_count, n);
-        return -1;
-    }
 
-    Valor entra[PAED_MAX_PARAMS];
-    memset(entra, 0, sizeof(entra));
-    for (int k = 0; k < n; k++) entra[k] = args[k];
-
-    // El error de adentro ya se reporto con su linea; aca solo se avisa que la
+    // El error de adentro ya salio con su linea; aca solo se avisa que la
     // expresion no tiene valor, sin repetir el motivo.
-    if (llamar_subaccion(prog, g_instr_actual, sub, entra, NULL, out) != 0) {
+    if (llamar_subaccion(prog, g_instr_actual, sub, args, n, 0, out) != 0) {
         snprintf(error, error_n, "la funcion '%s' no pudo terminar", sub->name);
         return -1;
     }
