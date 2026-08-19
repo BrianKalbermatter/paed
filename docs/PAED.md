@@ -643,7 +643,7 @@ avisar (pendiente en el KANBAN).
 ### 3.1 Precedencia
 
 De **menor** a **mayor** ligadura. Esta tabla no es decorativa: es literalmente
-el orden en que se llaman las funciones de `plugins/ide/expr.c`.
+el orden en que se llaman las funciones de `lang/src/expr.c`.
 
 | Prioridad | Operadores | Función en `expr.c` |
 |---|---|---|
@@ -836,14 +836,36 @@ Funciones usadas dentro de expresiones:
 | `MOD`, `DIV` | son operadores infijos, no funciones |
 | `NFDS`, `FDS` | ❌ necesitan secuencias; avisan en vez de inventar un valor |
 
-Definidas por el usuario, dentro de `AMBIENTE` — **no implementadas**:
+Definidas por el usuario — **implementadas desde el 2026-08-19**. Se declaran
+después de `ACCION` y antes del `PROCESO` principal:
 
 ```paed
-FUNCION car_a_num(c: caracter) ES: ENTERO
+FUNCION sumar(E a: ENTERO; E b: ENTERO): ENTERO
 PROCESO
-    ...
+    sumar := a + b;      // una FUNCION devuelve asignándole a SU PROPIO NOMBRE
 FIN_FUNCION
+
+PROCEDIMIENTO intercambiar(VAR x: ENTERO; VAR y: ENTERO)
+AMBIENTE
+    aux: ENTERO;         // el AMBIENTE de la subacción son variables LOCALES
+PROCESO
+    aux := x;  x := y;  y := aux;
+FIN_PROCEDIMIENTO
 ```
+
+Los modos de parámetro son los de la cátedra: `E` copia el valor y lo que pase
+adentro no sale; `S` no trae valor y devuelve el que quedó; `ES` entra con valor
+y sale modificado. `VAR` es exactamente `ES` — por referencia es entrar y salir,
+no hace falta un cuarto modo.
+
+Un `PROCEDIMIENTO` se llama como instrucción suelta; una `FUNCION` va adentro de
+una expresión, y llamarla como instrucción es un error con mensaje propio
+(tirar el valor que devuelve casi siempre significa que se quiso asignar).
+
+Los cuerpos viven en el mismo arreglo de instrucciones que el `PROCESO`
+principal, cada uno con su rango: llamar es correr un rango, y por eso una
+subacción puede llamar a otra sin ninguna maquinaria extra. Tests:
+`tests/subaccion_*.paed`.
 
 ## 6. Inventario de tokens
 
@@ -1266,7 +1288,7 @@ parcial de `paed/solutions/`.
 
 ## 12. Estado real del parser
 
-Esto es lo que `plugins/ide/parser.c` entiende **hoy**, verificado con
+Esto es lo que `lang/src/parser.c` entiende **hoy**, verificado con
 `make test`. El resto se reconoce y se reporta como no implementado, con número
 de línea — nunca se ignora.
 
@@ -1304,7 +1326,15 @@ de línea — nunca se ignora.
 | Nombre de `ACCION` con espacios | ❌ |
 | `REPETIR ... HASTA [QUE]` | ✅ §15 |
 | `SEGUN` / `FIN_SEGUN`, con etiquetas multiples y `CONTRARIO` | ✅ §15 |
-| `FUNCION` / `PROCEDIMIENTO` / `SUBACCION` en `AMBIENTE` | ❌ **el bloqueante que queda**, §15.3 |
+| `FUNCION` / `PROCEDIMIENTO` con su `AMBIENTE` y su `PROCESO` | ✅ 2026-08-19 |
+| Parámetros con modo `E` / `S` / `ES` / `VAR` | ✅ 2026-08-19 |
+| Retorno de `FUNCION` por asignación al nombre, usable en una expresión | ✅ 2026-08-19 |
+| Cierres `FIN_FUNCION` `FIN_PROCEDIMIENTO` `Fin_Proc;` `FinSubaccion.` | ✅ 2026-08-19 |
+| Cierre de subacción con `Fin;` a secas | ✅ 2026-08-19, resuelto por contexto |
+| Llamada a subacción SIN paréntesis (`Corte_2;`, `Inicializar`) | ✅ 2026-08-19 |
+| `SUBACCION <nombre> ES` (el `ES` opcional) | ✅ 2026-08-19 |
+| `HV = 99999999;` declarado en el `AMBIENTE` | ✅ 2026-08-19, se acepta y se **ignora**: HV sigue siendo valor de alto |
+| `ARCHIVO` o `SECUENCIA` declarados DENTRO de una subacción | ❌ se rechaza con mensaje propio; por parámetro sí anda |
 | `REGISTRO` / `FIN_REGISTRO` y acceso `pori.vx` | ✅ §2.2 |
 | Un campo que el registro no declara | ❌ rechazado, §2.2 |
 | Instrucción partida en dos líneas | ❌ el parser lee línea por línea |

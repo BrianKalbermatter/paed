@@ -4,23 +4,15 @@ kanban-plugin: board
 
 ---
 
-## PROXIMO — subacciones (2026-08-18)
+## PROXIMO — los dos tests grandes (2026-08-19)
 
-> **Es EL bloqueante.** El 2026-08-17 se decidió que la cátedra manda y PAED se
-> acomodó a sus grafías: de los 26 templates oficiales de
-> `UTN-FRRe/isi-aed/Pseudocodigo` pasaron a parsear **9** (antes 2).
-> **15 de los 17 que faltan están bloqueados por esto y nada más.**
->
-> Sin subacciones no se puede escribir ni un corte de control ni una
-> actualización, que son la mitad del parcial.
+> El lenguaje YA DA para escribirlos: se verificó con un corte de control de dos
+> niveles sobre un archivo real, con la forma exacta del template. Lo que falta
+> es la LOGICA de cada uno, que la escribe Brian.
 
-- [ ] **`SUBACCION` / `PROCEDIMIENTO` / `FUNCION` declaradas en el `AMBIENTE`.** La forma de los templates: la firma termina en `;`, adentro llevan su propio `Proceso` o `Algoritmo`, y cierran con `Fin;` o `Fin_Proc;` — **no** con `FIN_PROCEDIMIENTO` #subacciones
-- [ ] **Llamada SIN paréntesis**: `LEER_ARCH1;` y `Corte_2` son la forma del corpus. Hoy caen en "instruccion sin parentesis: se esperaba PROCEDIMIENTO(...)" #subacciones
-- [ ] **Pila de llamadas y ámbito local.** Un `PARA` adentro de una subacción llamada dos veces no puede pisarse con el de afuera #subacciones
-- [ ] **Parámetros con modo `E` / `S` / `ES` / `VAR`.** `VAR` es el que más aparece en el código real: `Procedimiento InicializarSecuencia(VAR sec_local: SECUENCIA de caracter)` #subacciones
-- [ ] **Retorno de `FUNCION` por asignación al nombre**: `Suma := Total;` adentro de `Funcion Suma(...)`. Y poder usarla en una expresión: `Escribir('La suma es: ', Suma(b, c))` #subacciones
-- [ ] Test: un corte de control de dos niveles escrito con subacciones, como lo escribe `CORTE DE CONTROL [TEMPLATE Rev2].txt`. Es el que prueba que la cosa sirve de verdad #subacciones
+- [ ] Test: un corte de control de dos niveles escrito con subacciones, como lo escribe `CORTE DE CONTROL [TEMPLATE Rev2].txt` #subacciones
 - [ ] Test: la actualización secuencial unitaria de `ACTUALIZACION INC UNI [TEMPLATE].txt`, con `LEER_arch_mae`, `IGUALES`, `DISTINTOS` y `PASO_DIRECTO` #subacciones
+- [ ] **Archivos y secuencias LOCALES a una subacción.** Hoy se rechazan con mensaje propio: solo se declaran en el `AMBIENTE` del programa. Pasarlas por parámetro sí anda, que es lo que hace el template `InicializarSecuencia(VAR sec_local: SECUENCIA de caracter)` #subacciones
 
 ## PROXIMO — lo otro que falta para los templates
 
@@ -35,7 +27,7 @@ kanban-plugin: board
 
 ## Backlog — Fase 1: la declaración parsea
 
-- [ ] *(fases 1, 2 y 3 COMPLETAS — 31/31 tests. Sigue la fase 4: el asistente del editor)* #f1-declaracion
+- [ ] *(fases 1, 2 y 3 COMPLETAS. La batería entera va en 46/46 — `make test`. Sigue la fase 4: el asistente del editor)* #f1-declaracion
 
 ## Backlog — Fase 2: el CSV existe en disco
 
@@ -94,6 +86,15 @@ kanban-plugin: board
 ## En progreso
 
 ## Hecho
+
+- [x] **Las formas de llamada de la cátedra — 2026-08-19.** Cuatro cosas, y sin las cuatro no se puede escribir un corte de control: **llamada SIN paréntesis** (`Inicializar`, `tratar_corte;`, `corte_3;` — así lo escribe todo el corpus), **`SUBACCION <nombre> ES`** (el `ES` es opcional, igual que en la cabecera de `ACCION`), **cierre con `Fin;` a secas** (resuelto por CONTEXTO y no en `GRAFIAS[]`: `Fin;` también cierra la `ACCION`, traducirlo a ciegas rompería el programa), y **`HV = 99999999;` en el `AMBIENTE`** (se acepta y se IGNORA — HV sigue siendo un valor de alto propio del lenguaje, porque las claves de los parciales son texto). Verificado con un corte de control de dos niveles sobre un archivo real #subacciones #parser
+- [x] **`VAL_VACIO`: declarada pero sin valor — 2026-08-19.** Antes una variable declarada NO estaba en la tabla, y "no está" significaba "no tiene valor". Las subacciones rompieron eso: si una subacción le asigna a un global que todavía no tenía valor, `env_set` no lo encuentra, lo crea ARRIBA — o sea adentro del marco — y al volver el marco se lo lleva puesto. El `Inicializar` del template hace exactamente eso, así que el corte de control habría fallado en la primera línea. Ahora las declaradas están en la tabla desde el arranque con tipo `VAL_VACIO`, leerlas sigue diciendo "no tiene valor todavía", y de paso una local tapa a una global desde que se declara #evaluador #subacciones
+
+- [x] **Subacciones — 2026-08-19. EL bloqueante, resuelto.** `FUNCION` y `PROCEDIMIENTO` con su propio `AMBIENTE` y su propio `PROCESO`, declarados antes del `PROCESO` principal. Los cuerpos van en el MISMO `instrs[]` que el programa, cada uno con su rango `[inicio, fin)`: llamar es correr un rango, y como el intérprete ya era un contador de programa, no hizo falta una segunda maquinaria. 5 tests nuevos, `make test` en 46/46 #subacciones #parser #evaluador
+- [x] **Pila de llamadas y ámbito local — 2026-08-19.** `ejecutar_rango()` se llama a sí misma: la pila de C hace de pila de llamadas. Marcos de variables con `env_push` / `env_truncar`, y `env_buscar` pasó a recorrer la tabla DESDE EL FINAL para que una local tape a una global. La marca de los `PARA` dejó de ser `static`: si no, una subacción llamada dos veces se pisaba con su propia llamada de afuera. Guarda de 64 llamadas anidadas #evaluador
+- [x] **Parámetros `E` / `S` / `ES` / `VAR` — 2026-08-19.** `E` copia; `S` no trae valor y devuelve; `ES` y `VAR` entran con valor y salen modificados. `VAR` es `ES`: por referencia es entrar y salir, no hace falta un cuarto modo. Los argumentos se evalúan ANTES de abrir el marco y se devuelven DESPUES de cerrarlo — al revés, el nombre de afuera está tapado por el de adentro #subacciones
+- [x] **Retorno de `FUNCION` por asignación al nombre — 2026-08-19.** `sumar := a + b`, y usable dentro de una expresión: `ESCRIBIR(sumar(doble(2), sumar(1,1)))`. `expr.c` no aprendió a ejecutar instrucciones — recibe dos ganchos del intérprete (`expr_set_funcion`), así que sigue siendo un evaluador de expresiones y nada más #evaluador
+- [x] **Errores del parser ordenados por línea — 2026-08-19.** Las claves, los modos y las llamadas a subacciones se verifican al final, con el programa entero leído, así que sus errores caían todos juntos DESPUES de los demás. Quien leía el reporte arreglaba la línea 30 y recién en la vuelta siguiente se enteraba de que la 9 también estaba mal. `ordenar_errores()` es una inserción estable: dos errores de la misma línea conservan el orden en que se detectaron #parser
 
 - [x] **La cátedra manda — 2026-08-17.** Decisión: cuando PAED y la cátedra se contradicen, se corrige PAED. De los 26 templates oficiales parseaban **2**; ahora parsean **9**. Un lenguaje que dice ser el pseudocódigo de la cátedra y no puede correr el código de la cátedra no es el pseudocódigo de la cátedra. Ver `docs/PAED.md` §15 #decidir #parser
 - [x] **Dos fuentes de verdad nuevas, con MÁS peso que la wiki**: los 27 templates oficiales de `github.com/UTN-FRRe/isi-aed/tree/master/Pseudocodigo` y la guía de TPs de `aed-frre.github.io`. No son prosa sobre el lenguaje: son el lenguaje. Cuando un template contradice a la wiki o a una decisión de PAED, gana el template #decidir #docs
