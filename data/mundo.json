@@ -1,0 +1,128 @@
+{
+  "libreria": "mundo",
+  "version": "1.0",
+  "descripcion": "Verbos 3D para PAED: dibujar un mundo con profundidad y billboards sobre plugins/renderer3d. NO es parte del lenguaje AED — la catedra no conoce ninguno de estos nombres. El parser lo carga ADEMAS de sintaxis.json, igual que escena.json. Las FUNCIONES (TECLA, MOUSE_X, SALIR, CLIC, TICKS) no se declaran aca: expr.c las resuelve en runtime contra la tabla que registra el host. Los parametros numericos son EXPR y no NUM: en un juego la posicion sale de una variable que cambia cada cuadro, no de un numero escrito a mano.",
+  "convencion": "argumentos con nombre, PROCEDIMIENTO(clave = valor)",
+  "procedimientos": [
+    {
+      "nombre": "INICIAR",
+      "efecto": "abrir la ventana y crear los recursos de GPU",
+      "params": [
+        {
+          "nombre": "titulo",
+          "tipo": "TEXTO"
+        },
+        {
+          "nombre": "ancho",
+          "tipo": "EXPR"
+        },
+        {
+          "nombre": "alto",
+          "tipo": "EXPR"
+        }
+      ]
+    },
+    {
+      "nombre": "CAPTURAR_MOUSE",
+      "efecto": "encerrar el puntero en la ventana para poder mirar alrededor",
+      "params": [
+        {
+          "nombre": "activar",
+          "tipo": "EXPR",
+          "requerido": true
+        }
+      ]
+    },
+    {
+      "nombre": "FRAME_INICIO",
+      "efecto": "empezar a dibujar un cuadro desde donde esta la camara",
+      "params": [
+        {
+          "nombre": "camx",
+          "tipo": "EXPR",
+          "requerido": true
+        },
+        {
+          "nombre": "camy",
+          "tipo": "EXPR",
+          "requerido": true
+        },
+        {
+          "nombre": "camz",
+          "tipo": "EXPR",
+          "requerido": true
+        },
+        {
+          "nombre": "angulo",
+          "tipo": "EXPR",
+          "requerido": true
+        },
+        {
+          "nombre": "cielo",
+          "tipo": "TEXTO"
+        }
+      ]
+    },
+    {
+      "nombre": "CUBO",
+      "efecto": "dibujar un cubo de una celda",
+      "params": [
+        {
+          "nombre": "x",
+          "tipo": "EXPR",
+          "requerido": true
+        },
+        {
+          "nombre": "y",
+          "tipo": "EXPR"
+        },
+        {
+          "nombre": "z",
+          "tipo": "EXPR",
+          "requerido": true
+        },
+        {
+          "nombre": "color",
+          "tipo": "TEXTO"
+        }
+      ]
+    },
+    {
+      "nombre": "BILLBOARD",
+      "efecto": "dibujar un sprite que siempre encara a la camara",
+      "params": [
+        {
+          "nombre": "x",
+          "tipo": "EXPR",
+          "requerido": true
+        },
+        {
+          "nombre": "y",
+          "tipo": "EXPR"
+        },
+        {
+          "nombre": "z",
+          "tipo": "EXPR",
+          "requerido": true
+        },
+        {
+          "nombre": "ancho",
+          "tipo": "EXPR"
+        },
+        {
+          "nombre": "alto",
+          "tipo": "EXPR"
+        },
+        {
+          "nombre": "color",
+          "tipo": "TEXTO"
+        }
+      ]
+    },
+    {
+      "nombre": "FRAME_FIN",
+      "efecto": "cerrar el cuadro, escalarlo y mostrarlo",
+      "params": []
+    }
+  ]
+}
