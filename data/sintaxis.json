@@ -65,6 +65,7 @@
         "FINACCION",
         "PROCESO",
         "AMBIENTE",
+        "SUBACCION",
         "FUNCION",
         "FIN_FUNCION",
         "PROCEDIMIENTO",
@@ -77,7 +78,11 @@
         "ARCHIVO",
         "REGISTRO",
         "FIN_REGISTRO",
-        "USAR"
+        "USAR",
+        "FIN",
+        "FACCION",
+        "FINREGISTRO",
+        "FIN_SUBACCION"
       ]
     },
     {

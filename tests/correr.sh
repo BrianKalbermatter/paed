@@ -115,6 +115,47 @@ for prog in "$tests_dir"/*.paed; do
     fi
 done
 
+# ── Guarda: las palabras del parser estan en sintaxis.json ───────────────────
+#
+# La regla del proyecto es una sola: toda palabra que reconozca lang/src/parser.c
+# tiene que estar en data/sintaxis.json, porque de ahi las leen los resaltadores
+# (tree-sitter para Helix, y lo que venga despues).
+#
+# No se cumple acordandose. El 2026-08-27 se agrego USAR al parser y NO al json:
+# los 49 tests pasaron igual, el lenguaje funciono igual, y lo unico roto era el
+# color. Es el tipo de error que nadie encuentra hasta que se acumulan cuatro.
+#
+# Las palabras se sacan del propio parser.c con una regex sobre las formas con
+# que compara palabras clave. Es una heuristica, no un analisis: cubre las que
+# abren bloque, que son donde vive el riesgo. Si manana el parser compara de
+# otra forma, hay que agregar el patron aca.
+faltantes=$(
+    rg -o 'empieza_con\(linea, "[A-Z_]+"\)|strncasecmp\(linea, "[A-Z_]+"|palabra_suelta\([a-z]+, "[A-Z_]+"\)|kw_es\(linea, "[A-Z_]+"\)' \
+       lang/src/parser.c \
+    | rg -o '"[A-Z_]+"' | tr -d '"' | sort -u \
+    | while IFS= read -r palabra; do
+        python3 -c "
+import json, sys
+d = json.load(open('data/sintaxis.json'))
+todas = {p.upper() for c in d.get('categorias', []) for p in c.get('palabras', [])}
+sys.exit(0 if sys.argv[1].upper() in todas else 1)
+" "$palabra" || echo "$palabra"
+      done | tr '\n' ' '
+)
+
+if [ -n "${faltantes// /}" ]; then
+    echo
+    echo "  FALLA    sintaxis.json"
+    echo "           el parser reconoce estas palabras y el json no las tiene:"
+    echo "             $faltantes"
+    echo "           agregalas a data/sintaxis.json o los resaltadores no las pintan"
+    fallaron=$((fallaron + 1))
+    fallidos+=("sintaxis.json")
+else
+    echo "  ok       sintaxis.json cubre las palabras del parser"
+    pasaron=$((pasaron + 1))
+fi
+
 echo
 echo "$pasaron pasaron, $fallaron fallaron"
 if [ "$fallaron" -gt 0 ]; then
