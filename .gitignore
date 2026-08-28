@@ -30,3 +30,8 @@ ejercicios/*.csv
 
 # Registro de skills generado por herramientas externas: no es del proyecto.
 .atl/
+
+# La gramatica generada por tree-sitter: sale de helix/grammar.js con
+# `tree-sitter generate`, no se escribe a mano.
+helix/src/
+helix/node_modules/
