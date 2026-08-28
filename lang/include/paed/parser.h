@@ -343,7 +343,7 @@ void paed_syntax_free(void);
 // pregunta "¿esta linea empieza con MIENTRAS?"; el resaltador pregunta al reves,
 // "esta palabra suelta, ¿que es?". Sin esto, el resaltador tendria que llevar su
 // PROPIA lista de keywords — y esa duplicacion es la que mato a la version
-// anterior del lenguaje (ver _void/README.md).
+// anterior del lenguaje (ver docs/LECCIONES.md).
 
 // La categoria a la que pertenece la palabra ('bucles', 'tipos', 'estructura'),
 // o NULL si no es del lenguaje. No distingue mayusculas.

@@ -5,7 +5,7 @@
 
 // Resaltado de PAED, hecho con EL parser de PAED.
 //
-// Hubo una version anterior con tree-sitter (esta en _void/helix/). Era una
+// Hubo una version anterior con tree-sitter (ver docs/LECCIONES.md). Era una
 // segunda gramatica del lenguaje al lado de parser.c, y como toda segunda
 // fuente de verdad, mentia: tenia que ADIVINAR por la forma del texto cosas que
 // el parser sabe con certeza porque leyo el AMBIENTE entero.

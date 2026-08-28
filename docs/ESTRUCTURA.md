@@ -27,7 +27,6 @@ paed/
 ├── tests/             27 programas .paed + correr.sh
 ├── aprender/          el tutorial: ejercicios ROTOS a propósito + solucion/
 ├── ejercicios/        parciales y simulacros — material de estudio, NO tests
-├── _void/             lo retirado — no entra en el build
 ├── Makefile
 └── VERSION
 ```
@@ -130,12 +129,6 @@ intérprete retirado.
 | `Frankly/docs/` | `docs/` | Es la spec, no notas de Frankly |
 | `Frankly/tests/` | `tests/` | Prueban el intérprete en C, no el de bash |
 | `Frankly/AprendiendoPseudo/`, `Frankly/ejercicio*.paed`, `Frankly/paed.paed` | `ejercicios/` | Material de estudio, no batería |
-| `Frankly/paed` | `_void/paed-interprete-bash` | Retirado |
-| `Frankly/core/`, `stdlib/` | `_void/` | Solo los usaba el intérprete bash |
-| `Frankly/tools/` | `_void/tools/` | Generaba las tres cosas de abajo |
-| `Frankly/generated/paed_keywords.h` | `_void/generated/` | **Nadie en `lang/` lo incluye** |
-| `Frankly/syntaxes/`, `syntax/`, `ftdetect/` | `_void/` | Tres listas de keywords desincronizadas — ver `_void/README.md` |
-| `Frankly/DOC.txt` | `_void/DOC.txt` | Él mismo dice que `PAED.md` le gana |
 
 La carpeta `Frankly/` ya no existe.
 
@@ -160,19 +153,12 @@ Se corrigió la ruta y **nada más**.
 > disco. Hoy no molesta, pero es la razón por la que mover una carpeta rompió 15
 > pruebas que no tenían nada que ver con lo que se movió.
 
-### `_void/` — por qué guardar y no borrar
+### Lo retirado — borrado el 2026-08-27
 
-Nada de `_void/` entra en el build ni vale como fuente de sintaxis. Se conserva
-porque fue la primera implementación y todavía se puede consultar. El día que no
-sirva ni para eso se borra: el historial de git lo tiene igual.
+Estaba en `_void/`: el intérprete original en bash, sus `core/` y `stdlib/`, las
+herramientas que generaban keywords en C, y tres resaltadores incompletos. Nada
+de eso entraba en el build ni valía como fuente de sintaxis.
 
-Ver [`../_void/README.md`](../_void/README.md).
-
-## Verificación
-
-Después de la mudanza, todo esto tiene que seguir dando:
-
-```bash
-make clean && make && make test        # 27/27
-make install PREFIX=/tmp/prueba        # y el binario corre parado afuera del repo
-```
+Se borró porque ya no hacía falta ni para consultarlo. **El historial de git lo
+tiene igual.** Las dos lecciones que dejó — por las que el lenguaje está armado
+como está — se rescataron en [`LECCIONES.md`](LECCIONES.md).
