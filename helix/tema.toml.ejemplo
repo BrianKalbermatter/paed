@@ -1,0 +1,34 @@
+# Colores de PAED — pegar esto en tu tema de Helix.
+#
+# Va en ~/.config/helix/themes/<tu-tema>.toml, NO en este repo: el tema es
+# tuyo y vale para todos los lenguajes. Esto es solo el pedazo de PAED.
+#
+# El sufijo .paed es lo que hace que nada de esto toque a otro lenguaje: Helix
+# busca en el tema la clave mas larga que matchee, asi que `keyword.paed` lo usa
+# solo PAED y C sigue con su `keyword` de siempre. Misma idea que los `scope`
+# de data/sintaxis.json, que ya terminan en .paed.
+#
+#   ACCION / PROCESO / AMBIENTE ... verde
+#   SI / SINO / ENTONCES .......... oro
+#   MIENTRAS / PARA / REPETIR ..... azul
+#   Y / O / NO / MOD / DIV ........ naranja
+#   lo que definis vos ............ magenta
+#
+# El rojo queda LIBRE a proposito: es el color de los errores que subraya
+# paed-lsp, y no conviene que compita con nada del codigo.
+
+"keyword.paed"                     = { fg = "verde",   modifiers = ["bold"] }
+"keyword.control.conditional.paed" = { fg = "oro",     modifiers = ["bold"] }
+"keyword.control.repeat.paed"      = { fg = "azul",    modifiers = ["bold"] }
+"keyword.operator.paed"            = { fg = "naranja" }
+"function.paed"                    = { fg = "magenta", modifiers = ["bold"] }
+
+# Los nombres de arriba salen de la [palette] del tema. Si el tuyo no los tiene,
+# cambialos por los que uses o agregalos:
+#
+#   [palette]
+#   oro     = "#ffd700"
+#   verde   = "#00ff66"
+#   azul    = "#3377ff"
+#   naranja = "#ff8800"
+#   magenta = "#ff00ff"

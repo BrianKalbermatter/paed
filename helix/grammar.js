@@ -171,7 +171,7 @@ module.exports = grammar({
     cabecera_accion: ($) =>
       seq(
         field("palabra", alias(sinMayusculas("ACCION"), $.estructura)),
-        field("nombre", $.identificador),
+        field("nombre", alias($.identificador, $.nombre_funcion)),
         field("es", alias(sinMayusculas("ES"), $.estructura))
       ),
 
@@ -182,7 +182,7 @@ module.exports = grammar({
       seq(
         field("palabra", alias(choice(sinMayusculas("FUNCION"),
                                       sinMayusculas("PROCEDIMIENTO")), $.estructura)),
-        field("nombre", $.identificador)
+        field("nombre", alias($.identificador, $.nombre_funcion))
       ),
 
     // Un nombre PEGADO a un parentesis es una llamada: `sumar(3, 5)`.
@@ -196,7 +196,16 @@ module.exports = grammar({
     // libreria. La gramatica no puede distinguirlas y NO DEBE INTENTARLO: para
     // saber cual declaraste vos hay que leer el AMBIENTE entero, y eso lo sabe
     // parser.c, no un resaltador. Ver docs/LECCIONES.md.
-    llamada: ($) => seq(field("nombre", $.identificador), token.immediate("(")),
+    // El nombre se ALIASEA a `nombre_funcion`: dentro de una llamada deja de
+    // ser un `identificador` y pasa a ser otro tipo de nodo.
+    //
+    // Sin el alias, `SALIR` matchea DOS reglas del highlights.scm — la de
+    // llamada y el `(identificador) @variable` del final — y cual gana depende
+    // de como desempate el editor. Con el alias no hay empate que desempatar:
+    // la regla del identificador ya no puede tocarlo.
+    llamada: ($) =>
+      seq(field("nombre", alias($.identificador, $.nombre_funcion)),
+          token.immediate("(")),
 
     // AN(20): el tipo se lo lleva el parentesis. Sin el, es una variable
     // comun y la pinta la regla `identificador`.

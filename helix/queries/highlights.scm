@@ -28,7 +28,7 @@
 
 ; El nombre de la ACCION se pinta como el nombre de una funcion en C, porque es
 ; lo mismo: el nombre del algoritmo que estas definiendo.
-(cabecera_accion nombre: (identificador) @function.paed)
+(cabecera_accion nombre: (nombre_funcion) @function.paed)
 
 ; ── Tipos ────────────────────────────────────────────────────────────────────
 ; ENTERO, REAL, CARACTER se pintan como int, float, char.
@@ -48,7 +48,7 @@
 
 ; ── Operadores ───────────────────────────────────────────────────────────────
 ; Y, O, NO, MOD, DIV son palabras pero operan, igual que `and`/`or` en Python.
-(operador_palabra) @keyword.operator
+(operador_palabra) @keyword.operator.paed
 
 ; := y los simbolos
 (asignacion) @operator
@@ -60,7 +60,7 @@
 
 ; ── Subacciones que escribiste vos ───────────────────────────────────────────
 ; El nombre en `FUNCION sumar(...)` — lo que estas DEFINIENDO.
-(declaracion_subaccion nombre: (identificador) @function.paed)
+(declaracion_subaccion nombre: (nombre_funcion) @function.paed)
 
 ; Un nombre pegado a un parentesis: `sumar(3, 5)`. Es una LLAMADA.
 ;
@@ -68,7 +68,7 @@
 ; puede distinguir una funcion tuya de una de libreria — para eso hay que leer
 ; el AMBIENTE entero, y eso lo sabe lang/src/parser.c, no un resaltador.
 ; Ver docs/LECCIONES.md.
-(llamada nombre: (identificador) @function.paed)
+(llamada nombre: (nombre_funcion) @function.paed)
 
 ; ── Todo lo demas es una variable ────────────────────────────────────────────
 ; Va al final a proposito: cualquier palabra que no haya matcheado antes con
