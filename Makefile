@@ -85,21 +85,29 @@ LANG_SRC = lang/src/parser.c lang/src/expr.c lang/src/interpreter.c \
            lang/vendor/cjson/cJSON.c
 LANG_OBJ = $(LANG_SRC:%.c=$(BUILDDIR)/lang/%.o)
 CLI_OBJ  = $(BUILDDIR)/lang/lang/cli/main.o
+LSP_OBJ  = $(BUILDDIR)/lang/lang/lsp/main.o
 
 # Los .d que dejo el compilador. Van con '-include' (con guion) y no con
 # 'include': la primera vez todavia no existen, y sin el guion make aborta en
 # vez de compilarlos.
--include $(LANG_OBJ:.o=.d) $(CLI_OBJ:.o=.d)
+-include $(LANG_OBJ:.o=.d) $(CLI_OBJ:.o=.d) $(LSP_OBJ:.o=.d)
 
 LIB      = $(BUILDDIR)/libpaed.a
 CLI      = $(BUILDDIR)/paed
+LSP      = $(BUILDDIR)/paed-lsp
 
-all: $(LIB) $(CLI)
+all: $(LIB) $(CLI) $(LSP)
 lang: all   # nombre viejo, cuando el editor vivia en este mismo Makefile
 
 $(LIB): $(LANG_OBJ)
 	@mkdir -p $(dir $@)
 	ar rcs $@ $(LANG_OBJ)
+
+# El servidor de lenguaje. Misma libreria que el interprete: un error que ves
+# subrayado en el editor es EXACTAMENTE el que vas a ver al correr el programa.
+$(LSP): $(LSP_OBJ) $(LIB)
+	@mkdir -p $(dir $@)
+	$(CC) $< $(LIB) -lm -o $@
 
 $(CLI): $(CLI_OBJ) $(LIB)
 	@mkdir -p $(dir $@)
