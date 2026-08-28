@@ -66,8 +66,65 @@ int paed_register_proc(const char *nombre, PaedProc fn, void *ud) {
     return 0;
 }
 
+// ── Funciones del host ───────────────────────────────────────────────────────
+//
+// Tabla gemela de la de procedimientos. Separada a proposito: un nombre puede
+// ser funcion o procedimiento, nunca las dos cosas, y buscarlas en tablas
+// distintas hace imposible confundirlas.
+#define PAED_MAX_FUNCS 32
+
+typedef struct {
+    char     nombre[PAED_NAME_MAX];
+    PaedFunc fn;
+    void    *ud;
+} FuncHost;
+
+static FuncHost g_funcs[PAED_MAX_FUNCS];
+static int      g_func_count = 0;
+
+int paed_register_func(const char *nombre, PaedFunc fn, void *ud) {
+    if (!nombre || !*nombre || !fn) return -1;
+
+    for (int i = 0; i < g_func_count; i++) {
+        if (strcasecmp(g_funcs[i].nombre, nombre) == 0) {
+            g_funcs[i].fn = fn;
+            g_funcs[i].ud = ud;
+            return 0;
+        }
+    }
+
+    if (g_func_count >= PAED_MAX_FUNCS) return -1;
+
+    FuncHost *f = &g_funcs[g_func_count++];
+    snprintf(f->nombre, sizeof(f->nombre), "%s", nombre);
+    f->fn = fn;
+    f->ud = ud;
+    return 0;
+}
+
+int paed_eval(const char *texto, Valor *out, char *error, size_t error_n) {
+    if (!texto || !out) {
+        if (error && error_n) snprintf(error, error_n, "no hay nada que evaluar");
+        return -1;
+    }
+    env.error[0] = '\0';
+    if (expr_eval(texto, &env, out) != 0) {
+        if (error && error_n) snprintf(error, error_n, "%s", env.error);
+        return -1;
+    }
+    return 0;
+}
+
+static const FuncHost *buscar_func(const char *nombre) {
+    for (int i = 0; i < g_func_count; i++)
+        if (strcasecmp(g_funcs[i].nombre, nombre) == 0)
+            return &g_funcs[i];
+    return NULL;
+}
+
 void paed_clear_procs(void) {
     g_proc_count = 0;
+    g_func_count = 0;
 }
 
 static const ProcHost *buscar_proc(const char *nombre) {
@@ -904,7 +961,12 @@ static int llamar_desde_instruccion(const PAEDProgram *prog, const PAEDInstr *in
 
 static int fn_existe(const char *nombre, void *ud) {
     const PAEDSubaccion *sub = paed_subaccion((const PAEDProgram *)ud, nombre);
-    return sub && sub->es_funcion;
+    if (sub && sub->es_funcion) return 1;
+
+    // Recien si no es del programa se mira la tabla del host. Ese orden es el
+    // mismo que ya vale para los procedimientos (ver ESCENA.md): lo que
+    // escribio el programador GANA sobre lo que agrego quien hospeda.
+    return buscar_func(nombre) != NULL;
 }
 
 static int fn_llamar(const char *nombre, const char *const *args, int n, Valor *out,
@@ -913,6 +975,9 @@ static int fn_llamar(const char *nombre, const char *const *args, int n, Valor *
     const PAEDSubaccion *sub  = paed_subaccion(prog, nombre);
 
     if (!sub || !sub->es_funcion) {
+        const FuncHost *f = buscar_func(nombre);
+        if (f) return f->fn(args, n, out, error, error_n, f->ud);
+
         snprintf(error, error_n, "'%s' no es una funcion de este programa", nombre);
         return -1;
     }
