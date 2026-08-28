@@ -11,7 +11,13 @@
 // ── Fuente unica de verdad: sintaxis.json ─────────────────────────────────────
 
 static cJSON *g_syntax = NULL;   // el lenguaje: pseudocodigo AED puro
-static cJSON *g_escena = NULL;   // libreria opcional de VimMon, no es el lenguaje
+// Librerias cargadas con USAR. VARIAS a la vez y no una sola: la idea es que
+// cada una traiga un tema (el mundo, el actor, el suelo) y el programa arme el
+// suyo combinandolas, como cualquier lenguaje con modulos.
+#define PAED_MAX_LIBS 8
+static cJSON *g_libs[PAED_MAX_LIBS];
+static char   g_libs_nombre[PAED_MAX_LIBS][64];
+static int    g_lib_count = 0;
 
 static cJSON *cargar_json(const char *path, int obligatorio) {
     FILE *f = fopen(path, "rb");
@@ -52,7 +58,6 @@ extern const char PAED_SINTAXIS_EMBEBIDA[];
 
 // Nombre del archivo de la libreria extra que se cargo, para poder nombrarla en
 // los mensajes de error. Vacio si no se cargo ninguna.
-static char g_lib_nombre[64] = {0};
 
 // Los datos AL LADO DEL BINARIO: <donde-esta-paed>/../share/paed
 //
@@ -154,15 +159,35 @@ int paed_syntax_load_lib(const char *nombre) {
     cJSON *lib = cargar_json(path, 1);
     if (!lib) return -1;
 
-    if (g_escena) cJSON_Delete(g_escena);
-    g_escena = lib;
-    snprintf(g_lib_nombre, sizeof(g_lib_nombre), "%s.json", nombre);
+    // Cargar dos veces la misma libreria no es un error: dos modulos pueden
+    // pedir la misma y ninguno tiene por que saber del otro.
+    for (int i = 0; i < g_lib_count; i++) {
+        if (strcmp(g_libs_nombre[i], nombre) == 0) {
+            cJSON_Delete(lib);
+            return 0;
+        }
+    }
+
+    if (g_lib_count >= PAED_MAX_LIBS) {
+        cJSON_Delete(lib);
+        fprintf(stderr, "[paed] no entran mas librerias (maximo %d)\n", PAED_MAX_LIBS);
+        return -1;
+    }
+
+    g_libs[g_lib_count] = lib;
+    snprintf(g_libs_nombre[g_lib_count], sizeof(g_libs_nombre[0]), "%s", nombre);
+    g_lib_count++;
     return 0;
 }
 
 void paed_syntax_free(void) {
     if (g_syntax) { cJSON_Delete(g_syntax); g_syntax = NULL; }
-    if (g_escena) { cJSON_Delete(g_escena); g_escena = NULL; }
+    for (int i = 0; i < g_lib_count; i++) {
+        cJSON_Delete(g_libs[i]);
+        g_libs[i] = NULL;
+        g_libs_nombre[i][0] = '\0';
+    }
+    g_lib_count = 0;
 }
 
 // ── Consultar las categorias de sintaxis.json ────────────────────────────────
@@ -171,7 +196,7 @@ void paed_syntax_free(void) {
 // porque lo compara donde corresponde. Lo necesita el RESALTADOR, que hace la
 // pregunta al reves — "esta palabra suelta, ¿que es?" — y no puede tener su
 // propia lista de keywords, porque esa fue exactamente la desincronizacion que
-// mato a la version anterior (ver _void/README.md).
+// mato a la version anterior (ver docs/LECCIONES.md).
 //
 // Vive aca, y no en colores.c, por un motivo simple: `g_syntax` es static de
 // este archivo. Sacarlo afuera para que otro lo lea seria abrir la puerta a que
@@ -319,10 +344,18 @@ static const char *proc_canonico(cJSON *def) {
     return cJSON_IsString(n) ? n->valuestring : NULL;
 }
 
-// Primero el lenguaje, despues las librerias cargadas.
+// Primero el lenguaje, despues las librerias cargadas, en el orden en que se
+// pidieron con USAR. Que el lenguaje vaya PRIMERO es la regla de siempre: una
+// libreria extiende PAED, no lo redefine — nadie puede registrar su propio
+// ESCRIBIR y tapar al de la catedra.
 static cJSON *proc_def(const char *nombre) {
     cJSON *p = buscar_proc(g_syntax, nombre);
-    return p ? p : buscar_proc(g_escena, nombre);
+    if (p) return p;
+    for (int i = 0; i < g_lib_count; i++) {
+        p = buscar_proc(g_libs[i], nombre);
+        if (p) return p;
+    }
+    return NULL;
 }
 
 // Busca un parametro de un procedimiento por nombre o por alias.
@@ -528,6 +561,16 @@ static int valida_valor(const char *tipo, const char *val) {
         return fin && *fin == '\0' && fin != val;
     }
     if (strcmp(tipo, "ID") == 0) return es_identificador(val);
+
+    // EXPR: cualquier cosa que se evalue en tiempo de ejecucion.
+    //
+    // Existe porque NUM valida con strtod, o sea que solo acepta un numero
+    // ESCRITO: 'x = 3' pasa, 'x = px' o 'x = px + 1' no. Para una escena
+    // estatica alcanza, pero un juego calcula TODO — la camara sale de una
+    // variable que cambia en cada cuadro. Un parametro EXPR se acepta tal cual
+    // y lo resuelve el interprete cuando corre, con las variables ya cargadas.
+    if (strcmp(tipo, "EXPR") == 0) return val[0] != '\0';
+
     return 1;  // tipo desconocido: no bloquea
 }
 
@@ -2967,12 +3010,20 @@ static void chequear_subacciones(PAEDProgram *p) {
 
         const PAEDSubaccion *sub = paed_subaccion(p, in->proc);
         if (!sub) {
-            if (g_lib_nombre[0])
+            if (g_lib_count > 0) {
+                // Nombrar las librerias que SI se cargaron es media respuesta:
+                // el que se olvido un USAR ve cual falta comparando.
+                char cargadas[256] = {0};
+                size_t usado = 0;
+                for (int k = 0; k < g_lib_count && usado < sizeof(cargadas) - 1; k++)
+                    usado += (size_t)snprintf(cargadas + usado, sizeof(cargadas) - usado,
+                                              "%s%s", k ? ", " : "", g_libs_nombre[k]);
                 add_error(p, in->line,
-                          "procedimiento desconocido '%s' (no esta ni en %s ni en %s, "
-                          "y tampoco es una subaccion de este programa)",
-                          in->proc, PAED_SYNTAX_FILE, g_lib_nombre);
-            else
+                          "procedimiento desconocido '%s' (no esta en %s, ni en las "
+                          "librerias que pediste con USAR (%s), ni es una subaccion "
+                          "de este programa)",
+                          in->proc, PAED_SYNTAX_FILE, cargadas);
+            } else
                 add_error(p, in->line,
                           "procedimiento desconocido '%s' (no esta en %s ni es una "
                           "subaccion de este programa)", in->proc, PAED_SYNTAX_FILE);
@@ -3051,6 +3102,52 @@ int paed_parse_file(const char *path, PAEDProgram *out) {
         // otra parte del parser mire la linea. Asi la lista de variantes vive
         // en un solo lugar (GRAFIAS) y no repartida por cada bloque.
         linea = normalizar_catedra(linea, sizeof(buf) - (size_t)(linea - buf));
+
+        // ── USAR <libreria>; ──
+        //
+        // NO es de la catedra: es una extension de PAED, igual que lo son CUBO
+        // o BILLBOARD. AED no tiene modulos porque un ejercicio de parcial entra
+        // en una hoja; un juego no.
+        //
+        // Va ANTES de la ACCION y se procesa mientras se lee la linea, no al
+        // final: los procedimientos que trae la libreria tienen que estar
+        // registrados antes de que el parser llegue a la primera llamada.
+        if (strncasecmp(linea, "USAR", 4) == 0 &&
+            (linea[4] == ' ' || linea[4] == '\t')) {
+            if (bloque != FUERA) {
+                add_error(out, lineno,
+                          "USAR va ANTES de la ACCION: una libreria se pide al "
+                          "empezar el archivo, no en medio del programa");
+                continue;
+            }
+
+            char nombre[64] = {0};
+            const char *c = linea + 4;
+            while (*c == ' ' || *c == '\t') c++;
+            size_t k = 0;
+            while ((isalnum((unsigned char)*c) || *c == '_') && k < sizeof(nombre) - 1)
+                nombre[k++] = *c++;
+            nombre[k] = '\0';
+            while (*c == ' ' || *c == '\t') c++;
+            if (*c == ';') c++;
+            while (*c == ' ' || *c == '\t') c++;
+
+            if (!k) {
+                add_error(out, lineno, "USAR necesita el nombre de una libreria: USAR mundo;");
+                continue;
+            }
+            if (*c) {
+                add_error(out, lineno,
+                          "USAR pide UNA libreria por linea: 'USAR %s;' y la otra abajo",
+                          nombre);
+                continue;
+            }
+            if (paed_syntax_load_lib(nombre) != 0)
+                add_error(out, lineno,
+                          "no encontre la libreria '%s': falta %s.json en el "
+                          "directorio de datos", nombre, nombre);
+            continue;
+        }
 
         if (strncasecmp(linea, "ACCION", 6) == 0 && (linea[6] == ' ' || linea[6] == '\t')) {
             if (bloque != FUERA) {

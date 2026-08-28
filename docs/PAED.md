@@ -85,14 +85,14 @@ errores, y de hecho los contiene:
 
 | Fuente | Estado | Error conocido |
 |---|---|---|
-| `_void/paed-interprete-bash` (715 líneas bash) | Implementación **retirada** | Acepta `PARA ... a ...` y comillas dobles — ninguna es de cátedra |
-| `_void/DOC.txt` | Notas de aprendizaje | Desactualizado seguido; redirige a este documento |
+| El intérprete original en bash (715 líneas, borrado; está en el historial de git) | Implementación **retirada** | Acepta `PARA ... a ...` y comillas dobles — ninguna es de cátedra |
+| `DOC.txt` del intérprete bash (borrado) | Notas de aprendizaje | Desactualizado seguido; redirige a este documento |
 | `ejercicios/` y `recta.paed` (VimMon, `programas/AlgebraRectas/`) | Ejercicios propios | Sintaxis incorrecta (ver §12.1) |
 | `data/sintaxis.json` | Lista de keywords | Incompleta |
-| `_void/syntaxes/paed.tmLanguage.json` | Resaltador **retirado** | Incompleta, comillas dobles |
+| El resaltador TextMate (borrado) | Resaltador **retirado** | Incompleta, comillas dobles |
 | `lang/` (el intérprete en C) | Implementación | Es lo que hay; igual **no es autoridad** |
 
-Lo que está en `_void/` no entra en el build ni se consulta para decidir nada:
+Lo retirado se borró el 2026-08-27 y vive en el historial de git. No se consulta para decidir nada:
 está guardado porque fue la primera implementación, no porque valga como fuente.
 
 **Regla dura:** si una de estas contradice a la cátedra o a la wiki, **la fuente
@@ -1074,6 +1074,48 @@ Hay una guarda de bucle infinito de 2.000.000 de pasos. No es opcional: el
 intérprete corre dentro del game loop, así que un programa colgado cuelga la
 ventana entera y hay que matar el proceso sin saber por qué.
 
+## 9.bis. `USAR` — librerías **[decidido] [implementado]**
+
+**Esto NO es de la cátedra.** AED no tiene módulos, y no le hacen falta: un
+ejercicio de parcial entra en una hoja. Un juego no.
+
+`USAR` pide una librería de procedimientos que **no** son del lenguaje. Va antes
+de la `ACCION`, una por línea:
+
+```paed
+USAR mundo;
+USAR escena;
+
+ACCION laberinto ES
+AMBIENTE
+    ...
+```
+
+Cada `USAR x;` carga `x.json` del directorio de datos (el mismo que
+`sintaxis.json`) mientras el parser lee esa línea — y no al final, porque los
+nombres tienen que estar registrados antes de la primera llamada que los use.
+
+Reglas:
+
+| Regla | Por qué |
+|---|---|
+| Va **antes** de `ACCION` | Una librería se pide al empezar, no en medio del programa |
+| Una por línea | `USAR mundo, escena;` no se acepta: una línea, una dependencia |
+| Repetir no es error | Dos módulos pueden pedir la misma y ninguno sabe del otro |
+| Máximo 8 a la vez | `PAED_MAX_LIBS` en `parser.c` |
+| **El lenguaje gana** | Una librería **extiende** PAED, no lo redefine: nadie puede tapar `ESCRIBIR` |
+
+Sin el `USAR`, el procedimiento de la librería no existe para el parser y el
+programa no llega a correr. Con el `USAR` pero sin que el host registre el
+cuerpo en C, el error aparece en runtime: *"lo reconoce el parser pero no lo
+implementa nadie"*. Declarar e implementar son dos cosas distintas.
+
+Los **tipos de parámetro** que valida `sintaxis.json`/`<lib>.json` son `VEC3`,
+`HEX`, `NUM`, `ID` y **`EXPR`**. `NUM` valida con `strtod`, o sea que solo acepta
+un número **escrito**: `x = 3` pasa, `x = px + 1` no. Para eso está `EXPR`, que
+se acepta tal cual y lo resuelve el intérprete en runtime con las variables ya
+cargadas. Una librería que reciba valores calculados tiene que usar `EXPR`.
+
 ## 10. Decisiones de diseño
 
 Ambigüedades del lenguaje, resueltas. **Sujetas a revisión contra la cátedra.**
@@ -1421,7 +1463,7 @@ es exactamente cómo un test deja de proteger: "arregla" el test en vez del bug.
 
 **Regla de oro:** ninguna construcción entra a esta spec sin un `.paed` que la
 ejercite y corra. La v1 se rompió justamente por eso —
-`_void/docs/paed_spec_v1.md:29` documentaba `mover <id> a=<x,y,z>` mientras el
+La spec v1 (borrada, en el historial de git) documentaba `mover <id> a=<x,y,z>` mientras el
 intérprete leía `nombre=` y `posicion=`, y `escalar`/`girar`/`oscilar` quedaron
 documentados pero nunca implementados.
 
@@ -1545,7 +1587,7 @@ cátedra sin romper la semántica correcta es trabajo aparte, anotado en el KANB
 
 | Versión | Fecha | Cambio |
 |---|---|---|
-| v1 | — | PAED declarativo (`cubo nombre=x posicion=0,0,0`). Discontinuado, archivado en `_void/docs/paed_spec_v1.md`. Sus primitivas de escena son hoy una librería, no sintaxis: ver [`ESCENA.md`](ESCENA.md) |
+| v1 | — | PAED declarativo (`cubo nombre=x posicion=0,0,0`). Discontinuado; borrado el 2026-08-27, queda en el historial de git. Sus primitivas de escena son hoy una librería, no sintaxis: ver [`ESCENA.md`](ESCENA.md) |
 | v2.0 | 2026-08-07 | Unificación en el dialecto AED. Vivía en `docs/paed_spec.md` |
 | v3.0 | 2026-08 | Reescritura corta al mudarse a `paed/Frankly/docs/` (hoy `docs/`) |
 | v4.0 | 2026-08-10 | Absorbe la v2.0 completa. Se separan **cátedra** / **decidido** / **implementado**, porque había decisiones documentadas que el parser no cumplía |

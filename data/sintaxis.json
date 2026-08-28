@@ -76,7 +76,8 @@
         "CERRAR",
         "ARCHIVO",
         "REGISTRO",
-        "FIN_REGISTRO"
+        "FIN_REGISTRO",
+        "USAR"
       ]
     },
     {
