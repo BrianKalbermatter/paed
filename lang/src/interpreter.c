@@ -301,6 +301,84 @@ static Valor valor_desde_texto(const char *linea) {
 // UNA LINEA POR DESTINO, no un token: asi un texto con espacios entra entero.
 // Partir por espacios haria que "Juan Perez" llenara dos destinos con medio
 // nombre cada uno.
+static int campo_es_numero(const char *tipo);   // definida mas abajo, junto a LEER de archivo
+
+// ¿El dato que se tipeo sirve para ese destino?
+//
+// Lo decide el TIPO DECLARADO, no el dato. Un `n: ENTERO` con 'abc' adentro es
+// un error de lectura, y no un texto guardado callado que despues hace que el
+// programa de un resultado raro veinte instrucciones mas abajo.
+//
+// Devuelve 1 si sirve. Si no, deja el motivo en `msg`, redactado para el que
+// esta tipeando: dice que se esperaba, no que se rompio.
+static int dato_valido_para(const PAEDProgram *prog, const char *nombre,
+                            const char *campo, const char *dato,
+                            char *msg, size_t msg_n) {
+    // El tipo del destino. Si es `p.campo`, el del campo dentro del registro.
+    const char *tipo = NULL;
+    for (int i = 0; i < prog->decl_count; i++) {
+        if (strcasecmp(prog->decls[i].name, nombre) != 0) continue;
+
+        if (campo && campo[0]) {
+            const PAEDRegistro *r = registro_de(prog, prog->decls[i].type);
+            if (!r) return 1;                       // no es un registro: no se valida
+            for (int c = 0; c < r->campo_count; c++)
+                if (strcasecmp(r->campos[c].name, campo) == 0) {
+                    tipo = r->campos[c].type;
+                    break;
+                }
+        } else {
+            tipo = prog->decls[i].type;
+        }
+        break;
+    }
+
+    // Sin declaracion no hay contra que validar. No es un error de aca: si el
+    // nombre no existe, guardar_valor lo va a decir con su propio mensaje.
+    if (!tipo || !tipo[0]) return 1;
+
+    if (strncasecmp(tipo, "LOGICO", 6) == 0) {
+        if ((dato[0] == 'V' || dato[0] == 'F' || dato[0] == 'v' || dato[0] == 'f')
+            && dato[1] == '\0') return 1;
+        snprintf(msg, msg_n, "'%s' es LOGICO y espera V o F, no '%s'", nombre, dato);
+        return 0;
+    }
+
+    if (strncasecmp(tipo, "CARACTER", 8) == 0) {
+        if (dato[1] == '\0') return 1;
+        snprintf(msg, msg_n, "'%s' es CARACTER y espera UN caracter, no '%s'", nombre, dato);
+        return 0;
+    }
+
+    if (!campo_es_numero(tipo)) return 1;           // AN(n) y demas: cualquier texto
+
+    // Numerico: los mismos caracteres que acepta el resto del interprete.
+    const char *c = dato;
+    if (*c == '+' || *c == '-') c++;
+
+    int digitos = 0, puntos = 0;
+    for (; *c; c++) {
+        if (*c >= '0' && *c <= '9') { digitos++; continue; }
+        if (*c == '.')              { puntos++;  continue; }
+        snprintf(msg, msg_n, "'%s' es %s y '%s' no es un numero", nombre, tipo, dato);
+        return 0;
+    }
+    if (digitos == 0 || puntos > 1) {
+        snprintf(msg, msg_n, "'%s' es %s y '%s' no es un numero", nombre, tipo, dato);
+        return 0;
+    }
+
+    // ENTERO no lleva decimales: son tipos distintos, no dos formas del mismo.
+    if (puntos && (strncasecmp(tipo, "ENTERO", 6) == 0 ||
+                   (toupper((unsigned char)tipo[0]) == 'N' && !strchr(tipo, ',')))) {
+        snprintf(msg, msg_n,
+                 "'%s' es %s y no lleva decimales: '%s' tiene punto", nombre, tipo, dato);
+        return 0;
+    }
+
+    return 1;
+}
+
 static int leer_consola(const PAEDProgram *prog, const PAEDInstr *in) {
     if (in->arg_count == 0) {
         runtime_error(prog, in, "LEER necesita al menos un destino: LEER(x)");
@@ -346,6 +424,19 @@ static int leer_consola(const PAEDProgram *prog, const PAEDInstr *in) {
             snprintf(msg, sizeof(msg), "la entrada trajo una linea vacia para '%s'", destino);
             runtime_error(prog, in, msg);
             return -1;
+        }
+
+        // El dato tiene que servir para lo que se declaro. Se valida ACA y no
+        // al usarlo, porque aca todavia se sabe quien lo tipeo y que se
+        // esperaba: mas adelante el error aparece lejos de su causa.
+        {
+            const char *campo = strchr(destino, '.');
+            char msg[PAED_MSG_MAX];
+            if (!dato_valido_para(prog, nombre, campo ? campo + 1 : NULL,
+                                  dato, msg, sizeof(msg))) {
+                runtime_error(prog, in, msg);
+                return -1;
+            }
         }
 
         if (guardar_valor(prog, in, nombre, indice, valor_desde_texto(dato)) != 0)

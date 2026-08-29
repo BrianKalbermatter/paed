@@ -154,6 +154,9 @@ static const Familia CATALOGO[] = {
         "no lleva decimales",
         "no es un valor",
         "no es parte de un numero",
+        "espera V o F",
+        "espera UN caracter",
+        "trajo una linea vacia",
         NULL } },
 };
 

@@ -8,8 +8,9 @@
 //
 //   1. UNA LINEA POR DESTINO. `LEER(A, B)` consume dos lineas, no una linea
 //      partida en dos. Asi un texto con espacios entra entero.
-//   2. El TIPO lo decide el dato: si la linea entera es un numero, es numero;
-//      si no, es texto. "12abc" es texto, no 12.
+//   2. El TIPO lo decide la DECLARACION, no el dato. Un `n: ENTERO` que recibe
+//      'abc' es un error de lectura, no un texto guardado callado — el error
+//      sale donde se tipeo el dato y no veinte instrucciones despues.
 //   3. El destino puede ser una variable, un elemento `A[i]` o un campo
 //      `p.campo` — los mismos tres lugares donde escribe una asignacion.
 //
@@ -27,7 +28,7 @@ AMBIENTE
     i    : ENTERO;
     edad : ENTERO;
     alto : REAL;
-    nom  : CARACTER;
+    nom  : AN(20);
     a    : ENTERO;
     b    : ENTERO;
 PROCESO
@@ -40,7 +41,7 @@ PROCESO
     LEER(a, b);
     ESCRIBIR(a, " + ", b, " = ", a + b);
 
-    ESCRIBIR("-- el tipo lo decide el dato --");
+    ESCRIBIR("-- el tipo lo decide la declaracion --");
     LEER(alto);
     ESCRIBIR("alto por dos = ", alto * 2);
     LEER(nom);
@@ -76,7 +77,7 @@ FIN_ACCION
 // dentro de 10 anios va a tener 43
 // -- varios destinos en un solo LEER --
 // 7 + 5 = 12
-// -- el tipo lo decide el dato --
+// -- el tipo lo decide la declaracion --
 // alto por dos = 3.5
 // hola, Juan Perez
 // -- destino con indice: el indice se evalua al leer --
