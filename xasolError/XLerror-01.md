@@ -17,7 +17,7 @@ Escribir el cuerpo pegado a la firma, sin el `PROCESO` en el medio, es el error
 más común:
 
 ```paed
-FUNCION devolverCuadro(E number: ENTERO): ENTERO
+FUNCION devolverCuadro(number: ENTERO): ENTERO
     devolverCuadro := number ** 2;      ← ¿en qué bloque va esto?
 FIN_FUNCION
 ```
@@ -29,7 +29,7 @@ porque el bloque nunca apareció.
 ## Cómo se arregla
 
 ```paed
-FUNCION devolverCuadro(E number: ENTERO): ENTERO
+FUNCION devolverCuadro(number: ENTERO): ENTERO
     PROCESO
         devolverCuadro := number ** 2;
 FIN_FUNCION
@@ -47,7 +47,7 @@ ACCION paed ES
         num: ENTERO;
         cuadrado: ENTERO;
 
-        FUNCION devolverCuadro(E number: ENTERO): ENTERO
+        FUNCION devolverCuadro(number: ENTERO): ENTERO
             PROCESO
                 devolverCuadro := number ** 2;
         FIN_FUNCION
@@ -63,8 +63,9 @@ FIN_ACCION
 Una `FUNCION` retorna **asignándole a su propio nombre**: `devolverCuadro := ...`.
 No hay `RETORNAR` en el camino normal.
 
-Y los parámetros llevan **modo**: `E` (entra), `S` (sale), `ES` (las dos) o
-`VAR` (por referencia, la forma de los templates oficiales).
+Y los parámetros van **sin modo**: `(number: ENTERO)`. El `E`/`S`/`E/S` que
+existe en PAED es el modo de apertura de un ARCHIVO — `ABRIR E/(mae)` — no de
+un parámetro. Ver [XL-02](XLerror-02.md).
 
 ## Ver también
 

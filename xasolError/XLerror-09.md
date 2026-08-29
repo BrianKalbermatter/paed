@@ -19,7 +19,7 @@ dos parámetros, la llamada lleva dos argumentos.
 Comparalos lado a lado:
 
 ```paed
-FUNCION sumar(E a: ENTERO; E b: ENTERO): ENTERO    ← dos parámetros
+FUNCION sumar(a: ENTERO; b: ENTERO): ENTERO    ← dos parámetros
 ...
 r := sumar(3, 5);                                   ← dos argumentos
 ```

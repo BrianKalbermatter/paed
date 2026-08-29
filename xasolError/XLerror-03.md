@@ -30,7 +30,7 @@ en qué línea, justamente porque el error es difícil de ver leyendo.
 adentro** de su subacción:
 
 ```paed
-FUNCION devolverCuadro(E number: ENTERO): ENTERO
+FUNCION devolverCuadro(number: ENTERO): ENTERO
     PROCESO
         devolverCuadro := number ** 2;    ← acá number existe
 FIN_FUNCION

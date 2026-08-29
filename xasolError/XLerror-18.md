@@ -45,7 +45,7 @@ Casi siempre es una mayúscula distinta, o un **parámetro usado afuera de su
 subacción**:
 
 ```paed
-FUNCION cuadrado(E number: ENTERO): ENTERO
+FUNCION cuadrado(number: ENTERO): ENTERO
     PROCESO
         cuadrado := number ** 2;     ← acá number existe
 FIN_FUNCION

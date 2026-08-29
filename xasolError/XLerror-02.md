@@ -18,7 +18,7 @@ llamada va adentro de una expresión y el lenguaje tiene que saber con qué est�
 operando:
 
 ```paed
-FUNCION sumar(E a: ENTERO; E b: ENTERO): ENTERO
+FUNCION sumar(a: ENTERO; b: ENTERO): ENTERO
                                        ─┬────
                                         └── esto no es opcional
 ```
@@ -28,21 +28,31 @@ Ponérselo también es este error.
 
 ## Cómo se arregla
 
-Cada parámetro se escribe `MODO nombre: TIPO`, y van separados por `;`:
+Cada parámetro se escribe `nombre: TIPO`, y van separados por `;`:
 
 ```paed
-FUNCION sumar(E a: ENTERO; E b: ENTERO): ENTERO
-PROCEDIMIENTO cargar(VAR sec: SECUENCIA DE CARACTER)
+FUNCION sumar(a: ENTERO; b: ENTERO): ENTERO
+PROCEDIMIENTO cargar(sec: SECUENCIA DE CARACTER)
 ```
 
-Los cuatro modos:
+## `E` y `S` NO van en los parámetros
 
-| Modo | Significa |
-|---|---|
-| `E` | Entrada — el dato entra y no se modifica afuera |
-| `S` | Salida — la subacción devuelve un dato por ahí |
-| `ES` | Entrada/Salida — entra con valor y puede salir cambiado |
-| `VAR` | Por referencia. Es la que más aparece en los templates de cátedra |
+Es el error de notación más fácil de cometer, porque esas letras existen en
+PAED — pero **son el modo de apertura de un ARCHIVO**:
+
+```paed
+ABRIR E/(mae);        ← acá sí: el archivo se abre para leer
+ABRIR E/S(arch);      ← para leer y escribir
+
+FUNCION sumar(a: ENTERO; b: ENTERO): ENTERO    ← acá no va ningún modo
+```
+
+Medido sobre la teoría de la cátedra: **cero** apariciones de `E` como modo de
+parámetro, y varias de `E/` en `ABRIR`. La forma con modo aparece en la wiki,
+que arrastra errores conocidos.
+
+PAED acepta las dos, así que un programa con `E` en un parámetro corre igual.
+En un parcial escribilo sin modo.
 
 ## Ver también
 
