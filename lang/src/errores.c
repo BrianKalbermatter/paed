@@ -139,6 +139,16 @@ static const Familia CATALOGO[] = {
         "no tiene de donde sacar los datos",
         NULL } },
 
+    { "XL-17", "La estructura del programa esta fuera de orden",
+      { "falta ACCION",
+        "falta PROCESO",
+        "se esperaba: ACCION",
+        "va justo despues de ACCION",
+        "va ANTES de la ACCION",
+        "instruccion antes de ACCION",
+        "instruccion despues de FIN_ACCION",
+        NULL } },
+
     { "XL-16", "El dato no corresponde al tipo declarado",
       { "no es un numero",
         "no lleva decimales",

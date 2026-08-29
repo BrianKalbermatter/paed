@@ -37,6 +37,7 @@ que se llama igual: `XL-01` → `xasolError/XLerror-01.md`.
 | [XL-14](xasolError/XLerror-14.md) | El programa no termina | al ejecutar |
 | [XL-15](xasolError/XLerror-15.md) | Se acabaron los datos de entrada | al ejecutar |
 | [XL-16](xasolError/XLerror-16.md) | El dato no corresponde al tipo declarado | al ejecutar |
+| [XL-17](xasolError/XLerror-17.md) | La estructura del programa está fuera de orden | al parsear |
 
 ## Un error sin código
 
