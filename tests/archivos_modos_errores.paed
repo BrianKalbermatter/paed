@@ -36,8 +36,8 @@ PROCESO
 FIN_ACCION
 
 // ── SALIDA ESPERADA ─────────────────────────────────────────────────────────
-// tests/archivos_modos_errores.paed:27: error: modo de apertura invalido en 'ABRIR X/': los de ABRIR son E/ (entrada), S/ (salida), E/S (entrada-salida)
-// tests/archivos_modos_errores.paed:28: error: 'ABRIR E/S/' tiene 2 barras: el modo de apertura lleva UNA sola, como en ABRIR E/(arch)
-// tests/archivos_modos_errores.paed:29: error: LEER no lleva modo de apertura: el modo se escribe una sola vez, en el ABRIR
+// tests/archivos_modos_errores.paed:27: error XL-10: modo de apertura invalido en 'ABRIR X/': los de ABRIR son E/ (entrada), S/ (salida), E/S (entrada-salida)
+// tests/archivos_modos_errores.paed:28: error XL-10: 'ABRIR E/S/' tiene 2 barras: el modo de apertura lleva UNA sola, como en ABRIR E/(arch)
+// tests/archivos_modos_errores.paed:29: error XL-10: LEER no lleva modo de apertura: el modo se escribe una sola vez, en el ABRIR
 // tests/archivos_modos_errores.paed:32: error: el archivo 'entra' se abrio para ENTRADA en la linea 31: ESCRIBIR necesita que este abierto para SALIDA (ABRIR S/ o E/S)
 // tests/archivos_modos_errores.paed:35: error: el archivo 'sale' se abrio para SALIDA en la linea 34: LEER necesita que este abierto para ENTRADA (ABRIR E/ o E/S)

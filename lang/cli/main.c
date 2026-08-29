@@ -25,6 +25,7 @@
 #include <paed/aprender.h>
 #include <paed/asistente.h>
 #include <paed/datos.h>
+#include <paed/errores.h>
 #include <paed/colores.h>
 #include <paed/parser.h>
 #include <paed/interpreter.h>
@@ -346,6 +347,7 @@ static void ayuda(void) {
     printf("  paed aprender              el tutorial: ejercicios rotos, de menos a mas\n");
     printf("  paed asistente <archivo>   el menu de archivos: que tipo es cada uno\n");
     printf("  paed datos <archivo>       carga las filas del .csv, ordenadas por su clave\n");
+    printf("  paed errores               los codigos de error y que significa cada uno\n");
     printf("  paed install [destino]     se instala (por defecto /usr/local o ~/.local)\n");
     printf("  paed uninstall [destino]   se borra (por defecto de donde se esta corriendo)\n");
     printf("  paed --version             la version\n");
@@ -420,6 +422,17 @@ int main(int argc, char **argv) {
         // por esa clave. Va antes de escribir el PROCESO, no despues.
         if (strcmp(argv[1], "datos") == 0)
             return paed_datos(argc - 1, argv + 1);
+
+        // El catalogo de errores. Lo mismo que esta en errores.md, para poder
+        // mirarlo sin salir de la terminal.
+        if (strcmp(argv[1], "errores") == 0) {
+            printf("\n  Codigos de error de PAED\n\n");
+            for (int i = 0; i < paed_codigos_count(); i++)
+                printf("    %-8s %s\n", paed_codigo_nombre(i), paed_codigo_titulo(i));
+            printf("\n  Cada uno esta explicado en xasolError/XLerror-NN.md,\n");
+            printf("  con el indice en errores.md.\n\n");
+            return 0;
+        }
 
         if (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-v") == 0 ||
             strcmp(argv[1], "-version") == 0 || strcmp(argv[1], "version") == 0) {

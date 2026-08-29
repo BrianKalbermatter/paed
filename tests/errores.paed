@@ -35,10 +35,10 @@ FIN_ACCION
 // ── SALIDA ESPERADA ─────────────────────────────────────────────────────────
 // tests/errores.paed:8: error: argumento 'cubo1' sin 'clave = valor' en MOVER: la referencia siempre se escribe con nombre
 // tests/errores.paed:8: error: falta el parametro obligatorio 'nombre' en MOVER
-// tests/errores.paed:9: error: procedimiento desconocido 'MOVERR' (no esta en sintaxis.json, ni en las librerias que pediste con USAR (escena), ni es una subaccion de este programa)
+// tests/errores.paed:9: error XL-08: procedimiento desconocido 'MOVERR' (no esta en sintaxis.json, ni en las librerias que pediste con USAR (escena), ni es una subaccion de este programa)
 // tests/errores.paed:10: error: parametro 'valor' no existe en COLOR
 // tests/errores.paed:10: error: falta el parametro obligatorio 'color' en COLOR
-// tests/errores.paed:11: error: '1' no es un valor VEC3 valido para posicion de MOVER
+// tests/errores.paed:11: error XL-16: '1' no es un valor VEC3 valido para posicion de MOVER
 // tests/errores.paed:11: error: argumento '1' sin 'clave = valor' en MOVER: la referencia siempre se escribe con nombre
 // tests/errores.paed:11: error: argumento '1' sin 'clave = valor' en MOVER: la referencia siempre se escribe con nombre
 // tests/errores.paed:11: error: falta el parametro obligatorio 'posicion' en MOVER

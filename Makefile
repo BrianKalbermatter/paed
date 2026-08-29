@@ -81,6 +81,7 @@ $(APRENDER_GEN): $(APRENDER_SRC) aprender/modulos.txt aprender/generar.sh
 LANG_SRC = lang/src/parser.c lang/src/expr.c lang/src/interpreter.c \
            lang/src/secuencia.c lang/src/archivo.c lang/src/aprender.c \
            lang/src/colores.c lang/src/asistente.c lang/src/datos.c \
+           lang/src/errores.c \
            lang/src/plataforma.c $(LANG_GEN) $(APRENDER_GEN) \
            lang/vendor/cjson/cJSON.c
 LANG_OBJ = $(LANG_SRC:%.c=$(BUILDDIR)/lang/%.o)

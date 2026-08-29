@@ -43,9 +43,9 @@ PROCESO
 FIN_ACCION
 
 // ── SALIDA ESPERADA ─────────────────────────────────────────────────────────
-// tests/archivos_organizacion_errores.paed:25: error: el registro 'remedio' no tiene un campo 'precio'
-// tests/archivos_organizacion_errores.paed:28: error: 'INDEXADO POR' lleva un solo campo y 'b' tiene 2
-// tests/archivos_organizacion_errores.paed:31: error: el campo 'farmacia' esta dos veces en la clave de 'c'
-// tests/archivos_organizacion_errores.paed:34: error: a 'd' le faltan los campos despues de 'ORDENADO POR'
+// tests/archivos_organizacion_errores.paed:25: error XL-11: el registro 'remedio' no tiene un campo 'precio'
+// tests/archivos_organizacion_errores.paed:28: error XL-10: 'INDEXADO POR' lleva un solo campo y 'b' tiene 2
+// tests/archivos_organizacion_errores.paed:31: error XL-10: el campo 'farmacia' esta dos veces en la clave de 'c'
+// tests/archivos_organizacion_errores.paed:34: error XL-10: a 'd' le faltan los campos despues de 'ORDENADO POR'
 // tests/archivos_organizacion_errores.paed:37: error: no se entiende 'AGRUPADO POR farmacia' en la declaracion de 'e': despues del tipo solo va ORDENADO POR o INDEXADO POR
-// tests/archivos_organizacion_errores.paed:40: error: 'f' no se puede ordenar por campos: 'ENTERO' no es un REGISTRO declarado en el AMBIENTE
+// tests/archivos_organizacion_errores.paed:40: error XL-10: 'f' no se puede ordenar por campos: 'ENTERO' no es un REGISTRO declarado en el AMBIENTE

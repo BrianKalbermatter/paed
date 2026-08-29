@@ -1,4 +1,5 @@
 #include "paed/parser.h"
+#include "paed/errores.h"
 #include "cJSON.h"
 
 #include <ctype.h>
@@ -533,9 +534,15 @@ static void add_error(PAEDProgram *p, int line, const char *fmt, ...) {
 }
 
 void paed_print_errors(const PAEDProgram *prog) {
-    for (int i = 0; i < prog->error_count; i++)
-        fprintf(stderr, "%s:%d: error: %s\n",
-                prog->path, prog->errors[i].line, prog->errors[i].msg);
+    for (int i = 0; i < prog->error_count; i++) {
+        // El codigo de la familia a la que pertenece el mensaje, para poder
+        // buscarlo en xasolError/. Vacio si todavia no esta catalogado, y ahi
+        // el error sale como salia antes. Ver lang/src/errores.c.
+        const char *cod = paed_codigo_error(prog->errors[i].msg);
+        fprintf(stderr, "%s:%d: error%s%s: %s\n",
+                prog->path, prog->errors[i].line,
+                cod[0] ? " " : "", cod, prog->errors[i].msg);
+    }
     if (prog->error_count >= PAED_MAX_ERRORS)
         fprintf(stderr, "%s: error: demasiados errores, se corto el reporte\n", prog->path);
 }

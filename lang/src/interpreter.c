@@ -1,4 +1,5 @@
 #include "paed/interpreter.h"
+#include "paed/errores.h"
 #include "paed/expr.h"
 #include "paed/secuencia.h"
 #include "paed/archivo.h"
@@ -22,7 +23,11 @@
 static Entorno env;
 
 void paed_runtime_error(const PAEDProgram *prog, const PAEDInstr *in, const char *msg) {
-    fprintf(stderr, "%s:%d: error: %s\n", prog->path, in->line, msg);
+    {
+        const char *cod = paed_codigo_error(msg);
+        fprintf(stderr, "%s:%d: error%s%s: %s\n", prog->path, in->line,
+                cod[0] ? " " : "", cod, msg);
+    }
 }
 
 // Nombre corto para el uso interno, que es la mayoria de las llamadas.

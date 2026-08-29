@@ -27,5 +27,5 @@ PROCESO
 FIN_ACCION
 
 // ── SALIDA ESPERADA ─────────────────────────────────────────────────────────
-// tests/registro_sin_cerrar.paed:21: error: falta FIN_REGISTRO: el registro 'fecha' de la linea 17 sigue abierto y aca ya empieza otro
-// tests/registro_sin_cerrar.paed:25: error: falta FIN_REGISTRO: el registro 'alumno' de la linea 21 quedo abierto y aca ya empieza el PROCESO
+// tests/registro_sin_cerrar.paed:21: error XL-11: falta FIN_REGISTRO: el registro 'fecha' de la linea 17 sigue abierto y aca ya empieza otro
+// tests/registro_sin_cerrar.paed:25: error XL-11: falta FIN_REGISTRO: el registro 'alumno' de la linea 21 quedo abierto y aca ya empieza el PROCESO

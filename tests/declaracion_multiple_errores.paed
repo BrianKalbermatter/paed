@@ -19,6 +19,6 @@ PROCESO
 FIN_ACCION
 
 // ── SALIDA ESPERADA ─────────────────────────────────────────────────────────
-// tests/declaracion_multiple_errores.paed:14: error: nombre de variable invalido: ''
-// tests/declaracion_multiple_errores.paed:15: error: nombre de variable invalido: ''
-// tests/declaracion_multiple_errores.paed:16: error: nombre de variable invalido: '9mal'
+// tests/declaracion_multiple_errores.paed:14: error XL-07: nombre de variable invalido: ''
+// tests/declaracion_multiple_errores.paed:15: error XL-07: nombre de variable invalido: ''
+// tests/declaracion_multiple_errores.paed:16: error XL-07: nombre de variable invalido: '9mal'
