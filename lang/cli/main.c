@@ -24,6 +24,7 @@
 
 #include <paed/aprender.h>
 #include <paed/asistente.h>
+#include <paed/datos.h>
 #include <paed/colores.h>
 #include <paed/parser.h>
 #include <paed/interpreter.h>
@@ -344,6 +345,7 @@ static void ayuda(void) {
     printf("  paed <archivo.paed>        corre un programa\n");
     printf("  paed aprender              el tutorial: ejercicios rotos, de menos a mas\n");
     printf("  paed asistente <archivo>   el menu de archivos: que tipo es cada uno\n");
+    printf("  paed datos <archivo>       carga las filas del .csv, ordenadas por su clave\n");
     printf("  paed install [destino]     se instala (por defecto /usr/local o ~/.local)\n");
     printf("  paed uninstall [destino]   se borra (por defecto de donde se esta corriendo)\n");
     printf("  paed --version             la version\n");
@@ -412,6 +414,12 @@ int main(int argc, char **argv) {
         // .paed para ejecutarlo, asi que no pasa por el parseo de argumentos.
         if (strcmp(argv[1], "asistente") == 0)
             return paed_asistente(argc - 1, argv + 1);
+
+        // El cargador de datos. Lee el AMBIENTE del .paed para saber que
+        // columnas y que clave tiene cada archivo, y escribe el .csv ordenado
+        // por esa clave. Va antes de escribir el PROCESO, no despues.
+        if (strcmp(argv[1], "datos") == 0)
+            return paed_datos(argc - 1, argv + 1);
 
         if (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-v") == 0 ||
             strcmp(argv[1], "-version") == 0 || strcmp(argv[1], "version") == 0) {
