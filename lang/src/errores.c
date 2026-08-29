@@ -139,6 +139,11 @@ static const Familia CATALOGO[] = {
         "no tiene de donde sacar los datos",
         NULL } },
 
+    { "XL-18", "Se usa una variable antes de darle valor",
+      { "todavia no tiene valor",
+        "no tiene valor todavia",
+        NULL } },
+
     { "XL-17", "La estructura del programa esta fuera de orden",
       { "falta ACCION",
         "falta PROCESO",

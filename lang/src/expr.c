@@ -588,9 +588,24 @@ static Valor primario(Ctx *c) {
         }
 
         Valor *v = env_buscar(c->env, nombre);
-        // Declarada pero sin asignar: existe en la tabla y aun asi no tiene
-        // valor. Se trata igual que si no existiera — es el mismo error.
-        if (v && v->tipo == VAL_VACIO) v = NULL;
+
+        // Existe en la tabla pero todavia no le asignaron nada. NO es el
+        // mismo error que "no existe", aunque antes se trataban igual:
+        //
+        //   fantasma   nunca se declaro          -> se escribio mal, o falta
+        //                                          la declaracion
+        //   b          declarada, sin asignar    -> falta el ':=' antes de
+        //                                          usarla
+        //
+        // Decir "no tiene valor todavia" para los dos manda a buscar un ':='
+        // que falta cuando en realidad lo que hay es un nombre mal escrito, y
+        // eso hace perder mucho tiempo.
+        if (v && v->tipo == VAL_VACIO) {
+            falla(c, "'%s' esta declarado pero todavia no tiene valor: "
+                     "hay que asignarle algo antes de usarlo", nombre);
+            return NUM(0);
+        }
+
         if (!v) {
             // env_buscar deja un motivo mejor cuando el nombre SI existe pero
             // es un arreglo usado sin indice. Solo si no dijo nada se cae al
@@ -601,7 +616,7 @@ static Valor primario(Ctx *c) {
                 snprintf(motivo, sizeof(motivo), "%s", c->env->error);
                 falla(c, "%s", motivo);
             } else {
-                falla(c, "la variable '%s' no tiene valor todavia", nombre);
+                falla(c, "'%s' no esta declarado en el AMBIENTE", nombre);
             }
             return NUM(0);
         }
