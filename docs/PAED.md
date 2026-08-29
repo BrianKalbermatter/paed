@@ -606,10 +606,10 @@ línea, y los de la clave después, aunque estén más arriba en el archivo.
 Repetir un campo en la clave también se rechaza: el segundo desempata lo que el
 primero ya dejó igual.
 
-Las organizaciones se definen en `data/sintaxis.json`, no en el C. El asistente
-del editor tiene que ofrecer exactamente las que el parser acepta, y con dos
-listas un día dicen cosas distintas — que es el bug que mató a la versión
-anterior (§0.1).
+Las organizaciones se definen en `data/sintaxis.json`, no en el C. Las
+herramientas que las ofrecen — `paed asistente`, `paed datos` — tienen que
+ofrecer exactamente las que el parser acepta, y con dos listas un día dicen
+cosas distintas: es el bug que mató a la versión anterior (§0.1).
 
 El juego de archivos que arma un ejercicio, la baja lógica contra la física y el
 plan de implementación están en [`ARCHIVOS.md`](ARCHIVOS.md).
@@ -1546,7 +1546,7 @@ no se toca nunca, así que ningún `;` de una instrucción corre peligro.
 
 Los alias de procedimiento (`Esc`, `GRABAR`) viven en `data/sintaxis.json`, no en
 el C, por la misma razón que las organizaciones de archivo: con dos listas, un
-día el parser y el asistente del editor dicen cosas distintas. El parser guarda
+día el parser y el resaltador dicen cosas distintas. El parser guarda
 el nombre **canónico**, así que el intérprete nunca ve un alias.
 
 ### 15.3 Lo que falta: SUBACCIONES

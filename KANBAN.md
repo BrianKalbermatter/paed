@@ -27,7 +27,7 @@ kanban-plugin: board
 
 ## Backlog — Fase 1: la declaración parsea
 
-- [ ] *(fases 1, 2 y 3 COMPLETAS. La batería entera va en 46/46 — `make test`. Sigue la fase 4: el asistente del editor)* #f1-declaracion
+- [ ] *(fases 1, 2 y 3 COMPLETAS. La batería entera va en 50/50 — `make test`. La fase 4 es el cargador de datos)* #f1-declaracion
 
 ## Backlog — Fase 2: el CSV existe en disco
 
@@ -36,16 +36,19 @@ kanban-plugin: board
 
 - [ ] `LV` (Low Value): CERO apariciones en wiki, OnlySintaxis y TEORIA_COMPLETA. **No inventarlo** — si algún día aparece en un parcial, ahí se agrega #f3-algoritmo
 
-## Backlog — Fase 4: el asistente del editor
+## Backlog — Fase 4: el cargador de datos
 
-- [ ] Detectar la declaración de archivo incompleta y su posición en el buffer #f4-asistente
-- [ ] Leer las organizaciones desde `sintaxis.json`, no de una lista en C: agregar una organización nueva tiene que hacerla aparecer sola en el asistente #f4-asistente
-- [ ] Mostrar el **juego de archivos** del ejercicio con el rol de cada uno y cuáles faltan declarar: maestro, movimientos, maestro nuevo, bajas, errores #f4-asistente
-- [ ] Preguntar la organización: secuencial, ordenado o indexado #f4-asistente
-- [ ] Preguntar la baja cuando corresponda: **lógica** (cambia el `REGISTRO`, necesita campo marca) o **física** (cambia el juego de archivos) #f4-asistente
-- [ ] Listar los campos del `REGISTRO` para elegir los de la clave sin tipearlos #f4-asistente
-- [ ] Escribir la cláusula elegida en el buffer. El asistente **solo produce texto en el `.paed`**: no guarda configuración en ningún lado, el disparador se deriva del texto fuente #f4-asistente
-- [ ] Mientras la fase 5 no exista, ofrecer `INDEXADO POR` **avisando que todavía no ejecuta**. Ofrecer una opción que después falla en `ABRIR` es peor que no ofrecerla: el error aparece lejos de la decisión que lo causó #f4-asistente
+`paed datos <archivo.paed>` — `lang/src/datos.c`. La cátedra te da los archivos
+armados en el parcial; acá los armás vos, y el `AMBIENTE` es la única fuente de
+qué columnas y qué clave tiene cada uno.
+
+- [x] Leer del `AMBIENTE` las columnas, sus tipos y la clave de cada archivo #f4-datos
+- [x] Validar cada valor contra el tipo declarado: un `ENTERO` no acepta `abc` ni `3.5`, y ningún valor puede llevar el separador del CSV #f4-datos
+- [x] Traer primero las filas que el `.csv` ya tenía: un archivo armado no se retipea, se le agregan las que falten #f4-datos
+- [x] Ordenar por la clave de la cláusula, **estable** (varios movimientos de la misma clave conservan su orden) y comparando números como números (`10` va después de `9`) #f4-datos
+- [x] Avisar cuántas filas repiten la clave: error en un maestro, normal en un archivo de movimientos por lotes #f4-datos
+- [ ] Mientras la fase 5 no exista, avisar que `INDEXADO POR` parsea pero el intérprete todavía no lo ejecuta #f4-datos
+- [ ] Tests de `paed datos`: orden numérico vs textual, estabilidad, carga acumulativa sobre un `.csv` existente, encabezado que no coincide con el `REGISTRO` #f4-datos
 
 ## Backlog — Fase 5: indexado de verdad
 
@@ -114,7 +117,7 @@ kanban-plugin: board
 - [x] Los cierres de la cátedra: `FinSi;` `FSI;` `FIN SI;` `FinMientras;` `FMientras;` `FinPara;` `FinSegun;` `fin_reg;` `FinReg` `freg;` #parser
 - [x] `Accion X ES;` con `;`, el `ES` **opcional** (`accion archivo_corte;` de CORTE DE CONTROL Rev2), y `FinAccion.` con punto #parser
 - [x] Comentarios `{entre llaves}` y `* entre asteriscos *`, cuando **abren la línea**. La restricción no es caprichosa: `d: {1..31}` es un tipo rango y `a := b * c` es multiplicación, así que en el medio de una línea los dos caracteres ya significan otra cosa #parser
-- [x] `Esc` / `ESC` / `GRABAR` como alias de `ESCRIBIR`. Viven en `data/sintaxis.json` y **no en el C**, por la misma razón que las organizaciones de archivo: con dos listas, un día el parser y el asistente del editor dicen cosas distintas. El parser guarda el nombre canónico, así que el intérprete nunca ve un alias #parser
+- [x] `Esc` / `ESC` / `GRABAR` como alias de `ESCRIBIR`. Viven en `data/sintaxis.json` y **no en el C**, por la misma razón que las organizaciones de archivo: con dos listas, un día el parser y el resaltador dicen cosas distintas. El parser guarda el nombre canónico, así que el intérprete nunca ve un alias #parser
 - [x] `ABRIRe(arch)` y `ABRIRs(arch)`: la barra del modo pasa a ser **opcional**. Dos barras sigue siendo error — ahí no hay una forma de la cátedra que interpretar, hay un modo escrito mal #parser
 - [x] `NOFDA` / `NoFDA` / `NOFDS` como `NFDA` / `NFDS`. (`No FDA(arch)` con espacio ya andaba solo: `NO` es el operador lógico y `FDA` la función) #evaluador
 - [x] **`REPETIR ... HASTA [QUE] cond`** — el ciclo post-test (`Repetir.txt`). La condición dice cuándo TERMINAR, al revés que la del `MIENTRAS`, y el cuerpo siempre corre al menos una vez. Test: `tests/catedra_repetir.paed` #parser #evaluador

@@ -10,10 +10,10 @@ La sintaxis del lenguaje es [`PAED.md`](PAED.md); acá está el diseño y el pla
 1. La **organización** del archivo se escribe en la declaración, con las
    cláusulas que ya usa la cátedra: `ORDENADO POR` e `INDEXADO POR`.
 2. Un ejercicio no usa *un* archivo: usa un **juego de archivos** con roles
-   distintos. El asistente del editor trabaja sobre el juego, no sobre uno.
+   distintos. Las herramientas trabajan sobre el juego, no sobre uno.
 3. En disco todo es **CSV con encabezado** (`PAED.md §2.6`).
-4. El asistente **escribe código en el `.paed`**. No guarda configuración
-   aparte, en ningún lado.
+4. La verdad **vive en el `.paed`**. No hay configuración aparte, en ningún
+   lado: las herramientas leen el `AMBIENTE` y nada más.
 
 ## 1. La declaración
 
@@ -78,7 +78,7 @@ roles distintos**, y algunos aparecen solo según qué decisiones se tomen.
 | **bajas** | `S/` | solo si hay baja **física** en la secuencial |
 | **errores / listado** | `S/` | casi siempre |
 
-Esa es la información que el asistente muestra: **el juego completo**, no la
+Esa es la información que hay que tener a la vista: **el juego completo**, no la
 línea que se está escribiendo. Declarar el maestro sin el archivo de errores es
 el olvido típico, y no se nota hasta que el programa tiene que reportar el primer
 movimiento inválido y no tiene dónde.
@@ -159,8 +159,8 @@ RE-ESCRIBIR(arch_mae, reg_mae)
 BORRAR(arch_mae, reg_mae)
 ```
 
-La diferencia importa para el asistente, y es la razón de que tenga que
-preguntarlo en vez de asumirlo:
+La diferencia hay que decidirla al escribir el `AMBIENTE`, y no se puede
+deducir de lo que ya está escrito:
 
 - **La baja lógica cambia el `REGISTRO`.** Hace falta un campo (`Marca_baja`)
   que no existe si nadie lo declaró. Elegir baja lógica y no tener el campo es
@@ -168,47 +168,80 @@ preguntarlo en vez de asumirlo:
 - **La baja física cambia el juego de archivos.** En la secuencial, los
   registros dados de baja tienen que ir a algún lado.
 
-Ninguna de las dos se puede deducir del código ya escrito. Por eso se pregunta.
+Ninguna de las dos se puede deducir del código ya escrito: son una decisión, y
+el `.paed` es donde queda escrita.
 
 Restricción del corpus, para los ejercicios con varios movimientos por maestro:
 *"solo el último movimiento puede ser una baja lógica"*, y *"no existen altas o
 bajas entre modificaciones"*.
 
-## 4. El contrato del asistente
+## 4. El cargador de datos
 
-Se abre cuando la declaración de un archivo está **incompleta**, y deja de
-abrirse cuando queda **completa**. Borrar la declaración y volver a escribirla la
-abre de nuevo.
+En el parcial la cátedra te **da** los archivos, ya cargados y ya ordenados. Acá
+no te los da nadie, y armarlos a mano en una planilla es donde aparecen los dos
+errores que después se pagan corriendo el programa: una columna que no coincide
+con el `REGISTRO`, y filas que no están en el orden que la declaración promete.
 
-**No hay estado guardado en ningún lado.** El disparador se deriva del texto
-fuente, no de un registro de "a este archivo ya lo configuré".
-
-Esto no es un detalle de implementación, es lo que mantiene el `.paed`
-autosuficiente. Si la organización viviera en un archivo de configuración al
-costado, el programa dejaría de correr en otra máquina — y el resto del proyecto
-está construido sobre lo contrario: el binario lleva el lenguaje adentro, y cada
-test lleva su salida esperada adentro.
-
-El asistente es **un ayudante de tipeo**. Lo único que produce es texto en el
-`.paed`:
+`paed datos <archivo.paed>` resuelve las dos, **leyendo el `AMBIENTE`**:
 
 ```
-arch: ARCHIVO DE remedio                    <- incompleta, se abre
-arch: ARCHIVO DE remedio ORDENADO POR ...;  <- completa, no se abre
+mae: ARCHIVO DE remedio ORDENADO POR farmacia, medicamento;
+         |                           |
+         |                           +-- por acá se ordenan las filas
+         +-- de acá salen las columnas y el tipo de cada una
 ```
 
-Lo que muestra:
+No tiene una definición propia de qué columnas lleva cada archivo ni de cuál es
+su clave: eso ya lo dijiste al escribir el `REGISTRO` y la cláusula. **El dato
+bueno es el `.paed`; la herramienta lo obedece.**
 
-1. El **juego de archivos** del ejercicio, con el rol de cada uno y cuáles
-   faltan declarar.
-2. La **organización** del que se está escribiendo: secuencial u ordenado o
-   indexado.
-3. Si hay bajas: **lógica o física**, con lo que cada una arrastra.
-4. Los **campos del `REGISTRO`**, para elegir los de la clave sin tipearlos.
+### El orden de trabajo que habilita
 
-Las opciones salen de `data/sintaxis.json`, no de una lista en C. Es la misma
-regla que gobierna todo lo demás: agregar una organización nueva la hace
-aparecer en el asistente sin tocar el editor. Ver `ESTRUCTURA.md`.
+1. Escribís el `AMBIENTE`: los `REGISTRO` y los `ARCHIVO` con su cláusula.
+2. Corrés `paed datos` y cargás las filas.
+3. Recién ahí escribís el `PROCESO`, con los datos ya fijos en disco.
+
+Ese orden importa: un algoritmo de mezcla o de actualización secuencial **supone**
+que la entrada viene ordenada. Depurar el algoritmo contra datos desordenados es
+perseguir un bug que no está en el código.
+
+### Lo que hace
+
+| | |
+|---|---|
+| **Columnas y tipos** | del `REGISTRO`, en su orden de declaración |
+| **Valida al tipear** | un `ENTERO` no acepta `abc`, y un `ENTERO` no acepta `3.5` |
+| **Ordena** | por la clave de la cláusula, **estable**, comparando números como números |
+| **Acumula** | si el `.csv` ya existe, trae sus filas primero y reordena todo junto |
+| **Avisa** | cuántas filas repiten la clave de la anterior |
+
+**El orden estable no es un detalle.** En un archivo de movimientos por lotes la
+misma clave trae varios movimientos, y tienen que aplicarse en el orden en que
+están: un orden inestable cambiaría el resultado del programa sin tocar el
+programa.
+
+**Comparar números como números tampoco.** En una columna numérica `'10'` va
+después de `'9'`; comparando como texto va antes, porque `'1' < '9'` en ASCII. Un
+maestro ordenado así hace fallar la actualización recién en el registro número
+diez.
+
+Las claves repetidas **no se rechazan**, se cuentan y se avisan: en un maestro
+son un error porque la clave lo identifica, y en un archivo de movimientos son
+exactamente lo que se espera. El mismo número significa cosas opuestas según qué
+archivo sea, así que la herramienta informa y decidís vos.
+
+### Lo que no hace
+
+**No inventa filas y no toca el `.paed`.** Los datos los escribís vos: son los
+del enunciado, y una fila generada al azar hace que el programa corra sin
+demostrar nada.
+
+**No guarda estado en ningún lado.** Todo lo que necesita saber sale del texto
+fuente. Eso es lo que mantiene el `.paed` autosuficiente: si la organización
+viviera en un archivo de configuración al costado, el programa dejaría de correr
+en otra máquina — y el resto del proyecto está construido sobre lo contrario, que
+el binario lleva el lenguaje adentro y cada test lleva su salida esperada
+adentro.
 
 ## 5. En disco
 
@@ -231,12 +264,12 @@ rápido** — y con estos tamaños, "rápido" ya lo es.
 
 ### Fase 1 — la declaración parsea y se valida
 
-Sin esto no hay nada: el asistente no tiene qué escribir y el runtime no sabe
-qué crear.
+Sin esto no hay nada: no hay clave de donde ordenar y el runtime no sabe qué
+crear.
 
 1. **`data/sintaxis.json`**: las cláusulas `ORDENADO POR` e `INDEXADO POR` como
    modificadores de la declaración `ARCHIVO`, con sus organizaciones nombradas
-   (`secuencial`, `ordenado`, `indexado`) para que el asistente las lea de ahí.
+   (`secuencial`, `ordenado`, `indexado`), para que se lean de ahí y no del C.
 
 2. **`PAEDDecl`** (`lang/include/paed/parser.h`) — campos nuevos, al lado de
    `es_archivo`:
@@ -298,17 +331,17 @@ planilla y se entiende.
 Ese test es el que demuestra que los archivos sirven: es el ejercicio que toma
 la cátedra.
 
-### Fase 4 — el asistente
+### Fase 4 — el cargador de datos
 
-14. Detectar la declaración incompleta y su posición.
-15. Leer las organizaciones desde `sintaxis.json`.
-16. Mostrar el juego de archivos, la organización, la baja, y los campos del
-    registro.
-17. Escribir la cláusula elegida en el buffer.
+14. Leer del `AMBIENTE` las columnas, sus tipos y la clave de cada archivo.
+15. Cargar filas validando cada valor contra el tipo declarado.
+16. Traer primero lo que el `.csv` ya tenía, para no retipear un archivo armado.
+17. Ordenar por la clave, estable, y escribir el `.csv`.
 
-Va cuarto a propósito: hasta que la Fase 1 no exista, el asistente no tiene
-sintaxis válida que escribir, y hasta que no exista la Fase 2, lo que escribe no
-produce ningún archivo.
+Va cuarto a propósito: hasta que la Fase 1 no exista, no hay cláusula de donde
+sacar la clave, y hasta que no exista la Fase 2, no hay `.csv` que escribir.
+
+**Hecho** — `lang/src/datos.c`, subcomando `paed datos`.
 
 ### Fase 5 — indexado de verdad
 
@@ -316,10 +349,10 @@ produce ningún archivo.
 19. `LEER` directo por clave.
 20. Campo marca y baja lógica.
 
-**Hasta que esta fase no esté, el asistente ofrece `INDEXADO POR` pero avisa que
-la organización todavía no ejecuta.** Ofrecer una opción que después falla en
-`ABRIR` es peor que no ofrecerla: el error aparece lejos de la decisión que lo
-causó.
+**Hasta que esta fase no esté, `INDEXADO POR` parsea pero el intérprete no lo
+ejecuta**, y las herramientas lo avisan. Aceptar una declaración que después
+falla en `ABRIR` sin decir nada es peor que rechazarla: el error aparece lejos
+de la decisión que lo causó.
 
 ## 7. Lo que queda abierto
 

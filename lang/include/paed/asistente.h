@@ -5,53 +5,44 @@
 
 #include "parser.h"
 
-// El asistente de archivos — la ventanita de la fase 4.
+// El asistente de archivos — `paed asistente <archivo.paed>`.
 //
 // Por que existe: en AED la estructura de los ejercicios de archivo NO cambia.
 // Actualizacion, mezcla y corte de control siempre traen el mismo juego —
 // maestro, movimientos, maestro nuevo, bajas, errores — y las mismas tres
-// organizaciones. Cuando la forma es fija, el editor no tiene que adivinar: ya
-// sabe que preguntar. Esa es toda la ventaja, y es la razon de este archivo.
+// organizaciones. Como la forma es fija, se puede mirar un .paed a medio
+// escribir y decir que archivos declaro, de que tipo es cada uno y cual falta.
+// Esa es toda la ventaja, y es la razon de este archivo.
 //
-// ── COMO SE USA DESDE editorBim ──────────────────────────────────────────────
+// Lo que CONTESTA, sin ejecutar el programa:
 //
-// Nada de aca imprime, ni lee del teclado, ni abre ninguna ventana. Devuelve
-// datos y nada mas: la ventanita la dibuja editorBim, que es el unico que sabe
-// donde esta el cursor y como se pinta un recuadro.
+//     - que archivos hay declarados en el AMBIENTE, y en que linea
+//     - de que tipo es cada uno: secuencial, ordenado o indexado
+//     - si su tipo es un REGISTRO de verdad (si no, ABRIR va a fallar)
+//     - si su .csv ya existe en disco
 //
-// El ciclo es este:
+// El companero de este modulo es datos.h, que carga las FILAS de ese .csv
+// ordenadas por la clave declarada. Este dice que archivos hay; aquel los llena.
 //
-//   1. El usuario escribe una linea. editorBim parsea el buffer y pregunta:
+// ── La division de este archivo ──────────────────────────────────────────────
 //
-//          PAEDArchivoInfo info;
-//          if (paed_asistente_en_linea(&prog, linea_del_cursor, &info)) {
-//              // hay un ARCHIVO declarado en esta linea -> abrir la ventanita
-//          }
-//
-//   2. Pide las opciones y las dibuja:
-//
-//          PAEDOpcion ops[PAED_MAX_ORGANIZACIONES];
-//          int n = paed_asistente_opciones(ops, PAED_MAX_ORGANIZACIONES);
-//
-//   3. El usuario elige una, la ventanita se cierra, y se aplica:
-//
-//          char msg[192];
-//          paed_asistente_crear(&prog, info.nombre, ops[i].organizacion,
-//                               msg, sizeof(msg));
-//          // msg trae que paso, listo para mostrar en la barra de estado
+// La primera mitad no imprime ni lee del teclado: devuelve datos. La segunda es
+// un menu de consola encima. Que sean dos mitades y no un solo bloque es lo que
+// permite que otro front-end — el editor, un test — pregunte lo mismo y obtenga
+// exactamente la misma respuesta.
 //
 // Ninguna de estas funciones guarda estado entre llamadas. El asistente no
-// tiene configuracion propia a proposito (KANBAN #f4-asistente): lo unico que
-// define el programa es el texto del .paed. Un asistente con memoria propia es
-// un segundo lugar donde se define el programa, y ya sabemos como termina eso.
+// tiene configuracion propia a proposito: lo unico que define el programa es el
+// texto del .paed. Un asistente con memoria propia es un segundo lugar donde se
+// define el programa, y ya sabemos como termina eso.
 
-// ── Una opcion de la ventanita ───────────────────────────────────────────────
+// ── Un tipo de archivo que se puede ofrecer ───────────────────────────────────────────────
 //
 // Salen de data/sintaxis.json ("archivos" -> "organizaciones"), filtradas por
 // "en_asistente". No hay ninguna lista de tipos de archivo en el C: encender
 // uno es una linea de JSON.
 typedef struct {
-    char etiqueta[64];        // lo que se lee en la ventanita: "Archivo Secuencial"
+    char etiqueta[64];        // lo que se lee en el menu: "Archivo Secuencial"
     char descripcion[160];    // el renglon de abajo, para el que no sabe cual elegir
     // El nombre interno ("secuencial", "ordenado", "indexado"). Es lo que se le
     // pasa despues a paed_asistente_crear: la etiqueta es para el humano, esto
@@ -90,15 +81,16 @@ typedef enum {
 // Llena `out` con los archivos declarados en el AMBIENTE y devuelve cuantos.
 int paed_asistente_archivos(const PAEDProgram *prog, PAEDArchivoInfo *out, int max);
 
-// ¿Hay un ARCHIVO declarado en esa linea? Es el DISPARADOR de la ventanita:
-// editorBim sabe en que linea esta el cursor y pregunta por ella.
+// ¿Hay un ARCHIVO declarado en esa linea? Es la consulta por POSICION: quien
+// sabe donde esta el cursor pregunta por esa linea y se entera de si ahi hay
+// una declaracion de archivo, sin recorrer la lista entera.
 //
 // Devuelve 1 y llena `out` si lo hay, 0 si no. `out` puede ser NULL si solo se
 // quiere la respuesta.
 int paed_asistente_en_linea(const PAEDProgram *prog, int linea, PAEDArchivoInfo *out);
 
-// Las opciones que van en la ventanita. Devuelve cuantas puso, o -1 si no pudo
-// leer la definicion del lenguaje.
+// Los tipos de archivo que se pueden ofrecer. Devuelve cuantos puso, o -1 si no
+// pudo leer la definicion del lenguaje.
 int paed_asistente_opciones(PAEDOpcion *out, int max);
 
 // Crea el .csv del archivo `nombre`, con el encabezado sacado de los campos de
@@ -122,9 +114,8 @@ PAEDAsistResultado paed_asistente_crear(const PAEDProgram *prog,
 
 // ── El front-end de consola ──────────────────────────────────────────────────
 //
-// `paed asistente <archivo.paed>`. No es la ventanita: es la MISMA logica de
-// arriba con un menu de texto encima, para poder probarla sin editorBim. Que la
-// ventanita y esto den lo mismo es lo que hace que probar aca valga.
+// `paed asistente <archivo.paed>`. Es la MISMA logica de arriba con un menu de
+// texto encima. Todo lo que decide esta arriba; aca solo se dibuja.
 //
 // argv viene desde 'asistente' en adelante: argv[0] es "asistente" y argv[1] el
 // archivo. Devuelve 0 si salio bien.

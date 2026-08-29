@@ -12,9 +12,9 @@
 //  LA LOGICA
 //
 //  Nada de esta mitad imprime ni lee del teclado: devuelve datos. Es la que
-//  llama editorBim para dibujar la ventanita, y tambien la que usa el menu de
-//  consola de mas abajo. Una sola logica con dos caras — si fueran dos, la
-//  ventanita y la consola se irian separando sin que nadie se de cuenta.
+//  usa el menu de consola de mas abajo, y la que puede usar cualquier otro
+//  front-end. Una sola logica con dos caras — si fueran dos, se irian
+//  separando sin que nadie se de cuenta.
 // ═══════════════════════════════════════════════════════════════════════════
 
 // El REGISTRO que se le puso al archivo, o NULL si ese tipo no existe.
@@ -187,8 +187,8 @@ PAEDAsistResultado paed_asistente_crear(const PAEDProgram *prog,
 // ═══════════════════════════════════════════════════════════════════════════
 //  EL FRONT-END DE CONSOLA
 //
-//  `paed asistente <archivo.paed>`. No es la ventanita: es un menu de texto
-//  sobre la MISMA logica de arriba, para poder probarla sin editorBim.
+//  `paed asistente <archivo.paed>`. Un menu de texto sobre la MISMA logica de
+//  arriba: aca solo se dibuja.
 // ═══════════════════════════════════════════════════════════════════════════
 
 // Se usan los mismos roles que el resaltador, y no colores elegidos a mano. Que

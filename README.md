@@ -45,6 +45,31 @@ No hay archivo de progreso: **el ejercicio actual es el primero que todavía no
 pasa**, y eso se calcula corriéndolos. Un archivo de estado sería una segunda
 verdad que se puede desincronizar del disco.
 
+## Los archivos de un ejercicio
+
+En el parcial la cátedra te **da** los archivos, cargados y ordenados. Acá los
+armás vos, y el `AMBIENTE` del `.paed` es la única fuente de qué columnas y qué
+clave tiene cada uno:
+
+```paed
+mae: ARCHIVO DE remedio ORDENADO POR farmacia, medicamento;
+```
+
+```bash
+paed asistente ejercicio.paed   # qué archivos declaraste y de qué tipo es cada uno
+paed datos     ejercicio.paed   # cargar las filas, ordenadas por su clave
+```
+
+`paed datos` saca de esa declaración las columnas y sus tipos, valida cada valor
+al tipearlo (un `ENTERO` no acepta `abc`), trae primero lo que el `.csv` ya
+tenía, y escribe todo **ordenado por la clave**. El orden es estable, y los
+números se comparan como números: `10` va después de `9`, no antes.
+
+El orden de trabajo que habilita: escribís el `AMBIENTE`, cargás los datos, y
+recién ahí el `PROCESO`. Un algoritmo de mezcla o de actualización secuencial
+**supone** que la entrada viene ordenada, y depurarlo contra datos desordenados
+es perseguir un bug que no está en el código.
+
 ## Instalación
 
 ```bash
