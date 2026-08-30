@@ -1,0 +1,41 @@
+// Del archivo general de alumnos de la U.T.N. - Facultad Regional Resistencia, ordenado por carrera, se desea emitir la cantidad de alumnos correspondientes a cada carrera y el total general.
+
+
+
+// Se dispone de una secuencia con los datos de los alumnos de la facultad:
+
+//    Apellido y Nombre
+//    Carrera (ISI - IEM - IQ)
+//    Nº de Legajo
+//    Fecha de Nacimiento
+//    Fecha de Ingreso
+//    D.N.I.
+//    Sexo (M o F)
+//    Fecha de último examen aprobado
+//    Nota
+//
+//Se desea un listado de los mismos, con el siguiente formato:
+//
+//    Nro_Legajo Apellido_Nombre Documento Carrera 
+
+ACCION facultad ES
+    AMBIENTE
+        fecha = REGISTRO
+            aaaa: N(4);
+            mm: 1..12;
+            dd 1..31;
+        FIN_REGISTRO
+        
+        alumnos = REGISTRO
+            apellidoNombre: AN(50);
+            carrera = "ISI","IEM","IQ";
+            nro_Legajo: N(4);
+            fechaNacimiento: fecha; 
+        FIN_REGISTRO        
+        reg_alumno: alumnos;
+        
+    PROCESO
+    
+FIN_ACCION
+
+
