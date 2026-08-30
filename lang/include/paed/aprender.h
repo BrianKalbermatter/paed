@@ -75,6 +75,23 @@ typedef struct {
 extern const PaedModulo PAED_MODULOS[];
 extern const int        PAED_MODULOS_N;
 
+// ── Las cintas de las secuencias ───────────────────────────────────────────
+//
+// Un ejercicio con `sec: SECUENCIA DE ENTERO` necesita sus datos para correr, y
+// esos datos NO estan en el codigo: son el enunciado. Viven en
+// secuencias_paed/<ejercicio>/<variable>.txt al lado del ejercicio — el mismo lugar donde los
+// busca el interprete (ver sec_ruta_datos en secuencia.h) — y viajan horneados
+// adentro del binario igual que los ejercicios, para que `aprender init` deje
+// la carpeta lista para correr.
+typedef struct {
+    const char *programa;    // el del EJERCICIO: "1-01_secuencia"
+    const char *nombre;      // el de la VARIABLE: "sec"
+    const char *datos;       // la cinta, una linea
+} PaedCinta;
+
+extern const PaedCinta PAED_CINTAS[];
+extern const int       PAED_CINTAS_N;
+
 // ── Los moldes ─────────────────────────────────────────────────────────────
 //
 // Un ejercicio que todavia NO declara su bloque `// -- SALIDA ESPERADA` es un

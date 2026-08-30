@@ -43,12 +43,44 @@ if [ "$n" -eq 0 ]; then
     exit 1
 fi
 
+# ── Las cintas de las secuencias ────────────────────────────────────────────
+#
+# Un ejercicio con una SECUENCIA necesita SUS DATOS para correr, y esos datos
+# viven en secuencias_paed/<programa>/<variable>.txt — el mismo lugar donde los
+# busca el interprete. Viajan horneados igual que los ejercicios, y por lo
+# mismo: `paed aprender init` tiene que dejar la carpeta LISTA para correr, sin
+# pedirle al alumno que baje nada mas.
+s=0
+cintas=()
+for c in secuencias_paed/*/*.txt; do
+    [ -e "$c" ] || continue
+    var="SEC_$s"
+    nombre=$(basename "$c" .txt)
+    programa=$(basename "$(dirname "$c")")
+    cintas+=("$programa|$nombre|$var")
+    echo "static const char $var[] ="
+    sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' -e 's/^/"/' -e 's/$/\\n"/' "$c"
+    echo ';'
+    echo
+    s=$((s + 1))
+done
+
 echo 'const PaedEjercicio PAED_EJERCICIOS[] = {'
 for par in "${nombres[@]}"; do
     printf '    { "%s", %s },\n' "${par%|*}" "${par#*|}"
 done
 echo '};'
 echo "const int PAED_EJERCICIOS_N = $n;"
+echo
+
+echo 'const PaedCinta PAED_CINTAS[] = {'
+for fila in "${cintas[@]:-}"; do
+    [ -n "$fila" ] || continue
+    IFS='|' read -r prog nom var <<< "$fila"
+    printf '    { "%s", "%s", %s },\n' "$prog" "$nom" "$var"
+done
+echo '};'
+echo "const int PAED_CINTAS_N = $s;"
 echo
 
 # ── Los modulos ─────────────────────────────────────────────────────────────

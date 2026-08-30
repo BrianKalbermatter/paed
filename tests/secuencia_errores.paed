@@ -54,9 +54,6 @@ PROCESO
     AVZ(sec, n);
 FIN_ACCION
 
-// ── SECUENCIA sec ──
-// 7 9
-
 // ── SALIDA ESPERADA ─────────────────────────────────────────────────────────
 // tests/secuencia_errores.paed:31: error: hay que arrancar 'sec' antes de avanzarla: falta ARR(sec)
 // tests/secuencia_errores.paed: se corta la ejecucion: despues del primer error el estado ya no es confiable

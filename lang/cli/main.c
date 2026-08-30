@@ -30,6 +30,7 @@
 #include <paed/parser.h>
 #include <paed/interpreter.h>
 #include <paed/plataforma.h>
+#include <paed/secuencia.h>
 
 // Lo que en Linux vive en unistd.h, en Windows vive en io.h con otro nombre.
 #ifdef _WIN32
@@ -83,58 +84,16 @@ static int leer_de_stdin(char *buf, size_t n, void *ud) {
 // Las lineas del bloque se PEGAN sin separador. Asi una secuencia de
 // caracteres larga se puede partir en varios renglones para que se lea, sin que
 // aparezcan saltos de linea que no estan en los datos.
+// De donde salen los datos de una secuencia: de SU ARCHIVO, y de ningun otro
+// lado. La ruta la arma la libreria (sec_ruta_datos, en secuencia.h) y el
+// editor escribe en esa misma ruta.
+//
+// Hubo una segunda forma — un bloque de comentarios adentro del .paed — y se
+// saco a proposito. Con dos lugares donde puede estar la cinta, el dia que las
+// dos digan cosas distintas gana una por un detalle de implementacion y el que
+// escribe el programa no tiene forma de saber cual. Un dato, un lugar.
 static int datos_de_secuencia(const char *nombre, char *buf, size_t n, void *ud) {
-    const char *path = (const char *)ud;
-
-    FILE *f = fopen(path, "r");
-    if (!f) return -1;
-
-    // "// ── SECUENCIA <nombre>" — se compara el nombre entero para que
-    // 'secAlu' no matchee con el bloque de 'secAlumnos'.
-    char marca[128];
-    snprintf(marca, sizeof(marca), "SECUENCIA %s", nombre);
-
-    char linea[PAED_LINEA_MAX];
-    int  dentro = 0;
-    size_t usado = 0;
-    buf[0] = '\0';
-
-    while (fgets(linea, sizeof(linea), f)) {
-        // Solo miran los comentarios: un bloque de datos NO es codigo.
-        char *barra = strstr(linea, "//");
-        if (!barra) { if (dentro) break; else continue; }
-
-        char *cuerpo = barra + 2;
-        while (*cuerpo == ' ' || *cuerpo == '\t') cuerpo++;
-
-        // Cualquier otra marca '──' termina el bloque: asi los datos de una
-        // secuencia no se comen el bloque de SALIDA ESPERADA que viene abajo.
-        char *marcador = strstr(cuerpo, "\xe2\x94\x80\xe2\x94\x80");   // ──
-        if (marcador) {
-            if (dentro) break;
-            if (strstr(cuerpo, marca)) {
-                // Que el nombre termine ahi: 'SECUENCIA sec' no puede entrar
-                // por el bloque de 'SECUENCIA sec2'.
-                char *fin = strstr(cuerpo, marca) + strlen(marca);
-                if (*fin == '\0' || *fin == ' ' || *fin == '\t' ||
-                    (unsigned char)*fin == 0xe2 || *fin == '\n' || *fin == '\r')
-                    dentro = 1;
-            }
-            continue;
-        }
-
-        if (!dentro) continue;
-
-        linea[strcspn(linea, "\r\n")] = '\0';
-        size_t len = strlen(cuerpo);
-        if (usado + len >= n) break;
-        memcpy(buf + usado, cuerpo, len);
-        usado += len;
-        buf[usado] = '\0';
-    }
-
-    fclose(f);
-    return dentro ? 0 : -1;
+    return sec_leer_datos((const char *)ud, nombre, buf, n);
 }
 
 // ── paed install ────────────────────────────────────────────────────────────
@@ -354,7 +313,8 @@ static void ayuda(void) {
     printf("  paed --help                esto\n\n");
     printf("  --lib <nombre>             carga una libreria que no es del lenguaje\n");
     printf("  --colores <archivo>        muestra el programa coloreado en la terminal\n");
-    printf("  --tokens <archivo>         un token por linea: linea col largo rol texto\n\n");
+    printf("  --tokens <archivo>         un token por linea: linea col largo rol texto\n");
+    printf("  --secuencias <archivo>     las secuencias de entrada: nombre tipo hay|falta\n\n");
 }
 
 // ── Que hacer con el archivo ────────────────────────────────────────────────
@@ -362,6 +322,7 @@ typedef enum {
     MODO_EJECUTAR = 0,
     MODO_COLORES,     // --colores: para MIRARLO, con ANSI
     MODO_TOKENS,      // --tokens:  para que lo lea otro programa (editorBim)
+    MODO_SECUENCIAS,  // --secuencias: que secuencias hay y cuales sin datos
 } Modo;
 
 // Donde va escribiendo el pintor. El resaltador entrega TOKENS y no el archivo
@@ -475,6 +436,7 @@ int main(int argc, char **argv) {
         }
         else if (strcmp(argv[i], "--colores") == 0) modo = MODO_COLORES;
         else if (strcmp(argv[i], "--tokens")  == 0) modo = MODO_TOKENS;
+        else if (strcmp(argv[i], "--secuencias") == 0) modo = MODO_SECUENCIAS;
         else if (!path) path = argv[i];
         else {
             fprintf(stderr, "paed: argumento de mas: %s\n", argv[i]);
@@ -509,6 +471,33 @@ int main(int argc, char **argv) {
     // que colorearse igual — es cuando mas se lo necesita. El parser junta los
     // errores y sigue leyendo, asi que el AMBIENTE ya esta cargado y los
     // archivos y los tipos del programador se reconocen lo mismo.
+    // ── Que secuencias hay, y cuales todavia no tienen cinta ────────────────
+    //
+    // Lo pregunta el editor ANTES de correr, para poder pedirte los datos que
+    // faltan. Va antes de mirar parse_rc por lo mismo que el resaltado: un
+    // programa a medio escribir ya declara sus secuencias, y es justo cuando
+    // hace falta saberlo.
+    //
+    // Una linea por secuencia de ENTRADA: nombre, tipo base, y si ya tiene
+    // datos o no. Las de SALIDA no salen: esas las escribe el programa.
+    if (modo == MODO_SECUENCIAS) {
+        for (int i = 0; i < prog.decl_count; i++) {
+            const PAEDDecl *d = &prog.decls[i];
+            if (!d->es_secuencia || d->es_salida) continue;
+
+            char datos[PAED_SEC_MAX];
+            int hay = datos_de_secuencia(d->name, datos, sizeof(datos),
+                                         (void *)path) == 0;
+
+            char ruta[600];
+            sec_ruta_datos(path, d->name, ruta, sizeof(ruta));
+            printf("%s\t%s\t%s\t%s\n", d->name, d->type,
+                   hay ? "hay" : "falta", ruta);
+        }
+        paed_syntax_free();
+        return 0;
+    }
+
     if (modo == MODO_COLORES || modo == MODO_TOKENS) {
         Pintor pintor = { .linea = 1, .col = 1 };
         paed_colorear_archivo(path, &prog,

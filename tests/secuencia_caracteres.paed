@@ -48,9 +48,6 @@ PROCESO
     CERRAR(secSal);
 FIN_ACCION
 
-// ── SECUENCIA secAlu ──
-// 12Ana#34Beto#
-
 // ── SALIDA ESPERADA ──
 // alumnos: 2
 // 12=Ana;34=Beto;

@@ -51,9 +51,6 @@ FIN_ACCION
 // valor anterior, y ese valor se procesa de nuevo.
 // Movelo: uno adelantado antes del ciclo, y el otro al FINAL del cuerpo.
 
-// ── SECUENCIA sec ───────────────────────────────────────────────────────────
-// 5 8 13 21
-
 // ── SALIDA ESPERADA ─────────────────────────────────────────────────────────
 // leo 5
 // leo 8

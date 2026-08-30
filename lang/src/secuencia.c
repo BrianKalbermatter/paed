@@ -1,5 +1,7 @@
 #include "paed/secuencia.h"
 
+#include "paed/plataforma.h"
+
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
@@ -20,6 +22,106 @@ static int falla(const char *fmt, ...) {
     vsnprintf(g_error, sizeof(g_error), fmt, ap);
     va_end(ap);
     return -1;
+}
+
+// ── Donde viven los datos ───────────────────────────────────────────────────
+//
+// El porque de la convencion esta en secuencia.h. Aca solo se arma la ruta y
+// se mueve el texto.
+
+// El nombre del programa: el del archivo, sin carpeta y sin ".paed".
+//
+// Se usa el nombre del ARCHIVO y no el de la ACCION a proposito: el archivo es
+// lo que se ve en la carpeta y lo que el editor tiene abierto, y una ACCION se
+// puede renombrar sin que nadie se entere de que sus cintas quedaron
+// huerfanas.
+static void nombre_programa(const char *path_paed, char *out, size_t n) {
+    const char *base = strrchr(path_paed, '/');
+#ifdef _WIN32
+    const char *contra = strrchr(path_paed, '\\');
+    if (contra > base) base = contra;
+#endif
+    base = base ? base + 1 : path_paed;
+
+    snprintf(out, n, "%s", base);
+    char *punto = strrchr(out, '.');
+    if (punto && punto != out) *punto = '\0';
+}
+
+static void carpeta_datos(const char *path_paed, char *out, size_t n) {
+    char prog[PAED_NAME_MAX * 2];
+    nombre_programa(path_paed, prog, sizeof(prog));
+
+    const char *barra = strrchr(path_paed, '/');
+#ifdef _WIN32
+    const char *contra = strrchr(path_paed, '\\');
+    if (contra > barra) barra = contra;
+#endif
+    if (barra) {
+        int dir = (int)(barra - path_paed);
+        snprintf(out, n, "%.*s/%s/%s", dir, path_paed, PAED_DIR_SECUENCIAS, prog);
+    } else {
+        snprintf(out, n, "%s/%s", PAED_DIR_SECUENCIAS, prog);
+    }
+}
+
+void sec_ruta_datos(const char *path_paed, const char *nombre,
+                    char *out, size_t n) {
+    char dir[512];
+    carpeta_datos(path_paed, dir, sizeof(dir));
+    snprintf(out, n, "%s/%s.txt", dir, nombre);
+}
+
+int sec_leer_datos(const char *path_paed, const char *nombre,
+                   char *buf, size_t n) {
+    if (!path_paed || !nombre || !buf || n == 0) return -1;
+
+    char ruta[600];
+    sec_ruta_datos(path_paed, nombre, ruta, sizeof(ruta));
+
+    FILE *f = fopen(ruta, "r");
+    if (!f) return -1;
+
+    size_t leidos = fread(buf, 1, n - 1, f);
+    fclose(f);
+    buf[leidos] = '\0';
+
+    // Solo los saltos del FINAL: el archivo termina en '\n' porque lo escribio
+    // un editor, no porque la cinta tenga uno.
+    while (leidos > 0 && (buf[leidos - 1] == '\n' || buf[leidos - 1] == '\r'))
+        buf[--leidos] = '\0';
+
+    return 0;
+}
+
+int sec_guardar_datos(const char *path_paed, const char *nombre,
+                      const char *datos) {
+    if (!path_paed || !nombre || !datos) return -1;
+
+    // Las DOS carpetas: secuencias_paed/ y la del programa adentro. paed_mkdir
+    // es de un solo nivel, y crear la de adentro sin la de afuera falla.
+    char dir[512];
+    carpeta_datos(path_paed, dir, sizeof(dir));
+
+    char *ultima = strrchr(dir, '/');
+    if (ultima) {
+        *ultima = '\0';
+        paed_mkdir(dir);          // secuencias_paed/
+        *ultima = '/';
+    }
+    paed_mkdir(dir);              // secuencias_paed/<programa>/
+
+    char ruta[600];
+    sec_ruta_datos(path_paed, nombre, ruta, sizeof(ruta));
+
+    FILE *f = fopen(ruta, "w");
+    if (!f) return -1;
+
+    // Un '\n' al final y nada mas: la cinta es una linea, y el salto es para
+    // que el archivo se pueda abrir con cualquier editor sin que se queje.
+    fprintf(f, "%s\n", datos);
+    fclose(f);
+    return 0;
 }
 
 void sec_reset(void) {

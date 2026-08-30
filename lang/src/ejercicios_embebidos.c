@@ -69,17 +69,17 @@ static const char EJ_2[] =
 "// La variable `aux` esta declarada y sin usar. Es una pista.\n"
 "\n"
 "ACCION asignacion ES\n"
-"AMBIENTE\n"
-"    a: ENTERO;\n"
-"    b: ENTERO;\n"
-"    aux: ENTERO;\n"
-"PROCESO\n"
-"    a := 10;\n"
-"    b := 25;\n"
-"    ESCRIBIR(\"antes:   a=\", a, \" b=\", b);\n"
-"    a := b;\n"
-"    b := a;\n"
-"    ESCRIBIR(\"despues: a=\", a, \" b=\", b);\n"
+"    AMBIENTE\n"
+"        a: ENTERO;\n"
+"        b: ENTERO;\n"
+"        aux: ENTERO;\n"
+"    PROCESO\n"
+"        a := 10;\n"
+"        b := 25;\n"
+"        ESCRIBIR(\"antes:   a=\", a, \" b=\", b);\n"
+"        a := b;\n"
+"        b := a;\n"
+"        ESCRIBIR(\"despues: a=\", a, \" b=\", b);\n"
 "FIN_ACCION\n"
 "\n"
 "// ── PISTA ───────────────────────────────────────────────────────────────────\n"
@@ -435,9 +435,6 @@ static const char EJ_10[] =
 "// cuando ya no queda nada por traer: el AVZ no encuentra nada, `v` conserva el\n"
 "// valor anterior, y ese valor se procesa de nuevo.\n"
 "// Movelo: uno adelantado antes del ciclo, y el otro al FINAL del cuerpo.\n"
-"\n"
-"// ── SECUENCIA sec ───────────────────────────────────────────────────────────\n"
-"// 5 8 13 21\n"
 "\n"
 "// ── SALIDA ESPERADA ─────────────────────────────────────────────────────────\n"
 "// leo 5\n"
@@ -875,6 +872,10 @@ static const char EJ_21[] =
 "// (la pista que ve el alumno con `paed aprender pista`)\n"
 ;
 
+static const char SEC_0[] =
+"5 8 13 21\n"
+;
+
 const PaedEjercicio PAED_EJERCICIOS[] = {
     { "0-01_escribir.paed", EJ_0 },
     { "0-02_valor.paed", EJ_1 },
@@ -900,6 +901,11 @@ const PaedEjercicio PAED_EJERCICIOS[] = {
     { "2-05_archivo_fda.paed", EJ_21 },
 };
 const int PAED_EJERCICIOS_N = 22;
+
+const PaedCinta PAED_CINTAS[] = {
+    { "1-01_secuencia", "sec", SEC_0 },
+};
+const int PAED_CINTAS_N = 1;
 
 const PaedModulo PAED_MODULOS[] = {
     { 0, "Introduccion" },

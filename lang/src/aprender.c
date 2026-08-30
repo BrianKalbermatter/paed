@@ -1,5 +1,7 @@
 // Lo que hago es ir por todos los ejercicios que tengo y el primero que salta que hay un error es el que estoy actualmente.
 #include "paed/aprender.h"
+
+#include "paed/secuencia.h"
 #include "paed/parser.h"
 #include "paed/plataforma.h"
 
@@ -402,6 +404,30 @@ static int cmd_init(const char *dir) {
         fputs(PAED_EJERCICIOS[i].contenido, f);
         fclose(f);
         escritos++;
+    }
+
+    // Las cintas de las secuencias, en la carpeta que el interprete mira.
+    //
+    // Van SIEMPRE, aunque los ejercicios ya estuvieran: son datos del
+    // enunciado, no trabajo del alumno, asi que no hay nada que pisar. Un
+    // ejercicio desempacado sin su cinta no corre, y el alumno no tiene forma
+    // de adivinar que le falta.
+    // Donde va cada cinta NO se calcula aca: lo hace sec_guardar_datos, que es
+    // la misma funcion que usa todo el resto. Armar la ruta a mano en un
+    // segundo lugar es armar el lugar donde el dia que la convencion cambie va
+    // a decir otra cosa, y el tutorial desempacaria las cintas donde el
+    // interprete no las busca.
+    for (int i = 0; i < PAED_CINTAS_N; i++) {
+        char ejercicio[MAX_RUTA], ruta_paed[MAX_RUTA];
+        snprintf(ejercicio, sizeof(ejercicio), "%s.paed", PAED_CINTAS[i].programa);
+        ruta_de(dir, ejercicio, ruta_paed, sizeof(ruta_paed));
+
+        if (sec_guardar_datos(ruta_paed, PAED_CINTAS[i].nombre,
+                              PAED_CINTAS[i].datos) != 0) {
+            fprintf(stderr, "paed: no puedo escribir la cinta de '%s'\n",
+                    PAED_CINTAS[i].nombre);
+            return 4;
+        }
     }
 
     printf("Ejercicios en %s" PAED_SEP "\n", dir);

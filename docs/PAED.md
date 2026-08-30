@@ -310,17 +310,64 @@ después, sin relación aparente con la causa.
 enunciado, no algo que alguien tipea mientras el programa corre, y pedirla
 entera es lo que permite que `FDS` conteste sin adivinar si viene algo más.
 
-La CLI los busca en el propio `.paed`, en un bloque de comentarios:
+La CLI los busca en **un solo lugar**: un archivo propio de la secuencia.
 
-```paed
-// ── SECUENCIA secAlu ──
-// 12Ana#34Beto#
+```
+saves/
+  EjercicioArchivos2.1.2.paed
+  Hola.paed
+  secuencias_paed/
+    EjercicioArchivos2.1.2/
+      sec.txt        <- la cinta de `sec` de ESE programa
+    Hola/
+      sec.txt        <- otra `sec`, y no se pisan
 ```
 
-Las líneas del bloque se **pegan sin separador**, así una secuencia larga se
-puede partir en varios renglones sin meter saltos de línea que no están en los
-datos. Es la misma decisión que la del bloque `ENTRADA` (§13): un programa es
-UN archivo.
+La ruta es
+`<carpeta del .paed>/secuencias_paed/<nombre del programa>/<variable>.txt`, y la
+arma `sec_ruta_datos()` (`lang/include/paed/secuencia.h`).
+
+Son **dos nombres** y cada uno contesta una pregunta distinta:
+
+- el del **archivo** es el de la **variable**. La secuencia se llama como se
+  llama y su cinta lo sigue: se abre la carpeta y se ve cuál alimenta a cuál.
+- el de la **carpeta** es el del **programa**. Es lo que **ata** esa cinta a ese
+  `.paed` y no a otro.
+
+La segunda parte no es un adorno. `sec` es el nombre más común que existe:
+puede haber ochenta `sec.txt` en el proyecto, y sin la carpeta del programa
+todos serían el mismo archivo — dos ejercicios abiertos al lado se pisarían la
+cinta y el segundo correría con los datos del primero, sin avisar. Con ella,
+cada programa está linkeado a la suya y los ochenta pueden llamarse igual.
+
+Se usa el nombre del **archivo** y no el de la `ACCION` porque el archivo es lo
+que se ve en la carpeta y lo que el editor tiene abierto; una `ACCION` se puede
+renombrar sin que nadie note que sus cintas quedaron huérfanas.
+
+El archivo es **una sola línea**: las celdas van pegadas una al lado de la
+otra, sin separadores. `hola mundo` son **diez** celdas y el espacio es una de
+ellas —`AVZ` la devuelve como cualquier otra—. El salto de línea del final no
+es un dato y se descarta; los espacios sí, incluido el del principio.
+
+Esa convención vive en la **librería**, no en la CLI, y a propósito: el que la
+lee al correr y el editor que la escribe tienen que estar de acuerdo, y la
+única forma de que no se separen nunca es que los dos llamen a la misma
+función. `paed --secuencias <archivo>` la publica, una línea por secuencia de
+entrada:
+
+```
+sec	CARACTERES	falta	saves/secuencias_paed/EjercicioArchivos2.1.2/sec.txt
+```
+
+Es lo que usa el editor xasol para pedirte la cinta antes de correr.
+
+> **Hubo una segunda forma y se sacó** (2026-08-29): un bloque
+> `// ── SECUENCIA sec ──` adentro del propio `.paed`. Con dos lugares donde
+> puede estar la cinta, el día que las dos digan cosas distintas gana una por un
+> detalle de implementación y el que escribe el programa no tiene forma de saber
+> cuál. Un dato, un lugar. Los ejercicios del tutorial viajan con su cinta
+> horneada (`PAED_CINTAS`, en `aprender.h`) y `aprender init` la desempaca en
+> `secuencias_paed/`.
 
 ### 2.4 Archivos y las dos formas de `LEER`
 

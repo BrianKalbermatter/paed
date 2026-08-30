@@ -57,6 +57,59 @@ typedef struct {
     int  fin;        // la ventana se paso del ultimo elemento (FDS)
 } Secuencia;
 
+// ── Donde viven los datos de una secuencia ──────────────────────────────────
+//
+//     <carpeta del .paed>/secuencias_paed/<nombre del programa>/<variable>.txt
+//
+// Si saves/EjercicioArchivos2.1.2.paed declara `sec: SECUENCIA DE CARACTERES`,
+// su cinta esta en:
+//
+//     saves/secuencias_paed/EjercicioArchivos2.1.2/sec.txt
+//
+// Son DOS nombres y cada uno responde una pregunta distinta:
+//
+//   - el del ARCHIVO es el de la VARIABLE. La secuencia se llama como se llama
+//     y su cinta lo sigue: se abre la carpeta y se ve cual alimenta a cual.
+//   - el de la CARPETA es el del PROGRAMA. Es lo que ATA esa cinta a ESE
+//     .paed y no a otro.
+//
+// La segunda parte no es un adorno. `sec` es el nombre mas comun que existe:
+// puede haber ochenta sec.txt en el proyecto, y sin la carpeta del programa
+// todos serian el mismo archivo — dos ejercicios abiertos al lado se pisarian
+// la cinta y el segundo correria con los datos del primero, sin avisar. Con
+// ella, cada programa esta linkeado a la suya y los ochenta pueden llamarse
+// igual.
+//
+// Esto vive ACA y no en el CLI a proposito. La convencion de donde esta la
+// cinta es del LENGUAJE: el que la lee cuando corre y el editor que la escribe
+// tienen que estar de acuerdo, y la unica forma de que no se separen nunca es
+// que los dos llamen a la misma funcion. Un segundo lugar que arme la ruta a
+// mano es un lugar donde el dia de manana va a decir otra cosa.
+#define PAED_DIR_SECUENCIAS "secuencias_paed"
+
+// Se publican TRES funciones y no las cinco que hay: armar el nombre del
+// programa y armar su carpeta son pasos de adentro de esta, y nadie afuera los
+// pide. Un .h no es la lista de lo que el .c sabe hacer — es lo que otros
+// necesitan. Todo lo que sobra ahi es una promesa que despues hay que
+// mantener.
+
+// La ruta de la cinta de la secuencia `nombre` del programa `path_paed`.
+void sec_ruta_datos(const char *path_paed, const char *nombre,
+                    char *out, size_t n);
+
+// Lee esa cinta entera. Devuelve 0 si estaba, -1 si no hay archivo.
+//
+// La cinta es UNA LINEA: las celdas van pegadas una al lado de la otra, sin
+// separadores — 'hola mundo' son diez celdas y el espacio es una de ellas. El
+// salto de linea del final NO es un dato y se saca; los espacios SI, incluido
+// el del principio, que es una celda como cualquier otra.
+int sec_leer_datos(const char *path_paed, const char *nombre,
+                   char *buf, size_t n);
+
+// Escribe esa cinta, creando la carpeta si hace falta. Devuelve 0 si pudo.
+int sec_guardar_datos(const char *path_paed, const char *nombre,
+                      const char *datos);
+
 // Vacia la tabla. La llama el interprete antes de cada programa: dos corridas
 // seguidas en el mismo proceso no pueden compartir la posicion de lectura.
 void sec_reset(void);

@@ -51,9 +51,6 @@ PROCESO
     ESCRIBIR("p = ", p.x, " , ", p.y);
 FIN_ACCION
 
-// ── SECUENCIA sec ──
-// 42 43
-
 // ── SALIDA ESPERADA ──
 // a + b = 3
 // uno; dos; tres
