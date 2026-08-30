@@ -212,7 +212,7 @@
     },
     {
       "nombre": "acciones",
-      "color": "dorado",
+      "color": "rosa-lila",
       "scope": "entity.name.function.paed",
       "descripcion": "el <nombre> de ACCION <nombre> ES. No tiene 'palabras': sale de PAEDProgram.name, o sea del programa que se esta mirando"
     },

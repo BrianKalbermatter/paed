@@ -127,6 +127,85 @@ static void emitir(PAEDTokenFn fn, void *ud, int linea, const char *base,
 static int es_inicio_de_nombre(char c) { return isalpha((unsigned char)c) || c == '_'; }
 static int es_resto_de_nombre(char c)  { return isalnum((unsigned char)c) || c == '_'; }
 
+// ── Nombres con punto ───────────────────────────────────────────────────────
+//
+// `ACCION EjercicioArchivos2.1.2 ES` es un nombre solo, no tres cosas. El
+// parser ya lo lee asi — su sscanf("%63s") se lleva la palabra entera hasta el
+// espacio — pero el escaner de colores cortaba en el punto y salia partido:
+// 'EjercicioArchivos2' como variable, el '.' como puntuacion y '1.2' como
+// numero. Tres colores para un nombre.
+//
+// No alcanza con dejar que el punto forme parte de cualquier nombre, y por eso
+// esto no esta en es_resto_de_nombre(): en `f.total` el punto es el acceso al
+// campo de un REGISTRO, y ahi son DOS cosas de verdad. La diferencia no se
+// puede sacar mirando el texto — hay que preguntar quien esta DECLARADO.
+//
+// Entonces la regla es: se estira sobre los puntos solo mientras lo que se
+// forma sea un nombre que el programa declaro. `f.total` no es el nombre de
+// ninguna accion, asi que no se estira y sigue siendo un acceso a campo.
+//
+// Un texto que es un NUMERO y nada mas: '2', '2.5'. Se usa para no robarle el
+// color a los literales. Si alguien llama '2' a su ACCION, el nombre y el
+// numero dos son el mismo texto y no hay forma de distinguirlos mirando: ahi
+// gana el numero, que es lo que aparece mil veces en un programa.
+static int es_numero_puro(const char *txt, int largo) {
+    int digitos = 0, puntos = 0;
+    for (int i = 0; i < largo; i++) {
+        if (isdigit((unsigned char)txt[i])) { digitos++; continue; }
+        if (txt[i] == '.' && puntos == 0 && i > 0 && i < largo - 1) { puntos++; continue; }
+        return 0;
+    }
+    return digitos > 0;
+}
+
+// Devuelve el largo del nombre declarado mas LARGO que arranca en `p`, y deja
+// su rol en *rol. Cero si no hay ninguno.
+static int largo_nombre_declarado(const PAEDProgram *prog, const char *p,
+                                  const char **rol) {
+    if (!prog) return 0;
+
+    int mejor = 0;
+
+    // Se prueba tramo por tramo: "Ejercicio", "Ejercicio.1", "Ejercicio.1.2".
+    // Gana el mas largo que matchee, no el primero: "Ejercicio.1" puede no ser
+    // nada y "Ejercicio.1.2" si serlo.
+    const char *fin = p + 1;
+    while (es_resto_de_nombre(*fin)) fin++;
+
+    for (;;) {
+        char nombre[PAED_NAME_MAX];
+        size_t n = (size_t)(fin - p);
+        if (n >= sizeof(nombre)) break;
+        memcpy(nombre, p, n);
+        nombre[n] = '\0';
+
+        if (prog->name[0] && strcasecmp(prog->name, nombre) == 0) {
+            mejor = (int)n;
+            *rol  = "acciones";
+        } else {
+            // Las subacciones van del MISMO rol que la ACCION, y no de uno
+            // propio: el reparto de colores no separa "la accion" de "una
+            // funcion tuya", separa lo que definis VOS de lo que trae el
+            // lenguaje — es el function.paed de helix/tema.toml.ejemplo. Un
+            // rol aparte pediria un color aparte para decir lo mismo.
+            for (int i = 0; i < prog->subaccion_count; i++)
+                if (strcasecmp(prog->subacciones[i].name, nombre) == 0) {
+                    mejor = (int)n;
+                    *rol  = "acciones";
+                    break;
+                }
+        }
+
+        // Al siguiente punto, si es que hay uno con algo detras.
+        if (*fin != '.' || !es_resto_de_nombre(fin[1])) break;
+        fin++;
+        while (es_resto_de_nombre(*fin)) fin++;
+    }
+
+    if (mejor > 0 && es_numero_puro(p, mejor)) return 0;
+    return mejor;
+}
+
 int paed_colorear_archivo(const char *path, const PAEDProgram *prog,
                           PAEDTokenFn fn, void *ud) {
     if (!path || !fn) return -1;
@@ -165,6 +244,27 @@ int paed_colorear_archivo(const char *path, const PAEDProgram *prog,
                        comilla == '"' ? "strings" : "strings_simples");
                 p = fin;
                 continue;
+            }
+
+            // Un nombre DECLARADO, antes que nada.
+            //
+            // Va antes de los numeros y antes de los nombres comunes porque un
+            // nombre declarado puede empezar con un digito: `ACCION 2_1_2 ES`.
+            // Si preguntaba primero por el numero, la rama de los numeros se
+            // quedaba con el '2' y el resto salia aparte — el nombre partido en
+            // dos colores. Y va DESPUES del comentario y de las comillas, que
+            // esos se comen la linea entera pase lo que pase.
+            //
+            // Que esto no se lleve puesto a los literales lo cuida
+            // es_numero_puro: ver largo_nombre_declarado.
+            if (isalnum((unsigned char)*p) || *p == '_') {
+                const char *rol_decl = NULL;
+                int largo_decl = largo_nombre_declarado(prog, p, &rol_decl);
+                if (largo_decl > 0) {
+                    emitir(fn, ud, nro, linea, p, largo_decl, rol_decl);
+                    p += largo_decl;
+                    continue;
+                }
             }
 
             // Numero. El punto se come solo si le sigue un digito: en

@@ -214,7 +214,7 @@ const char PAED_SINTAXIS_EMBEBIDA[] =
 "    },\n"
 "    {\n"
 "      \"nombre\": \"acciones\",\n"
-"      \"color\": \"dorado\",\n"
+"      \"color\": \"rosa-lila\",\n"
 "      \"scope\": \"entity.name.function.paed\",\n"
 "      \"descripcion\": \"el <nombre> de ACCION <nombre> ES. No tiene 'palabras': sale de PAEDProgram.name, o sea del programa que se esta mirando\"\n"
 "    },\n"
