@@ -1,6 +1,28 @@
-# Diccionario del motor — librería `mundo`
+# Diccionario del motor — librería `pl_mundo`
 ## Esto es del proyecto de Shulker_dev fuera de la catedra
-> **Es para fines de divertirse creando cosas nuevas.**
+> **Es para fines de divertirse creando cosas nuevas en el motor grafico de Shulker_dev.**
+
+┌──────────┬─────────┬─────────────────────┐
+│  Color   │   Hex   │      Qué pinta      │
+├──────────┼─────────┼─────────────────────┤
+│ 🟢 verde │ #00ff9c │ ACCION PROCESO      │
+│          │         │ AMBIENTE FIN_ACCION │
+├──────────┼─────────┼─────────────────────┤
+│ 🟡 oro   │ #ffe600 │ SI SINO ENTONCES    │
+│          │         │ FIN_SI              │
+├──────────┼─────────┼─────────────────────┤
+│ 🔵 azul  │ #2b6bff │ MIENTRAS PARA       │
+│          │         │ REPETIR HACER HASTA │
+├──────────┼─────────┼─────────────────────┤
+│ 🟣       │ #ff2ef0 │ Funciones y las     │
+│ magenta  │         │  llamadas           │
+├──────────┼─────────┼─────────────────────┤
+│ 🟠       │ #ff9500 │ Y O NO MOD DIV      │
+│ naranja  │         │                     │
+├──────────┼─────────┼─────────────────────┤
+│ 🟣       │ #a45cff │ ESCRIBIR LEER (las  │
+│ violeta  │         │ del lenguaje)       │
+└──────────┴─────────┴─────────────────────┘
 
 ```bash
 make mundo
@@ -15,10 +37,10 @@ make mundo
 USAR mundo;
 
 ACCION laberinto ES
-AMBIENTE
-    ...
-PROCESO
-    ...
+    AMBIENTE
+        ...
+    PROCESO
+        ...
 FIN_ACCION
 ```
 
@@ -28,26 +50,26 @@ FIN_ACCION
 USAR mundo;
 // Lo que todo juego debe tener siempre 
 ACCION mi_juego ES
-AMBIENTE
-    ang, px, pz: REAL;
-PROCESO
-    INICIAR(titulo = 'Mi juego', ancho = 960, alto = 540);
-    CAPTURAR_MOUSE(activar = 1);
+    AMBIENTE
+        ang, px, pz: REAL;
+    PROCESO
+        INICIAR(titulo = 'Mi juego', ancho = 960, alto = 540);
+        CAPTURAR_MOUSE(activar = 1);
     
     // Que es activar = 1; donde definis activar?
-    ang := 90;  px := 0;  pz := 0;
+        ang := 90;  px := 0;  pz := 0;
 
-    MIENTRAS SALIR() = 0 HACER
-        // 1. LEER LA ENTRADA
-        ang := ang + MOUSE_X() * 0.2;
-        SI TECLA('W') ENTONCES
-            pz := pz + 0.1;
-        FIN_SI
+        MIENTRAS (SALIR() = 0) HACER
+            // 1. LEER LA ENTRADA
+            ang := ang + MOUSE_X() * 0.2;
+            SI TECLA('W') ENTONCES
+                pz := pz + 0.1;
+            FIN_SI
 
-        // 2. ACTUALIZAR EL MUNDO
-        //    (mover enemigos, chequear choques...)
+            // 2. ACTUALIZAR EL MUNDO
+            //    (mover enemigos, chequear choques...)
 
-        // 3. DIBUJAR
+            // 3. DIBUJAR
         FRAME_INICIO(camx = px, camy = 0.5, camz = pz, angulo = ang);
             CUBO(x = 3, z = 5, color = 'gris');
             BILLBOARD(x = 8, z = 2, alto = 2, color = 'rojo');

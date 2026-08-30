@@ -27,8 +27,13 @@
 # cambialos por los que uses o agregalos:
 #
 #   [palette]
-#   oro     = "#ffd700"
-#   verde   = "#00ff66"
-#   azul    = "#3377ff"
-#   naranja = "#ff8800"
-#   magenta = "#ff00ff"
+#   oro     = "#ffe600"
+#   verde   = "#00ff9c"
+#   azul    = "#2b6bff"
+#   naranja = "#ff9500"
+#   magenta = "#ff2ef0"
+#
+# Son NEON a proposito: sobre un fondo casi negro, un color a media saturacion
+# se lee apagado y todo el codigo tiende al gris. Estos cinco hexadecimales son
+# LOS MISMOS que estan en PseudoGames/src/xasol_sintaxis.c, y tienen que seguir
+# siendolo — el punto de esta tabla es que PAED se vea igual en los dos lados.
