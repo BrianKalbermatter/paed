@@ -39,6 +39,7 @@ que se llama igual: `XL-01` → `xasolError/XLerror-01.md`.
 | [XL-16](xasolError/XLerror-16.md) | El dato no corresponde al tipo declarado | al ejecutar |
 | [XL-17](xasolError/XLerror-17.md) | La estructura del programa está fuera de orden | al parsear |
 | [XL-18](xasolError/XLerror-18.md) | Se usa una variable antes de darle valor | al ejecutar |
+| [XL-19](xasolError/XLerror-19.md) | CONJUNTO mal declarado, o usado sin declarar | al parsear y al ejecutar |
 
 ## Un error sin código
 

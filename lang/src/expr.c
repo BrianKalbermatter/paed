@@ -71,6 +71,19 @@ static PaedFnExiste g_fn_existe = NULL;
 static PaedFnLlamar g_fn_llamar = NULL;
 static void        *g_fn_ud     = NULL;
 
+// Los conjuntos del programa, para el operador EN. Ver expr.h.
+static const PAEDProgram *g_prog = NULL;
+
+void expr_set_conjuntos(const PAEDProgram *prog) { g_prog = prog; }
+
+static const PAEDConjunto *conjunto_buscar(const char *nombre) {
+    if (!g_prog) return NULL;
+    for (int i = 0; i < g_prog->conjunto_count; i++)
+        if (strcasecmp(g_prog->conjuntos[i].name, nombre) == 0)
+            return &g_prog->conjuntos[i];
+    return NULL;
+}
+
 void expr_set_funcion(PaedFnExiste existe, PaedFnLlamar llamar, void *ud) {
     g_fn_existe = existe;
     g_fn_llamar = llamar;
@@ -769,10 +782,18 @@ static Valor relacional(Ctx *c) {
 // El '==' NO esta en la teoria (que solo define '='), pero aparece en los
 // ejercicios del usuario ("SI (recorrido == P) ENTONCES"), asi que se acepta
 // como sinonimo en vez de romperle los archivos. Queda anotado en el KANBAN.
+static int membresia(Ctx *c, Valor *izq);   // EN / NO EN, aca abajo
+
 static Valor igualdad(Ctx *c) {
     Valor izq = relacional(c);
     for (;;) {
         espacios(c);
+
+        if (membresia(c, &izq)) {
+            if (c->fallo) return izq;
+            continue;
+        }
+
         int distinto;
         if      (simbolo(c, "<>")) distinto = 1;
         else if (simbolo(c, "==")) distinto = 0;
@@ -784,6 +805,81 @@ static Valor igualdad(Ctx *c) {
         izq = LOG(distinto ? cmp != 0 : cmp == 0);
         if (c->fallo) return izq;
     }
+}
+
+// ── Prioridad 7 tambien: EN y NO EN ─────────────────────────────────────────
+//
+//     SI (v EN vocales) ENTONCES
+//     MIENTRAS (v NO EN separadores) HACER
+//
+// Preguntar si un valor esta en un conjunto es una COMPARACION, asi que va en
+// el mismo nivel que '=' y '<>'. Que este aca y no en el SI ni en el MIENTRAS
+// es a proposito: los dos evaluan su condicion con este mismo evaluador, asi
+// que alcanza con escribirlo una vez para que funcione en los dos — y en el
+// HASTA del REPETIR, que es la misma condicion.
+
+// Un elemento del conjunto, convertido a valor. El texto se guardo tal cual se
+// escribio, y recien aca se decide que es: un numero si se lee entero como
+// numero, y texto en cualquier otro caso.
+static Valor elemento_a_valor(const char *txt) {
+    char *fin = NULL;
+    double n = strtod(txt, &fin);
+    if (fin && fin != txt) {
+        while (*fin && isspace((unsigned char)*fin)) fin++;
+        if (*fin == '\0') return NUM(n);
+    }
+
+    Valor v = {0};
+    v.tipo = VAL_TEXTO;
+    snprintf(v.texto, sizeof(v.texto), "%s", txt);
+    return v;
+}
+
+static int conjunto_tiene(const PAEDConjunto *cj, const Valor *v) {
+    for (int i = 0; i < cj->elem_count; i++) {
+        Valor e = elemento_a_valor(cj->elems[i]);
+        if (expr_comparar(v, &e) == 0) return 1;
+    }
+    return 0;
+}
+
+// Consume `EN <conjunto>` o `NO EN <conjunto>` y deja el resultado en *izq.
+// Devuelve 1 si habia uno; 0 si la expresion seguia por otro lado, sin haber
+// tocado la posicion de lectura.
+static int membresia(Ctx *c, Valor *izq) {
+    const char *guardado = c->p;
+
+    int negado = 0;
+    if (palabra(c, "NO")) negado = 1;
+
+    if (!palabra(c, "EN")) {
+        c->p = guardado;   // el 'NO' no era de esto: se devuelve intacto
+        return 0;
+    }
+
+    espacios(c);
+    char nombre[PAED_NAME_MAX];
+    size_t n = 0;
+    while ((isalnum((unsigned char)*c->p) || *c->p == '_') &&
+           n < sizeof(nombre) - 1)
+        nombre[n++] = *c->p++;
+    nombre[n] = '\0';
+
+    if (n == 0) {
+        falla(c, "despues de EN va el nombre de un conjunto");
+        return 1;
+    }
+
+    const PAEDConjunto *cj = conjunto_buscar(nombre);
+    if (!cj) {
+        falla(c, "'%s' no es un conjunto declarado: se declara en el AMBIENTE "
+                 "con %s = {a, b, c};", nombre, nombre);
+        return 1;
+    }
+
+    int adentro = conjunto_tiene(cj, izq);
+    *izq = LOG(negado ? !adentro : adentro);
+    return 1;
 }
 
 // ── Prioridad 8 y 9: Y y O, con cortocircuito ─────────────────

@@ -221,6 +221,40 @@ typedef struct {
     int      line;
 } PAEDRegistro;
 
+// ── CONJUNTOS ───────────────────────────────────────────────────────────────
+//
+//     vocales = {"A", "E", "I", "O", "U"};
+//
+// Un conjunto es una lista de valores FIJA, escrita en el AMBIENTE, contra la
+// que se pregunta si algo esta adentro:
+//
+//     SI (v NO EN vocales) ENTONCES ...
+//
+// Se declara con '=' y no con ':' por lo mismo que un REGISTRO: no es una
+// variable de un tipo, es algo que el programador DEFINE. La teoria lo nombra
+// al hablar de consistencia — "definicion de limites para los datos (Rango,
+// Conjunto)", TEORIA_COMPLETA.txt:929 — y es exactamente para lo que sirve:
+// decir de antemano cuales son los valores validos.
+//
+// Por que existe: sin conjunto, "no es una vocal" se escribe
+// `(v <> "A") Y (v <> "E") Y (v <> "I") Y (v <> "O") Y (v <> "U")`. Eso no es
+// mas explicito, es la misma idea repetida cinco veces — y cuando el enunciado
+// agrega una letra hay que acordarse de tocar cada lugar donde se pregunto.
+//
+// Los elementos se guardan como TEXTO, tal como se escribieron. Se convierten
+// a valor recien al comparar, con las mismas reglas que el operador '=' del
+// lenguaje: asi `{1, 2, 3}` compara como numeros y `{"A", "E"}` como texto,
+// sin que el conjunto tenga que declarar de que tipo es.
+#define PAED_MAX_CONJUNTOS  8
+#define PAED_MAX_ELEMENTOS 32
+
+typedef struct {
+    char name[PAED_NAME_MAX];
+    int  line;
+    char elems[PAED_MAX_ELEMENTOS][PAED_NAME_MAX];
+    int  elem_count;
+} PAEDConjunto;
+
 // ── Subacciones: FUNCION y PROCEDIMIENTO ────────────────────────────────────
 //
 // Una subaccion es un bloque con nombre propio. La catedra tiene dos:
@@ -287,6 +321,9 @@ typedef struct {
     int       decl_count;
     PAEDRegistro registros[PAED_MAX_REGISTROS];
     int          registro_count;
+
+    PAEDConjunto conjuntos[PAED_MAX_CONJUNTOS];
+    int          conjunto_count;
     PAEDInstr instrs [PAED_MAX_INSTRS];
     int       instr_count;
     PAEDError errors [PAED_MAX_ERRORS];

@@ -251,6 +251,54 @@ inventado, y declarar el tipo no impediría absolutamente nada.
 dígito lo hace parte del número, una letra lo hace acceso a campo. Un número
 nunca llega al lector de identificadores, porque empieza con dígito.
 
+### 2.2b Conjuntos — implementado 2026-08-29
+
+```paed
+AMBIENTE
+    vocales = {"A", "E", "I", "O", "U"};
+    chicos  = {1, 2, 3};
+```
+
+Un conjunto es una lista de valores **fija**, escrita en el AMBIENTE, contra la
+que se pregunta con el operador `EN`:
+
+```paed
+SI (v NO EN vocales) ENTONCES ...
+MIENTRAS v NO EN vocales HACER ...
+```
+
+Se declara con `=` y no con `:` por lo mismo que un `REGISTRO`: no es una
+variable de un tipo, es algo que el programador **define**. La teoría lo nombra
+al hablar de consistencia — *"definición de límites para los datos (Rango,
+**Conjunto**)"*, `TEORIA_COMPLETA.txt:929` — y es exactamente para lo que
+sirve: decir de antemano cuáles son los valores válidos.
+
+**Qué reemplaza.** Sin conjunto, "no es una vocal" se escribe así:
+
+```paed
+SI (v <> "A") Y (v <> "E") Y (v <> "I") Y (v <> "O") Y (v <> "U") ENTONCES
+```
+
+Eso no es más explícito: es la misma idea repetida cinco veces. Y cuando el
+enunciado agrega una letra hay que acordarse de tocar **cada** lugar donde se
+preguntó.
+
+**`EN` es un operador, no una instrucción del `SI`.** Está en el mismo nivel de
+prioridad que `=` y `<>` (`expr.c`, función `membresia`), así que anda igual en
+un `SI`, en un `MIENTRAS` y en el `HASTA` de un `REPETIR` — los tres evalúan su
+condición con el mismo evaluador. `NO EN` es su negación, y el `NO` de adelante
+no se confunde con el `NO` unario: si no viene un `EN` detrás, se devuelve
+intacto.
+
+**Los elementos no declaran tipo.** Se guardan como texto tal como se
+escribieron y se convierten al comparar, con las reglas del `=` del lenguaje:
+`{1, 2, 3}` compara como números y `{"A", "E"}` como texto. Las comillas son del
+literal, no del dato: `{"A"}`, `{'A'}` y `{A}` son el mismo conjunto.
+
+Los límites son 8 conjuntos por programa y 32 elementos cada uno
+(`PAED_MAX_CONJUNTOS`, `PAED_MAX_ELEMENTOS`). Lo que sale mal tiene su código:
+[XL-19](../xasolError/XLerror-19.md).
+
 ### 2.3 Secuencias
 
 **Es la estructura que toman los parciales.** Medido sobre `apuntes/AED` el

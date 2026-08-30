@@ -69,6 +69,14 @@ static const char *rol_de_identificador(const PAEDProgram *prog, const char *pal
         if (prog->name[0] && strcasecmp(prog->name, palabra) == 0)
             return "acciones";
 
+        // Un CONJUNTO declarado. Va con los tipos del programador y no con
+        // las variables por lo que ES: algo que definis vos en el AMBIENTE
+        // con '=', igual que un REGISTRO, y que despues se nombra pero no se
+        // asigna.
+        for (int i = 0; i < prog->conjunto_count; i++)
+            if (strcasecmp(prog->conjuntos[i].name, palabra) == 0)
+                return "tipos_usuario";
+
         // Un REGISTRO declarado. Es lo que pinta el 'fecha' de `fechas: fecha;`
         // y el 'factura' de `ARCHIVO DE factura`.
         for (int i = 0; i < prog->registro_count; i++)

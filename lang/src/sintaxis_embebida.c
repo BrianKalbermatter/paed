@@ -137,6 +137,7 @@ const char PAED_SINTAXIS_EMBEBIDA[] =
 "        \"Y\",\n"
 "        \"O\",\n"
 "        \"NO\",\n"
+"        \"EN\",\n"
 "        \"AND\",\n"
 "        \"OR\",\n"
 "        \"MOD\",\n"

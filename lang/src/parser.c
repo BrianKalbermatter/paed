@@ -2499,6 +2499,72 @@ static int abre_registro(const char *linea) {
     return n == 8 && strncasecmp(r, "REGISTRO", 8) == 0;
 }
 
+// ¿Esta linea declara un CONJUNTO? `<nombre> = { ... }`, SIN tocar la linea.
+//
+// Se mira que despues del '=' venga una llave. Con eso alcanza para separarlo
+// de `x = REGISTRO` y de una declaracion normal, que lleva ':' y no '='.
+static int abre_conjunto(const char *linea) {
+    const char *ig = strchr(linea, '=');
+    if (!ig) return 0;
+
+    const char *r = ig + 1;
+    while (*r && isspace((unsigned char)*r)) r++;
+    return *r == '{';
+}
+
+// Carga los elementos de `{a, b, c}` en el conjunto.
+//
+// Se guardan como TEXTO y sin las comillas: el que compara es el evaluador, con
+// las reglas del '=' del lenguaje. Aca no se decide de que tipo es nada.
+//
+// El corte es a mano y no con strtok por dos motivos, y el segundo es el que
+// importa: strtok COLAPSA los separadores seguidos, asi que `{1,,2}` le pasaba
+// como si fueran dos elementos y `{1, , 2}` daba error — el mismo tipeo con dos
+// resultados distintos, que es peor que cualquiera de los dos. Ademas strtok
+// guarda estado global, y un parser es el ultimo lugar donde uno quiere eso.
+static void parse_elementos(PAEDProgram *p, PAEDConjunto *cj, char *dentro,
+                            int lineno) {
+    // `{}` no es un elemento vacio: es un conjunto vacio, y eso lo reporta el
+    // que llama con su propio mensaje. Sin este corte, la coma que no esta se
+    // leeria como un elemento en blanco y el error hablaria de otra cosa.
+    if (*trim(dentro) == '\0') return;
+
+    char *item = dentro;
+
+    for (;;) {
+        char *coma = strchr(item, ',');
+        if (coma) *coma = '\0';
+
+        char *e = trim(item);
+
+        // Las comillas son del literal, no del dato: "A" y 'A' y A son el
+        // mismo elemento. Sacarlas aca deja una sola forma para comparar.
+        size_t n = strlen(e);
+        if (n >= 2 && (e[0] == '"' || e[0] == '\'') && e[n - 1] == e[0]) {
+            e[n - 1] = '\0';
+            e++;
+        }
+
+        if (*e == '\0') {
+            add_error(p, lineno, "el conjunto '%s' tiene un elemento vacio",
+                      cj->name);
+            return;
+        }
+        if (cj->elem_count >= PAED_MAX_ELEMENTOS) {
+            add_error(p, lineno, "el conjunto '%s' no entra: maximo %d elementos",
+                      cj->name, PAED_MAX_ELEMENTOS);
+            return;
+        }
+
+        strncpy(cj->elems[cj->elem_count], e, PAED_NAME_MAX - 1);
+        cj->elems[cj->elem_count][PAED_NAME_MAX - 1] = '\0';
+        cj->elem_count++;
+
+        if (!coma) return;
+        item = coma + 1;
+    }
+}
+
 static void parse_ambiente_una(PAEDProgram *p, char *linea, int lineno, PAEDRegistro **reg) {
     // ── Dentro de un REGISTRO ──
     if (*reg) {
@@ -2559,6 +2625,52 @@ static void parse_ambiente_una(PAEDProgram *p, char *linea, int lineno, PAEDRegi
             }
             (*reg)->campo_count++;
         }
+        return;
+    }
+
+    // ── ¿Declara un CONJUNTO? `<nombre> = { ... }` ──
+    // Va antes del REGISTRO porque los dos empiezan igual, con '=', y este se
+    // reconoce por la llave.
+    if (abre_conjunto(linea)) {
+        char *llave = strchr(linea, '{');
+        char *cierra = strrchr(linea, '}');
+        if (!cierra) {
+            add_error(p, lineno,
+                      "falta '}' para cerrar el conjunto: se escribe "
+                      "nombre = {a, b, c};");
+            return;
+        }
+
+        *strchr(linea, '=') = '\0';
+        char *nombre = trim(linea);
+        *cierra = '\0';
+
+        if (!es_identificador(nombre)) {
+            add_error(p, lineno, "nombre de conjunto invalido: '%s'", nombre);
+            return;
+        }
+        if (p->conjunto_count >= PAED_MAX_CONJUNTOS) {
+            add_error(p, lineno, "demasiados conjuntos (maximo %d)",
+                      PAED_MAX_CONJUNTOS);
+            return;
+        }
+        for (int i = 0; i < p->conjunto_count; i++)
+            if (kw_es(p->conjuntos[i].name, nombre)) {
+                add_error(p, lineno,
+                          "el conjunto '%s' ya estaba declarado en la linea %d",
+                          nombre, p->conjuntos[i].line);
+                return;
+            }
+
+        PAEDConjunto *cj = &p->conjuntos[p->conjunto_count++];
+        memset(cj, 0, sizeof(*cj));
+        strncpy(cj->name, nombre, PAED_NAME_MAX - 1);
+        cj->line = lineno;
+        parse_elementos(p, cj, llave + 1, lineno);
+
+        if (cj->elem_count == 0)
+            add_error(p, lineno,
+                      "conjunto sin elementos: '%s' no tiene ninguno", nombre);
         return;
     }
 

@@ -1617,6 +1617,10 @@ int interp_exec(const PAEDProgram *prog) {
     // pasan los dos ganchos y sigue siendo un evaluador de expresiones.
     expr_set_funcion(fn_existe, fn_llamar, (void *)prog);
 
+    // Los conjuntos del AMBIENTE, para el operador EN. Son datos fijos del
+    // programa, asi que se pasan una vez y no cambian mas.
+    expr_set_conjuntos(prog);
+
     // Se arranca en proceso_inicio y no en 0: lo que esta antes es cuerpo de
     // alguna subaccion, y una subaccion NO se ejecuta donde esta escrita — se
     // ejecuta cuando alguien la llama.

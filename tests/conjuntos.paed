@@ -1,0 +1,67 @@
+// CONJUNTOS: una lista fija de valores, y el operador EN para preguntar si
+// algo esta adentro.
+//
+// Se declara con '=' y no con ':' por lo mismo que un REGISTRO: no es una
+// variable de un tipo, es algo que el programador DEFINE. La teoria lo nombra
+// al hablar de consistencia — "definicion de limites para los datos (Rango,
+// Conjunto)", TEORIA_COMPLETA.txt:929.
+//
+// Lo que reemplaza: sin conjunto, "no es una vocal" se escribe
+//     (v <> "A") Y (v <> "E") Y (v <> "I") Y (v <> "O") Y (v <> "U")
+// que no es mas explicito — es la misma idea cinco veces, y cuando el
+// enunciado agrega una letra hay que tocar cada lugar donde se pregunto.
+//
+// EN esta en el mismo nivel de prioridad que '=' y '<>', asi que anda igual en
+// un SI, en un MIENTRAS y en el HASTA de un REPETIR: los tres evaluan su
+// condicion con el mismo evaluador.
+
+ACCION conjuntos ES
+AMBIENTE
+    vocales = {"A", "E", "I", "O", "U"};
+    chicos  = {1, 2, 3};
+
+    sec: SECUENCIA DE CARACTERES;
+    v: VENTANA DE CARACTERES;
+    cons: ENTERO;
+    n: ENTERO;
+
+PROCESO
+    // En un MIENTRAS
+    ARR(sec); AVZ(sec, v);
+    cons := 0;
+    MIENTRAS v NO EN vocales HACER
+        cons := cons + 1;
+        AVZ(sec, v);
+    FIN_MIENTRAS
+    ESCRIBIR("consonantes antes de la vocal: ", cons);
+
+    // En un SI
+    SI (v EN vocales) ENTONCES
+        ESCRIBIR("corto en la vocal ", v);
+    FIN_SI
+
+    // Con numeros: el conjunto no declara de que tipo es, cada elemento se
+    // compara con las reglas del '=' del lenguaje.
+    n := 2;
+    SI (n EN chicos) ENTONCES
+        ESCRIBIR(n, " esta en chicos");
+    FIN_SI
+
+    SI (7 NO EN chicos) ENTONCES
+        ESCRIBIR("el 7 no esta");
+    FIN_SI
+
+    // Y en el HASTA, que es la misma condicion
+    n := 0;
+    REPETIR
+        n := n + 1;
+    HASTA (n NO EN chicos)
+    ESCRIBIR("salio del REPETIR con n = ", n);
+FIN_ACCION
+
+// ── SALIDA ESPERADA ─────────────────────────────────────────────────────────
+// consonantes antes de la vocal: 3
+// corto en la vocal A
+// 2 esta en chicos
+// el 7 no esta
+// salio del REPETIR con n = 4

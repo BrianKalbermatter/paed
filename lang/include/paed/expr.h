@@ -188,6 +188,16 @@ void expr_set_funcion(PaedFnExiste existe, PaedFnLlamar llamar, void *ud);
 // diferencia que nadie encuentra hasta que ya rompio algo.
 int expr_comparar(const Valor *a, const Valor *b);
 
+// Los CONJUNTOS del programa, para el operador EN.
+//
+// El evaluador necesita mirarlos, y los conjuntos son datos FIJOS del programa
+// — no cambian mientras corre — asi que se le pasa el programa entero una vez
+// y listo. No hace falta el ida y vuelta con el interprete que si necesitan las
+// FUNCION, donde lo que hay que resolver es una llamada.
+//
+// Con NULL, `EN` avisa que no hay ningun conjunto declarado, en vez de romper.
+void expr_set_conjuntos(const PAEDProgram *prog);
+
 // Lee un valor como condicion. Un NUM cuenta como falso solo si es 0, y un
 // texto vacio cuenta como falso: asi una condicion nunca queda "indefinida".
 int valor_verdadero(const Valor *v);
