@@ -402,9 +402,6 @@ static Valor primario(Ctx *c) {
         }
         nombre[n] = '\0';
 
-        // Literales logicos (TEORIA_COMPLETA.txt:350-356)
-        if (strcmp(nombre, "V") == 0 || strcasecmp(nombre, "VERDADERO") == 0) return LOG(1);
-        if (strcmp(nombre, "F") == 0 || strcasecmp(nombre, "FALSO")     == 0) return LOG(0);
 
         // HV — alto valor, el centinela de la mezcla de archivos. No se
         // declara, no se asigna y no ocupa una entrada de variable, igual que
@@ -420,6 +417,13 @@ static Valor primario(Ctx *c) {
 
         // A[i] — el indice es una EXPRESION completa, no solo un numero: asi
         // valen A[i], A[i+1] y A[med] sin ningun caso especial.
+        //
+        // ESTE BLOQUE VA ANTES QUE LOS LITERALES LOGICOS. La catedra declara
+        // sus vectores como `V: ARREGLO[1..10] de ENTERO` (ARREGLOS_Conceptos.txt)
+        // y `V` es tambien el literal VERDADERO. Resolviendo el literal primero,
+        // `V[2]` devolvia verdadero y dejaba `[2]` sin consumir: el error que
+        // salia era "sobra '[2]' al final de la expresion", que no dice nada
+        // del problema real. Con un '[' detras, es un arreglo y no un booleano.
         if (*c->p == '[') {
             c->p++;
             Valor idx = eval_o(c);
@@ -452,6 +456,11 @@ static Valor primario(Ctx *c) {
             }
             return *elem;
         }
+
+        // Literales logicos (TEORIA_COMPLETA.txt:350-356). Van DESPUES del
+        // indexado: sin '[' detras, `V` y `F` siguen siendo verdadero y falso.
+        if (strcmp(nombre, "V") == 0 || strcasecmp(nombre, "VERDADERO") == 0) return LOG(1);
+        if (strcmp(nombre, "F") == 0 || strcasecmp(nombre, "FALSO")     == 0) return LOG(0);
 
         if (*c->p == '(') {   // llamada a funcion
             c->p++;
