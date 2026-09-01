@@ -20,6 +20,29 @@ static cJSON *g_libs[PAED_MAX_LIBS];
 static char   g_libs_nombre[PAED_MAX_LIBS][64];
 static int    g_lib_count = 0;
 
+// Los dos unicos accesos al estado de este bloque desde el resto del archivo.
+// Existen para que g_syntax y g_libs no se toquen de afuera: son el estado del
+// modulo de sintaxis, y el dia que ese modulo viva en su propio .c estas dos
+// funciones son toda su superficie hacia el parser.
+
+// Una seccion de primer nivel de sintaxis.json, o NULL si no esta.
+static cJSON *syn_seccion(const char *nombre) {
+    return cJSON_GetObjectItem(g_syntax, nombre);
+}
+
+// Los nombres de las librerias cargadas, separados por coma, para poder
+// nombrarlas en un mensaje de error. Devuelve cuantas hay.
+static int syn_libs_nombres(char *out, size_t n) {
+    if (n == 0) return g_lib_count;
+    out[0] = '\0';
+
+    size_t usado = 0;
+    for (int k = 0; k < g_lib_count && usado < n - 1; k++)
+        usado += (size_t)snprintf(out + usado, n - usado,
+                                  "%s%s", k ? ", " : "", g_libs_nombre[k]);
+    return g_lib_count;
+}
+
 static cJSON *cargar_json(const char *path, int obligatorio) {
     FILE *f = fopen(path, "rb");
     if (!f) {
@@ -1963,7 +1986,7 @@ static int parse_bloque(PAEDProgram *p, char *linea, int lineno, Pila *pila) {
 // todo lo demas: el asistente del editor tiene que ofrecer las mismas que el
 // parser acepta, y con dos listas un dia dicen cosas distintas.
 static cJSON *organizaciones(void) {
-    cJSON *a = cJSON_GetObjectItem(g_syntax, "archivos");
+    cJSON *a = syn_seccion("archivos");
     if (!cJSON_IsObject(a)) return NULL;
     cJSON *o = cJSON_GetObjectItem(a, "organizaciones");
     return cJSON_IsArray(o) ? o : NULL;
@@ -3129,14 +3152,10 @@ static void chequear_subacciones(PAEDProgram *p) {
 
         const PAEDSubaccion *sub = paed_subaccion(p, in->proc);
         if (!sub) {
-            if (g_lib_count > 0) {
-                // Nombrar las librerias que SI se cargaron es media respuesta:
-                // el que se olvido un USAR ve cual falta comparando.
-                char cargadas[256] = {0};
-                size_t usado = 0;
-                for (int k = 0; k < g_lib_count && usado < sizeof(cargadas) - 1; k++)
-                    usado += (size_t)snprintf(cargadas + usado, sizeof(cargadas) - usado,
-                                              "%s%s", k ? ", " : "", g_libs_nombre[k]);
+            // Nombrar las librerias que SI se cargaron es media respuesta:
+            // el que se olvido un USAR ve cual falta comparando.
+            char cargadas[256];
+            if (syn_libs_nombres(cargadas, sizeof(cargadas)) > 0) {
                 add_error(p, in->line,
                           "procedimiento desconocido '%s' (no esta en %s, ni en las "
                           "librerias que pediste con USAR (%s), ni es una subaccion "
