@@ -171,9 +171,18 @@ module.exports = grammar({
     cabecera_accion: ($) =>
       seq(
         field("palabra", alias(sinMayusculas("ACCION"), $.estructura)),
-        field("nombre", alias($.identificador, $.nombre_funcion)),
+        field("nombre", alias($.nombre_accion, $.nombre_funcion)),
         field("es", alias(sinMayusculas("ES"), $.estructura))
       ),
+
+    // El nombre de una ACCION NO es un identificador: la guia numera los
+    // ejercicios, y parser.c acepta `ACCION 223 ES` y `ACCION 2.2.4 ES`. Con
+    // solo `identificador`, la cabecera no matcheaba, y ES caia en la regla de
+    // identificador — se pintaba como una variable, del color del texto comun.
+    // El sintoma se veia en ES porque ACCION todavia matcheaba adentro del nodo
+    // ERROR; el que quedaba huerfano era ES.
+    nombre_accion: (_) =>
+      token(prec(2, choice(/[A-Za-z_][A-Za-z0-9_]*/, /[0-9]+(\.[0-9]+)*/))),
 
     // `FUNCION sumar(` / `PROCEDIMIENTO saludar(` — el nombre que ESTAS
     // DEFINIENDO. Se marca aparte de una llamada cualquiera para que el tema
