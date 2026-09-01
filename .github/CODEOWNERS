@@ -1,0 +1,8 @@
+# Cualquier cambio necesita la revision de Brian antes de entrar a la rama
+# principal. La proteccion de rama pide "code owner review", asi que este
+# archivo es lo que decide a quien se le pide.
+#
+# Si algun dia hay mas gente con permiso, se agregan lineas por carpeta:
+#     lang/       @otra-persona
+#     helix/      @quien-sea
+* @BrianKalbermatter
