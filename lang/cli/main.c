@@ -1,7 +1,7 @@
 // paed — el interprete de PAED en la terminal.
 //
 //   paed programa.paed          corre un programa
-//   paed install [destino]      se instala solo, copiandose a si mismo
+//   paed install [destino]      se instala solo: se copia y se pone en el PATH
 //   paed uninstall [destino]    se borra
 //   paed --version              que version es
 //
@@ -144,6 +144,102 @@ static int se_puede_escribir(const char *dir) {
 }
 #endif
 
+// ── El PATH ─────────────────────────────────────────────────────────────────
+//
+// Instalar y que el comando no exista es la forma mas comun de que esto
+// parezca roto: el binario esta, pero la shell no lo encuentra. Asi que
+// install lo arregla en vez de solo avisar.
+
+#ifndef _WIN32
+// Si `dir` es una de las entradas del PATH. Se compara ENTRADA POR ENTRADA y no
+// con strstr: "~/.local/bin" aparece como substring dentro de "~/.local/bin2" y
+// de cualquier ruta que lo contenga, y entonces install creeria que ya esta
+// puesto cuando no lo esta.
+static int path_contiene(const char *path, const char *dir) {
+    if (!path || !dir || !*dir) return 0;
+    size_t largo = strlen(dir);
+
+    for (const char *e = path; *e; ) {
+        const char *fin = strchr(e, ':');
+        size_t n = fin ? (size_t)(fin - e) : strlen(e);
+        if (n == largo && strncmp(e, dir, largo) == 0) return 1;
+        if (!fin) break;
+        e = fin + 1;
+    }
+    return 0;
+}
+
+// El archivo de configuracion de la shell del usuario, y como se escribe en el
+// una linea que agrega al PATH. fish no usa la sintaxis de sh, asi que no
+// alcanza con elegir el archivo: cambia tambien lo que se escribe.
+//
+// Si $SHELL no dice nada conocido se cae a ~/.profile, que lo leen todas las
+// shells tipo Bourne al iniciar sesion.
+static const char *rc_de_la_shell(const char *home, char *out, size_t n) {
+    const char *sh = getenv("SHELL");
+    const char *nombre = sh ? sh : "";
+    for (const char *c = nombre; *c; c++) if (*c == '/') nombre = c + 1;
+
+    if (strcmp(nombre, "zsh") == 0) {
+        snprintf(out, n, "%s/.zshrc", home);
+        return "export PATH=\"%s:$PATH\"";
+    }
+    if (strcmp(nombre, "fish") == 0) {
+        snprintf(out, n, "%s/.config/fish/config.fish", home);
+        return "set -gx PATH %s $PATH";
+    }
+    if (strcmp(nombre, "bash") == 0) {
+        snprintf(out, n, "%s/.bashrc", home);
+        return "export PATH=\"%s:$PATH\"";
+    }
+    snprintf(out, n, "%s/.profile", home);
+    return "export PATH=\"%s:$PATH\"";
+}
+
+// Agrega bindir al PATH escribiendo en el rc de la shell.
+//
+// Devuelve 1 si escribio, 0 si ya estaba, -1 si no pudo. Que "ya estaba" no sea
+// un error es lo que hace que install se pueda correr dos veces sin ensuciar el
+// archivo: si el usuario reinstala, no le quedan cinco lineas iguales.
+static int agregar_al_path(const char *bindir, char *rc, size_t nrc) {
+    const char *home = getenv("HOME");
+    if (!home) return -1;
+
+    const char *formato = rc_de_la_shell(home, rc, nrc);
+
+    // Ya escrita en una corrida anterior. Se busca el bindir y no la linea
+    // entera: si el usuario la edito a mano, igual esta puesto.
+    FILE *f = fopen(rc, "r");
+    if (f) {
+        char linea[1024];
+        while (fgets(linea, sizeof(linea), f)) {
+            if (linea[0] == '#') continue;
+            if (strstr(linea, bindir)) { fclose(f); return 0; }
+        }
+        fclose(f);
+    }
+
+    // Las carpetas intermedias, si faltan. fish guarda su config en
+    // ~/.config/fish/config.fish, y en una maquina recien instalada esa carpeta
+    // no existe: fopen en modo append NO la crea, y la instalacion terminaba
+    // diciendo que no pudo escribir sin que hubiera nada roto.
+    for (char *c = rc + 1; *c; c++) {
+        if (*c != '/') continue;
+        *c = '\0';
+        paed_mkdir(rc);
+        *c = '/';
+    }
+
+    f = fopen(rc, "a");
+    if (!f) return -1;
+    fprintf(f, "\n# PAED\n");
+    fprintf(f, formato, bindir);
+    fprintf(f, "\n");
+    fclose(f);
+    return 1;
+}
+#endif
+
 // Se copia a si mismo y escribe la definicion del lenguaje que lleva adentro.
 // No necesita ningun paquete ni ningun archivo al lado: por eso alcanza con
 // bajar el binario suelto y correr `paed install`.
@@ -208,24 +304,47 @@ static int instalar(const char *destino) {
 
     printf("  %s\n  %s\n\n", bin, json);
 
-    // Instalar y que el comando no exista es la forma mas comun de que esto
-    // parezca roto. Se avisa ANTES de que pase, con la linea para arreglarlo.
     const char *ruta = getenv("PATH");
+#ifdef _WIN32
+    // En Windows el PATH del usuario vive en el registro, no en un archivo de
+    // texto: escribirlo desde aca es meterse con la configuracion del sistema.
+    // Se deja el comando, que es una linea.
     if (ruta && strstr(ruta, bindir)) {
         printf("Listo. Probalo:\n    paed tu_programa.paed\n");
     } else {
         printf("%s no esta en tu PATH, asi que el comando 'paed' todavia no existe.\n", bindir);
         printf("Agregalo una sola vez:\n\n");
-#ifdef _WIN32
         // setx escribe el PATH del usuario en el registro, y recien lo ve una
         // consola NUEVA: la que corre este comando sigue con el viejo.
         printf("    setx PATH \"%%PATH%%;%s\"\n\n", bindir);
         printf("(y despues abri una consola nueva)\n\n");
-#else
-        printf("    echo 'export PATH=\"%s:$PATH\"' >> ~/.bashrc && source ~/.bashrc\n\n", bindir);
-#endif
         printf("Mientras tanto anda por ruta completa:  %s tu_programa.paed\n", bin);
     }
+#else
+    if (path_contiene(ruta, bindir)) {
+        printf("Listo. Probalo:\n    paed tu_programa.paed\n");
+        return 0;
+    }
+
+    char rc[700];
+    int puesto = agregar_al_path(bindir, rc, sizeof(rc));
+
+    if (puesto == 1) {
+        printf("%s no estaba en el PATH: agregado a %s\n\n", bindir, rc);
+        printf("Abri una terminal nueva (o corre 'source %s') y probalo:\n", rc);
+        printf("    paed --version\n");
+    } else if (puesto == 0) {
+        // Esta en el rc pero no en el PATH de ESTA shell: el archivo se lee al
+        // abrir la terminal, y esta ya estaba abierta cuando se escribio.
+        printf("%s ya figura en %s, pero esta terminal todavia no lo tomo.\n\n", bindir, rc);
+        printf("Abri una terminal nueva (o corre 'source %s').\n", rc);
+    } else {
+        printf("%s no esta en tu PATH y no pude escribir tu archivo de shell.\n", bindir);
+        printf("Agregalo a mano, una sola vez:\n\n");
+        printf("    echo 'export PATH=\"%s:$PATH\"' >> ~/.bashrc && source ~/.bashrc\n\n", bindir);
+        printf("Mientras tanto anda por ruta completa:  %s tu_programa.paed\n", bin);
+    }
+#endif
     return 0;
 }
 
@@ -307,7 +426,7 @@ static void ayuda(void) {
     printf("  paed asistente <archivo>   el menu de archivos: que tipo es cada uno\n");
     printf("  paed datos <archivo>       carga las filas del .csv, ordenadas por su clave\n");
     printf("  paed errores               los codigos de error y que significa cada uno\n");
-    printf("  paed install [destino]     se instala (por defecto /usr/local o ~/.local)\n");
+    printf("  paed install [destino]     se instala y se agrega al PATH (por defecto /usr/local o ~/.local)\n");
     printf("  paed uninstall [destino]   se borra (por defecto de donde se esta corriendo)\n");
     printf("  paed --version             la version\n");
     printf("  paed --help                esto\n\n");
