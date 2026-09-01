@@ -2,6 +2,7 @@
 #include "paed/errores.h"
 #include "sintaxis.h"
 #include "texto.h"
+#include "reporte.h"
 #include "cJSON.h"
 
 #include <ctype.h>
@@ -11,32 +12,6 @@
 #include <string.h>
 #include "paed/plataforma.h"   // saber donde esta el binario, sin #ifdef aca
 
-
-// ── Errores ───────────────────────────────────────────────────────────────────
-
-static void add_error(PAEDProgram *p, int line, const char *fmt, ...) {
-    if (p->error_count >= PAED_MAX_ERRORS) return;
-    PAEDError *e = &p->errors[p->error_count++];
-    e->line = line;
-    va_list ap;
-    va_start(ap, fmt);
-    vsnprintf(e->msg, sizeof(e->msg), fmt, ap);
-    va_end(ap);
-}
-
-void paed_print_errors(const PAEDProgram *prog) {
-    for (int i = 0; i < prog->error_count; i++) {
-        // El codigo de la familia a la que pertenece el mensaje, para poder
-        // buscarlo en xasolError/. Vacio si todavia no esta catalogado, y ahi
-        // el error sale como salia antes. Ver lang/src/errores.c.
-        const char *cod = paed_codigo_error(prog->errors[i].msg);
-        fprintf(stderr, "%s:%d: error%s%s: %s\n",
-                prog->path, prog->errors[i].line,
-                cod[0] ? " " : "", cod, prog->errors[i].msg);
-    }
-    if (prog->error_count >= PAED_MAX_ERRORS)
-        fprintf(stderr, "%s: error: demasiados errores, se corto el reporte\n", prog->path);
-}
 
 // ── Validacion de valores segun el tipo declarado en sintaxis.json ────────────
 
