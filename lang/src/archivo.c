@@ -156,8 +156,9 @@ static int ya_abierto(const Archivo *a) {
     return a->abierto && !a->cerrado;
 }
 
-int arch_crear(Archivo *a, const char *modo) {
-    if (ya_abierto(a)) return falla("el archivo '%s' ya esta abierto", a->nombre);
+// El archivo de salida: se crea vacio y con encabezado. Lo comparten CREAR y
+// ABRIR S/, que en la catedra son la misma operacion escrita de dos maneras.
+static int abrir_para_escribir(Archivo *a, const char *modo) {
     if (a->campo_count == 0)
         return falla("'%s' no se puede crear: su tipo no es un REGISTRO declarado", a->nombre);
 
@@ -181,8 +182,21 @@ int arch_crear(Archivo *a, const char *modo) {
     return 0;
 }
 
+int arch_crear(Archivo *a, const char *modo) {
+    if (ya_abierto(a)) return falla("el archivo '%s' ya esta abierto", a->nombre);
+    return abrir_para_escribir(a, modo);
+}
+
 int arch_abrir(Archivo *a, const char *modo) {
     if (ya_abierto(a)) return falla("el archivo '%s' ya esta abierto", a->nombre);
+
+    // ABRIR S/ es la forma de la catedra para un archivo de salida: en el papel
+    // no hay disco, asi que "abrir para grabar" ya significa dejarlo listo y
+    // vacio. Aca hay disco, y sin esta rama el modo se guardaba pero el fopen
+    // quedaba en "r": ABRIR S/ abria en solo lectura y fallaba si el archivo no
+    // existia todavia, que es justamente el caso de todo archivo generado.
+    if (modo && strcasecmp(modo, "S") == 0) return abrir_para_escribir(a, modo);
+
     if (a->campo_count == 0)
         return falla("'%s' no se puede abrir: su tipo no es un REGISTRO declarado", a->nombre);
 
