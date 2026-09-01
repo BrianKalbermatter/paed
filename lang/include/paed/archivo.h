@@ -115,10 +115,13 @@ int arch_set_campos(Archivo *a, const char campos[][PAED_NAME_MAX], int n);
 // segunda diera error habria que borrarlo a mano entre corrida y corrida.
 int arch_crear(Archivo *a, const char *modo);
 
-// Abre uno que ya existe y VALIDA su encabezado contra los campos del
-// REGISTRO. Un archivo de movimientos abierto como maestro se leeria sin
-// protestar y devolveria basura con forma de dato valido: ese es el error mas
-// caro de los archivos, y el encabezado lo ataja gratis.
+// Depende del modo. Con "S" es identica a arch_crear: la catedra escribe
+// ABRIR S/ para la salida y no distingue crear de abrir, porque en el papel no
+// hay disco. Con "E" o "ES" abre uno que ya existe y VALIDA su encabezado
+// contra los campos del REGISTRO. Un archivo de movimientos abierto como
+// maestro se leeria sin protestar y devolveria basura con forma de dato
+// valido: ese es el error mas caro de los archivos, y el encabezado lo ataja
+// gratis.
 int arch_abrir(Archivo *a, const char *modo);
 
 int arch_cerrar(Archivo *a);
