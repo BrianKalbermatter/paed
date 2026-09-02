@@ -13,4 +13,7 @@
 // completan cuando se cierra el bloque.
 PAEDInstr *nueva_instr(PAEDProgram *p, PAEDKind kind, int lineno);
 
+// Si la linea cierra la ACCION. Se aceptan FIN_ACCION y FINACCION.
+int es_fin_accion(const char *linea);
+
 #endif // PAED_PROGRAMA_INTERNO_H
