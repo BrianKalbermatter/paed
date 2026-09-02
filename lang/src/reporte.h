@@ -13,4 +13,10 @@
 // El formato es el de printf. La linea es la del archivo .paed, no la del C.
 void add_error(PAEDProgram *p, int line, const char *fmt, ...);
 
+// Ordena los errores por linea, de forma ESTABLE. Se llama una vez al final:
+// algunos errores no se encuentran leyendo —las claves, los modos, las
+// llamadas a subacciones— y se detectan con el archivo entero leido, asi que
+// sin esto caen todos juntos despues de los demas.
+void ordenar_errores(PAEDProgram *p);
+
 #endif // PAED_REPORTE_INTERNO_H

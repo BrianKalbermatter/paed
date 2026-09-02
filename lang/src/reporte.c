@@ -46,3 +46,24 @@ void paed_print_errors(const PAEDProgram *prog) {
         fprintf(stderr, "%s: error: demasiados errores, se corto el reporte\n", prog->path);
 }
 
+// Los errores se reportan en el orden en que se ENCONTRARON, y algunos no se
+// encuentran leyendo: las claves, los modos y las llamadas a subacciones se
+// verifican al final, con el programa entero en la mano. Sin ordenar, esos
+// errores caen todos juntos despues de los demas, y quien lee el reporte
+// arregla la linea 30, vuelve a compilar, y recien ahi se entera de que la 9
+// tambien estaba mal.
+//
+// Es una insercion y no un qsort porque tiene que ser ESTABLE: dos errores de
+// la misma linea son independientes, y el orden entre ellos es el orden en que
+// se detectaron, que es el que mejor se lee.
+void ordenar_errores(PAEDProgram *p) {
+    for (int i = 1; i < p->error_count; i++) {
+        PAEDError e = p->errors[i];
+        int j = i - 1;
+        while (j >= 0 && p->errors[j].line > e.line) {
+            p->errors[j + 1] = p->errors[j];
+            j--;
+        }
+        p->errors[j + 1] = e;
+    }
+}
