@@ -969,57 +969,6 @@ static const char *nombre_kind(PAEDKind k) {
     }
 }
 
-// Busca una palabra clave SUELTA dentro de una linea. "Suelta" = sin letras ni
-// digitos pegados a los costados, para que un identificador como 'hastaFin' no
-// se confunda con la palabra HASTA.
-static char *palabra_en(char *s, const char *kw) {
-    size_t n = strlen(kw);
-    // Sin distinguir mayusculas y no strstr: las palabras clave no distinguen
-    // (ver kw_es, mas abajo), asi que 'PARA i := 1 hasta 5 HACER' tambien vale.
-    for (char *c = s; (c = paed_strcasestr(c, kw)) != NULL; c += n) {
-        int izq = (c == s) || (!isalnum((unsigned char)c[-1]) && c[-1] != '_');
-        int der = !isalnum((unsigned char)c[n]) && c[n] != '_';
-        if (izq && der) return c;
-    }
-    return NULL;
-}
-
-// ¿Esta linea ES exactamente esta palabra clave, sin mirar mayusculas?
-//
-// La wiki escribe `ARREGLO` (wiki.txt:1791) y `arreglo[` (:1798) para lo mismo,
-// y el ejemplo de catedra (AED_2021_UnI.pdf:10) declara los tipos en minuscula.
-// Obligar a una sola forma seria inventar una regla que las fuentes no tienen.
-//
-// Solo aplica a las PALABRAS CLAVE. Los identificadores conservan su
-// capitalizacion y se siguen comparando con strcmp: 'total' y 'Total' son dos
-// variables distintas.
-static int kw_es(const char *linea, const char *kw) {
-    return strcasecmp(linea, kw) == 0;
-}
-
-// Saca la palabra clave del principio y el terminador del final.
-// "SI (a = 1) ENTONCES" -> "(a = 1)". NULL si falta el terminador.
-static char *cuerpo_cabecera(char *linea, const char *kw, const char *fin) {
-    char  *c  = trim(linea + strlen(kw));
-    size_t lc = strlen(c), nf = strlen(fin);
-
-    if (lc < nf || strcasecmp(c + lc - nf, fin) != 0) return NULL;
-    // El terminador tiene que ser una palabra suelta, no el final de otra:
-    // sin esto, un identificador que termine en HACER pasaria por terminador.
-    if (lc > nf && !isspace((unsigned char)c[lc - nf - 1]) && c[lc - nf - 1] != ')')
-        return NULL;
-
-    c[lc - nf] = '\0';
-    return trim(c);
-}
-
-// ¿La linea empieza con esta palabra clave como palabra entera?
-static int empieza_con(const char *linea, const char *kw) {
-    size_t n = strlen(kw);
-    if (strncasecmp(linea, kw, n) != 0) return 0;
-    return linea[n] == '\0' || isspace((unsigned char)linea[n]) || linea[n] == '(';
-}
-
 // Abre un bloque: crea la instruccion, guarda la condicion y apila.
 static void abrir(PAEDProgram *p, Pila *pila, PAEDKind kind,
                   const char *cond, int lineno) {
