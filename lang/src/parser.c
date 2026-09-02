@@ -3,6 +3,7 @@
 #include "sintaxis.h"
 #include "texto.h"
 #include "reporte.h"
+#include "programa.h"
 #include "cJSON.h"
 
 #include <ctype.h>
@@ -89,22 +90,6 @@ static int split_args(char *inner, char *out[], int max, PAEDProgram *p, int lin
         }
     }
     return n;
-}
-
-// Reserva la proxima instruccion ya inicializada. salto = -1 significa "esta no
-// salta a ningun lado"; las de bloque lo completan cuando se cierra el bloque.
-static PAEDInstr *nueva_instr(PAEDProgram *p, PAEDKind kind, int lineno) {
-    if (p->instr_count >= PAED_MAX_INSTRS) {
-        add_error(p, lineno, "demasiadas instrucciones (maximo %d)", PAED_MAX_INSTRS);
-        return NULL;
-    }
-    PAEDInstr *in = &p->instrs[p->instr_count++];
-    memset(in, 0, sizeof(*in));
-    in->kind  = kind;
-    in->line  = lineno;
-    in->salto = -1;
-    in->siguiente = -1;
-    return in;
 }
 
 // destino := expresion;   (el ';' ya se saco)
