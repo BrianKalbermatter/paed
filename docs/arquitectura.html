@@ -1,0 +1,699 @@
+<title>El camino de una línea</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap">
+<style>
+  :root {
+    --paper:      #FAFAF7;
+    --surface:    #FFFFFF;
+    --surface-2:  #F1F2EE;
+    --ink:        #1A2027;
+    --ink-soft:   #4A555F;
+    --muted:      #737E86;
+    --rule:       #DEE0DA;
+    --accent:     #1F6F5C;
+    --accent-dim: #E4EFEA;
+    --signal:     #A8452A;
+    --signal-dim: #F6E9E4;
+    --code-bg:    #F4F5F1;
+
+    --step: 1.5rem;
+    --measure: 68ch;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:      #14181C;
+      --surface:    #1B2126;
+      --surface-2:  #222930;
+      --ink:        #E7EAE6;
+      --ink-soft:   #B3BCC0;
+      --muted:      #8A959C;
+      --rule:       #2E363D;
+      --accent:     #6FC3A8;
+      --accent-dim: #1C2E2A;
+      --signal:     #E08A6C;
+      --signal-dim: #2E211D;
+      --code-bg:    #1E252B;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper:      #14181C;
+    --surface:    #1B2126;
+    --surface-2:  #222930;
+    --ink:        #E7EAE6;
+    --ink-soft:   #B3BCC0;
+    --muted:      #8A959C;
+    --rule:       #2E363D;
+    --accent:     #6FC3A8;
+    --accent-dim: #1C2E2A;
+    --signal:     #E08A6C;
+    --signal-dim: #2E211D;
+    --code-bg:    #1E252B;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Source Serif 4", Georgia, "Times New Roman", serif;
+    font-size: 17px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 78rem;
+    margin: 0 auto;
+    padding: clamp(2rem, 5vw, 4.5rem) clamp(1.1rem, 4vw, 3rem) 6rem;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 3rem;
+  }
+  @media (min-width: 66rem) {
+    .wrap { grid-template-columns: 14rem minmax(0, 1fr); gap: 4rem; align-items: start; }
+    .rail { position: sticky; top: 2rem; }
+  }
+
+  /* ── Rail ─────────────────────────────────────────── */
+  .rail { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: .78rem; }
+  .rail h2 {
+    font-family: "IBM Plex Sans", system-ui, sans-serif;
+    font-size: .68rem; font-weight: 600; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--muted);
+    margin: 0 0 .9rem;
+  }
+  .rail ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .1rem; }
+  .rail a {
+    display: flex; gap: .55rem; align-items: baseline;
+    color: var(--ink-soft); text-decoration: none;
+    padding: .28rem .45rem; border-radius: 3px;
+    border-left: 2px solid transparent;
+  }
+  .rail a:hover, .rail a:focus-visible { background: var(--surface-2); color: var(--ink); border-left-color: var(--accent); }
+  .rail .n { color: var(--muted); font-variant-numeric: tabular-nums; }
+  .rail .sz { margin-left: auto; color: var(--muted); font-size: .72rem; }
+
+  /* ── Head ─────────────────────────────────────────── */
+  .eyebrow {
+    font-family: "IBM Plex Mono", monospace; font-size: .76rem;
+    letter-spacing: .08em; text-transform: uppercase; color: var(--accent);
+    margin: 0 0 .8rem;
+  }
+  h1 {
+    font-family: "IBM Plex Sans", system-ui, sans-serif;
+    font-size: clamp(2.1rem, 5.5vw, 3.2rem); font-weight: 700;
+    line-height: 1.05; letter-spacing: -.02em; text-wrap: balance;
+    margin: 0 0 1rem;
+  }
+  .lede { font-size: 1.15rem; color: var(--ink-soft); max-width: var(--measure); margin: 0 0 2rem; }
+
+  h2 {
+    font-family: "IBM Plex Sans", system-ui, sans-serif;
+    font-size: 1.5rem; font-weight: 700; letter-spacing: -.015em;
+    text-wrap: balance; margin: 3.5rem 0 1rem; padding-top: 1.6rem;
+    border-top: 1px solid var(--rule);
+  }
+  h3 {
+    font-family: "IBM Plex Sans", system-ui, sans-serif;
+    font-size: 1.05rem; font-weight: 600; margin: 2rem 0 .5rem;
+  }
+  p { max-width: var(--measure); margin: 0 0 1rem; }
+  strong { font-weight: 600; }
+
+  code, .mono { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: .87em; }
+  p code, li code, td code {
+    background: var(--code-bg); padding: .1em .35em; border-radius: 3px;
+  }
+
+  /* ── Pipeline ─────────────────────────────────────── */
+  .flow { display: flex; flex-direction: column; gap: 0; margin: 1.6rem 0 2.5rem; max-width: 46rem; }
+  .flow-row {
+    display: grid; grid-template-columns: 10.5rem 1fr; gap: 1rem;
+    align-items: baseline; padding: .7rem 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  .flow-row:first-child { border-top: 1px solid var(--rule); }
+  .flow-mod {
+    font-family: "IBM Plex Mono", monospace; font-size: .82rem; font-weight: 500;
+    color: var(--accent);
+  }
+  .flow-what { font-size: .95rem; color: var(--ink-soft); }
+  .flow-note { display: block; color: var(--muted); font-size: .85rem; }
+
+  /* ── Módulo cards ─────────────────────────────────── */
+  .mod {
+    background: var(--surface); border: 1px solid var(--rule); border-radius: 5px;
+    padding: 1.3rem 1.5rem; margin: 1.2rem 0; max-width: 52rem;
+  }
+  .mod-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: .7rem; margin-bottom: .3rem; }
+  .mod-name {
+    font-family: "IBM Plex Mono", monospace; font-size: 1rem; font-weight: 600; color: var(--ink);
+  }
+  .mod-size {
+    font-family: "IBM Plex Mono", monospace; font-size: .74rem; color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .job { color: var(--ink-soft); margin: 0 0 1rem; }
+  .qa { border-left: 2px solid var(--accent); padding-left: .9rem; margin-top: 1rem; }
+  .qa .q {
+    font-family: "IBM Plex Sans", system-ui, sans-serif; font-weight: 600;
+    font-size: .92rem; margin: 0 0 .35rem; color: var(--ink);
+  }
+  .qa .a { margin: 0; font-size: .95rem; color: var(--ink-soft); }
+  .qa + .qa { margin-top: .9rem; }
+
+  /* ── Callout ──────────────────────────────────────── */
+  .warn {
+    background: var(--signal-dim); border-left: 3px solid var(--signal);
+    padding: .9rem 1.1rem; border-radius: 0 4px 4px 0; margin: 1.2rem 0; max-width: 52rem;
+  }
+  .warn p { margin: 0; font-size: .95rem; }
+  .warn .lbl {
+    font-family: "IBM Plex Mono", monospace; font-size: .72rem; letter-spacing: .07em;
+    text-transform: uppercase; color: var(--signal); display: block; margin-bottom: .3rem;
+  }
+
+  /* ── Tabla ────────────────────────────────────────── */
+  .scroll { overflow-x: auto; margin: 1.2rem 0 2rem; }
+  table { border-collapse: collapse; font-size: .92rem; min-width: 34rem; }
+  th, td { text-align: left; padding: .55rem .9rem .55rem 0; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  th {
+    font-family: "IBM Plex Sans", system-ui, sans-serif; font-weight: 600; font-size: .78rem;
+    letter-spacing: .05em; text-transform: uppercase; color: var(--muted);
+  }
+
+  pre {
+    background: var(--code-bg); border: 1px solid var(--rule); border-radius: 4px;
+    padding: .9rem 1.1rem; overflow-x: auto; margin: 1rem 0 1.5rem;
+    font-family: "IBM Plex Mono", monospace; font-size: .82rem; line-height: 1.55;
+    max-width: 52rem;
+  }
+  pre .c { color: var(--muted); }
+
+  ul { max-width: var(--measure); padding-left: 1.2rem; }
+  li { margin-bottom: .45rem; }
+
+  a { color: var(--accent); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+</style>
+
+<div class="wrap">
+
+  <nav class="rail">
+    <h2>Los doce módulos</h2>
+    <ol>
+      <li><a href="#parser"><span class="n">01</span> parser.c <span class="sz">411</span></a></li>
+      <li><a href="#grafias"><span class="n">02</span> grafias.c <span class="sz">127</span></a></li>
+      <li><a href="#texto"><span class="n">03</span> texto.c <span class="sz">181</span></a></li>
+      <li><a href="#bloques"><span class="n">04</span> bloques.c <span class="sz">451</span></a></li>
+      <li><a href="#sentencias"><span class="n">05</span> sentencias.c <span class="sz">98</span></a></li>
+      <li><a href="#ambiente"><span class="n">06</span> ambiente.c <span class="sz">664</span></a></li>
+      <li><a href="#instruccion"><span class="n">07</span> instruccion.c <span class="sz">845</span></a></li>
+      <li><a href="#subacciones"><span class="n">08</span> subacciones.c <span class="sz">247</span></a></li>
+      <li><a href="#sintaxis"><span class="n">09</span> sintaxis.c <span class="sz">456</span></a></li>
+      <li><a href="#programa"><span class="n">10</span> programa.c <span class="sz">48</span></a></li>
+      <li><a href="#chequeos"><span class="n">11</span> chequeos.c <span class="sz">208</span></a></li>
+      <li><a href="#reporte"><span class="n">12</span> reporte.c <span class="sz">69</span></a></li>
+    </ol>
+    <h2 style="margin-top:1.6rem">Aparte</h2>
+    <ol>
+      <li><a href="#tokens"><span class="n">→</span> ¿Y el tokenizador?</a></li>
+      <li><a href="#fronteras"><span class="n">→</span> Los headers</a></li>
+      <li><a href="#defender"><span class="n">→</span> Qué defender</a></li>
+    </ol>
+  </nav>
+
+  <main>
+    <p class="eyebrow">PAED · el parser, por dentro</p>
+    <h1>El camino de una línea</h1>
+    <p class="lede">
+      Todo el parser de PAED se entiende siguiendo una sola línea de texto desde que
+      entra hasta que se convierte en instrucción. Doce módulos, cada uno con un solo
+      trabajo, en el orden en que la tocan.
+    </p>
+
+    <h2 id="idea">La idea en una frase</h2>
+    <p>
+      <code>parser.c</code> lee el archivo de arriba a abajo, decide <strong>en qué parte del
+      programa está parado</strong>, y le pasa cada línea al módulo que corresponde. No parsea
+      nada él mismo: reparte.
+    </p>
+    <p>
+      Ese "en qué parte está parado" es un enum de ocho estados y es el corazón de todo:
+    </p>
+<pre>typedef enum { FUERA, CABECERA, AMBIENTE, PROCESO, CERRADO,
+               SUB_CABECERA, SUB_AMBIENTE, SUB_PROCESO } Bloque;</pre>
+    <p>
+      Los tres <code>SUB_*</code> son los mismos tres de arriba pero dentro de una
+      subacción. Están duplicados a propósito, y esa decisión se defiende sola: cada
+      línea del archivo cae en <em>exactamente uno</em> de los ocho. Un estado que hay
+      que cruzar con un booleano para saber qué significa son dos estados escritos mal.
+    </p>
+
+    <h2 id="camino">El camino, paso por paso</h2>
+    <p>
+      Esta es la secuencia real del bucle de <code>paed_parse_file</code>. Si te preguntan
+      "¿por dónde pasa una línea?", es esto:
+    </p>
+
+    <div class="flow">
+      <div class="flow-row">
+        <span class="flow-mod">fgets</span>
+        <span class="flow-what">Se lee la línea cruda del archivo.</span>
+      </div>
+      <div class="flow-row">
+        <span class="flow-mod">texto.c</span>
+        <span class="flow-what">
+          <code>strip_comment</code> saca el comentario, <code>trim</code> los espacios.
+          <span class="flow-note">Las líneas vacías se descartan acá y no llegan a ningún lado.</span>
+        </span>
+      </div>
+      <div class="flow-row">
+        <span class="flow-mod">grafias.c</span>
+        <span class="flow-what">
+          <code>normalizar_catedra</code> traduce <code>FinSi;</code>, <code>Fsi</code>,
+          <code>FIN SI</code> a una sola forma.
+          <span class="flow-note">Antes que todo lo demás: de acá en adelante nadie más conoce las variantes.</span>
+        </span>
+      </div>
+      <div class="flow-row">
+        <span class="flow-mod">parser.c</span>
+        <span class="flow-what">
+          Mira si es <code>USAR</code>, <code>ACCION</code>, <code>AMBIENTE</code>,
+          <code>PROCESO</code>, <code>FIN_ACCION</code> o el arranque de una subacción, y
+          actualiza el estado.
+        </span>
+      </div>
+      <div class="flow-row">
+        <span class="flow-mod">según el estado</span>
+        <span class="flow-what">
+          <code>AMBIENTE</code> → <code>ambiente.c</code> &nbsp;·&nbsp;
+          <code>PROCESO</code> → <code>bloques.c</code>, y si no era una cabecera de bloque,
+          <code>sentencias.c</code>
+        </span>
+      </div>
+      <div class="flow-row">
+        <span class="flow-mod">sentencias.c</span>
+        <span class="flow-what">
+          Parte la línea por <code>;</code> y entrega cada pedazo.
+          <span class="flow-note">El corte solo vale fuera de comillas y paréntesis.</span>
+        </span>
+      </div>
+      <div class="flow-row">
+        <span class="flow-mod">instruccion.c</span>
+        <span class="flow-what">Cada pedazo se convierte en una instrucción del programa.</span>
+      </div>
+      <div class="flow-row">
+        <span class="flow-mod">chequeos.c</span>
+        <span class="flow-what">
+          Con el archivo entero leído: modos, claves y llamadas a subacciones.
+        </span>
+      </div>
+      <div class="flow-row">
+        <span class="flow-mod">reporte.c</span>
+        <span class="flow-what">
+          <code>ordenar_errores</code> y salida por pantalla.
+        </span>
+      </div>
+    </div>
+
+    <div class="warn">
+      <span class="lbl">La pregunta que más te van a hacer</span>
+      <p>
+        <strong>"¿Por qué las grafías se traducen tan temprano?"</strong> Porque los cierres
+        se analizan en cuatro lugares distintos: <code>parse_bloque</code>,
+        <code>parse_ambiente</code>, el cierre de <code>ACCION</code> y la pila. Con un
+        <code>if</code> por variante en cada lugar, agregar una grafía obliga a tocar cuatro
+        archivos, y el día que se olvida uno la misma palabra anda en un contexto y no en
+        el otro. Traduciendo al principio, la lista vive en un solo lugar.
+      </p>
+    </div>
+
+    <h2 id="modulos">Los módulos, uno por uno</h2>
+
+    <div class="mod" id="parser">
+      <div class="mod-head"><span class="mod-name">parser.c</span><span class="mod-size">411 líneas</span></div>
+      <p class="job">Leer el archivo y repartir. Es el único que conoce a todos los demás.</p>
+      <div class="qa">
+        <p class="q">¿Qué hace exactamente?</p>
+        <p class="a">
+          Abre el archivo, lleva el estado <code>Bloque</code> y la pila de bloques abiertos,
+          y en cada línea decide a quién se la manda. Al final llama a los chequeos y ordena
+          los errores. Termina devolviendo 0 si no hubo ninguno.
+        </p>
+      </div>
+      <div class="qa">
+        <p class="q">¿Por qué se quedó con el enum <code>Bloque</code>?</p>
+        <p class="a">
+          Porque es el estado de <em>su</em> bucle. Fuera de <code>paed_parse_file</code> no
+          significa nada, así que sacarlo a un header habría sido exponer algo que nadie más
+          puede usar.
+        </p>
+      </div>
+    </div>
+
+    <div class="mod" id="grafias">
+      <div class="mod-head"><span class="mod-name">grafias.c</span><span class="mod-size">127 líneas</span></div>
+      <p class="job">Traducir las formas de la cátedra a una forma canónica.</p>
+      <div class="qa">
+        <p class="q">¿Por qué existe?</p>
+        <p class="a">
+          Porque la cátedra escribe lo mismo de muchas maneras. Entre las diapositivas, los
+          27 templates oficiales y los parciales resueltos, un mismo cierre aparece como
+          <code>FIN_SI</code>, <code>FinSi;</code>, <code>Fsi;</code> y <code>FIN SI;</code>.
+          La decisión fue: <strong>la cátedra tiene razón</strong>. PAED las reconoce a todas.
+        </p>
+      </div>
+      <div class="qa">
+        <p class="q">¿No es peligroso reescribir líneas?</p>
+        <p class="a">
+          Solo toca líneas que son <em>una palabra clave sola</em>. Una línea con código no se
+          modifica nunca, así que ningún <code>;</code> de una instrucción corre peligro.
+        </p>
+      </div>
+    </div>
+
+    <div class="mod" id="texto">
+      <div class="mod-head"><span class="mod-name">texto.c</span><span class="mod-size">181 líneas</span></div>
+      <p class="job">Cortar texto y reconocer palabras clave. Sin estado, sin dependencias.</p>
+      <div class="qa">
+        <p class="q">¿Por qué las palabras clave no distinguen mayúsculas?</p>
+        <p class="a">
+          Porque las fuentes no lo hacen: la wiki escribe <code>ARREGLO</code> y
+          <code>arreglo[</code> para lo mismo, y el ejemplo oficial declara los tipos en
+          minúscula. Obligar a una sola forma sería inventar una regla que las fuentes no
+          tienen. <strong>Los identificadores sí distinguen</strong> y se comparan con
+          <code>strcmp</code>: <code>total</code> y <code>Total</code> son dos variables.
+        </p>
+      </div>
+    </div>
+
+    <div class="mod" id="bloques">
+      <div class="mod-head"><span class="mod-name">bloques.c</span><span class="mod-size">451 líneas</span></div>
+      <p class="job">La pila: quién abre un bloque, quién lo cierra y a dónde salta.</p>
+      <div class="qa">
+        <p class="q">¿Para qué hace falta una pila?</p>
+        <p class="a">
+          Porque cuando se lee <code>SI</code> todavía no se sabe dónde termina. El salto solo
+          se conoce cuando aparece el <code>FIN_SI</code>, y ahí se completa hacia atrás. Sin
+          pila habría que leer el archivo dos veces.
+        </p>
+      </div>
+      <div class="qa">
+        <p class="q">¿Por qué llama a <code>sentencias.c</code>, que a su vez lo puede llamar a él?</p>
+        <p class="a">
+          Es recursión mutua, y es del lenguaje: un bloque contiene sentencias y una sentencia
+          puede abrir un bloque. Se declara en <code>sentencias.h</code> en vez de forzar a los
+          dos a vivir en el mismo archivo.
+        </p>
+      </div>
+    </div>
+
+    <div class="mod" id="sentencias">
+      <div class="mod-head"><span class="mod-name">sentencias.c</span><span class="mod-size">98 líneas</span></div>
+      <p class="job">Partir una línea por <code>;</code> y entregar cada pedazo.</p>
+      <div class="qa">
+        <p class="q">¿Por qué es un módulo propio y no una función suelta?</p>
+        <p class="a">
+          Porque lo usan los <em>dos</em> bloques del programa: el AMBIENTE parte declaraciones
+          y el PROCESO parte instrucciones. Lo único que cambia es qué hacer con cada pedazo, y
+          eso entra por parámetro (<code>ParteFn</code>).
+        </p>
+      </div>
+    </div>
+
+    <div class="mod" id="ambiente">
+      <div class="mod-head"><span class="mod-name">ambiente.c</span><span class="mod-size">664 líneas</span></div>
+      <p class="job">Qué existe en el programa y de qué tipo.</p>
+      <div class="qa">
+        <p class="q">¿Qué se lleva?</p>
+        <p class="a">
+          La organización de un archivo (<code>ORDENADO POR</code>, <code>INDEXADO POR</code>),
+          el parseo de una declaración, que una declaración nombre varias variables, y el bloque
+          AMBIENTE con sus <code>REGISTRO</code> adentro.
+        </p>
+      </div>
+      <div class="qa">
+        <p class="q">¿Y el PROCESO?</p>
+        <p class="a">
+          El AMBIENTE decide <strong>qué existe</strong>; el PROCESO decide <strong>qué
+          pasa</strong>. Son dos temas y se parsean en dos lados.
+        </p>
+      </div>
+    </div>
+
+    <div class="mod" id="instruccion">
+      <div class="mod-head"><span class="mod-name">instruccion.c</span><span class="mod-size">845 líneas</span></div>
+      <p class="job">Leer UNA instrucción del PROCESO. El módulo más grande.</p>
+      <div class="qa">
+        <p class="q">¿Por qué es el más grande?</p>
+        <p class="a">
+          Porque una instrucción puede ser muchas cosas: una llamada con argumentos, una
+          asignación, una llamada con modo de apertura. Además valida los valores contra el
+          tipo declarado y distingue consola de archivo.
+        </p>
+      </div>
+      <div class="qa">
+        <p class="q">¿Cómo distingue <code>LEER(x)</code> de consola de <code>LEER(arch, reg)</code> de archivo?</p>
+        <p class="a">
+          <strong>No los distingue contando argumentos</strong> — los dos pueden llevar dos. Lo
+          único que los separa es la declaración: si el primer argumento se declaró
+          <code>ARCHIVO DE</code>, es operación de archivo. Se resuelve mirando el AMBIENTE,
+          antes de ejecutar.
+        </p>
+      </div>
+    </div>
+
+    <div class="mod" id="subacciones">
+      <div class="mod-head"><span class="mod-name">subacciones.c</span><span class="mod-size">247 líneas</span></div>
+      <p class="job">Reconocer <code>FUNCION</code> y <code>PROCEDIMIENTO</code> y parsear sus parámetros.</p>
+      <div class="qa">
+        <p class="q">¿Acá se verifica que una subacción exista?</p>
+        <p class="a">
+          No, y esa separación importa: para saber si existe hay que haber leído el archivo
+          entero, porque una subacción puede llamar a otra declarada más abajo. Eso vive en
+          <code>chequeos.c</code>.
+        </p>
+      </div>
+    </div>
+
+    <div class="mod" id="sintaxis">
+      <div class="mod-head"><span class="mod-name">sintaxis.c</span><span class="mod-size">456 líneas</span></div>
+      <p class="job">Cargar <code>sintaxis.json</code> y contestar preguntas sobre el lenguaje.</p>
+      <div class="qa">
+        <p class="q">¿Por qué el lenguaje está en un JSON y no en el C?</p>
+        <p class="a">
+          Es la decisión más importante del proyecto. Las palabras clave, los procedimientos y
+          sus parámetros salen de <code>sintaxis.json</code> porque <strong>el asistente del
+          editor y el parser tienen que ofrecer exactamente lo mismo</strong>. Con dos listas,
+          un día dicen cosas distintas.
+        </p>
+      </div>
+      <div class="qa">
+        <p class="q">¿Es el único módulo con estado?</p>
+        <p class="a">
+          Sí. <code>g_syntax</code> y las librerías cargadas viven acá y no salen: toda su
+          superficie hacia afuera son dos funciones. Fue el primero en separarse justamente
+          por eso — mientras el estado viviera junto al parseo, ningún otro corte era posible.
+        </p>
+      </div>
+    </div>
+
+    <div class="mod" id="programa">
+      <div class="mod-head"><span class="mod-name">programa.c</span><span class="mod-size">48 líneas</span></div>
+      <p class="job">Reservar instrucciones en el programa que se está armando.</p>
+      <div class="qa">
+        <p class="q">¿48 líneas justifican un módulo?</p>
+        <p class="a">
+          Acá sí: <code>nueva_instr</code> la necesitan tanto el parseo de instrucciones como la
+          pila de bloques. Mientras viviera dentro de <code>parser.c</code>, el módulo de
+          bloques no podía salir. Es un habilitador, no un módulo por completitud.
+        </p>
+      </div>
+    </div>
+
+    <div class="mod" id="chequeos">
+      <div class="mod-head"><span class="mod-name">chequeos.c</span><span class="mod-size">208 líneas</span></div>
+      <p class="job">Lo que solo se puede verificar con el programa entero leído.</p>
+      <div class="qa">
+        <p class="q">¿Por qué no se chequea mientras se lee?</p>
+        <p class="a">
+          Porque son preguntas que necesitan contexto de todo el archivo. Para saber si un
+          <code>LEER</code> es válido hay que saber qué dejó abierto el <code>ABRIR</code> de
+          más arriba. Para saber si una subacción existe hay que haber leído todo.
+        </p>
+      </div>
+    </div>
+
+    <div class="mod" id="reporte">
+      <div class="mod-head"><span class="mod-name">reporte.c</span><span class="mod-size">69 líneas</span></div>
+      <p class="job">Juntar los errores, ordenarlos e imprimirlos.</p>
+      <div class="qa">
+        <p class="q">¿Por qué los errores no se imprimen cuando pasan?</p>
+        <p class="a">
+          Porque los errores de parseo son <strong>independientes entre sí</strong>. Mostrando
+          solo el primero, quien lo lee arregla una cosa, vuelve a compilar, y recién ahí se
+          entera de la siguiente. Se acumulan y salen todos juntos.
+        </p>
+      </div>
+      <div class="qa">
+        <p class="q">¿Por qué se ordenan al final?</p>
+        <p class="a">
+          Porque algunos no se encuentran leyendo: las claves, los modos y las llamadas a
+          subacciones se detectan después, con el archivo entero. Sin ordenar, esos caerían
+          todos juntos al final del reporte en vez de al lado de su línea. El orden es una
+          inserción y no un <code>qsort</code> porque tiene que ser <strong>estable</strong>.
+        </p>
+      </div>
+    </div>
+
+    <h2 id="tokens">¿Y el tokenizador?</h2>
+    <p>
+      Es la pregunta que hace cualquiera que estudió compiladores, y la respuesta de PAED es
+      poco ortodoxa a propósito. Hay <strong>dos lectores del mismo archivo</strong>, y solo
+      uno tokeniza.
+    </p>
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr><th></th><th>El parser</th><th>El coloreador</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Dónde</td>
+            <td><code class="mono">parser.c</code> y sus módulos</td>
+            <td><code class="mono">colores.c</code></td>
+          </tr>
+          <tr>
+            <td>Unidad</td>
+            <td>La <strong>línea</strong></td>
+            <td>El <strong>token</strong></td>
+          </tr>
+          <tr>
+            <td>Cómo trabaja</td>
+            <td><code>trim</code>, <code>strncasecmp</code>, cortar por <code>;</code></td>
+            <td>Recorre y emite un <code>PAEDToken</code> por vez</td>
+          </tr>
+          <tr>
+            <td>Para qué</td>
+            <td>Producir instrucciones ejecutables</td>
+            <td>Decir de qué color va cada palabra</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p>
+      <strong>El parser no tiene lexer.</strong> No hay una fase que convierta el texto en un
+      flujo de tokens y después un parser que los consuma. Trabaja directo sobre el
+      <code>char*</code> de cada línea, con comparaciones de string.
+    </p>
+
+    <h3>Por qué se puede hacer así</h3>
+    <p>
+      Porque el pseudocódigo de AED es un lenguaje <strong>orientado a líneas</strong>. Una
+      instrucción no cruza el salto de línea nunca, y la gramática es lo bastante plana como
+      para que "mirar el principio de la línea" alcance para saber qué es. Un lexer separado
+      resolvería un problema que este lenguaje no tiene.
+    </p>
+    <p>
+      La contrapartida está a la vista y conviene admitirla: el reconocimiento queda repartido
+      en <code>strncasecmp</code> por todo el código en vez de concentrado en una tabla de
+      tokens. <code>texto.c</code> existe justamente para juntar esas comparaciones y que no
+      estén sueltas.
+    </p>
+
+    <h3>El coloreador sí tokeniza</h3>
+<pre>typedef struct {
+    int         linea;
+    int         col;
+    int         largo;
+    const char *rol;    <span class="c">// la categoria de sintaxis.json</span>
+    const char *texto;
+} PAEDToken;</pre>
+    <p>
+      Y acá está el detalle que vale oro: el campo <code>rol</code> <strong>no es un enum en el
+      C</strong>. Es un puntero a la categoría que salió de <code>sintaxis.json</code>. El
+      coloreador y el parser clasifican las palabras con la misma fuente, así que no pueden
+      discrepar sobre qué es una palabra clave.
+    </p>
+
+    <div class="warn">
+      <span class="lbl">El detalle que demuestra que está bien pensado</span>
+      <p>
+        El coloreador funciona sobre un parseo que <strong>falló</strong>. El parser junta
+        errores y sigue leyendo, así que el AMBIENTE ya quedó cargado y los colores salen
+        igual. Un editor tiene que colorear el archivo roto — que es justo cuando lo estás
+        escribiendo.
+      </p>
+    </div>
+
+    <h2 id="fronteras">La frontera de los headers</h2>
+    <p>
+      Hay dos clases de header y la diferencia se pregunta seguido:
+    </p>
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr><th>Dónde</th><th>Qué es</th><th>Regla</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code class="mono">include/paed/</code></td>
+            <td>La API de PAED</td>
+            <td>Lo que ve alguien que use PAED como librería. <strong>No expone cJSON</strong>, a propósito.</td>
+          </tr>
+          <tr>
+            <td><code class="mono">src/*.h</code></td>
+            <td>Lo interno</td>
+            <td>Lo que nuestros archivos se prestan entre ellos. Acá sí viaja cJSON.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p>
+      Por eso <code>sintaxis.h</code> vive en <code>src/</code>: todo lo que declara devuelve
+      <code>cJSON*</code>, y meterlo en el header público obligaría a cualquiera que use PAED
+      a heredar esa dependencia.
+    </p>
+
+    <h2 id="defender">Tres decisiones que vale la pena poder defender</h2>
+
+    <h3>1. El lenguaje vive en un JSON</h3>
+    <p>
+      No es una preferencia de formato. Es que el parser y el asistente del editor consultan
+      <em>la misma</em> fuente. Si alguien propone "mové las palabras clave a un array en C
+      que es más rápido", la respuesta es que la velocidad no era el problema: la
+      sincronización sí.
+    </p>
+
+    <h3>2. Los comentarios son la memoria del proyecto</h3>
+    <p>
+      El ratio ronda el 16–28%, que está dentro de lo normal para C. Pero lo que importa es
+      qué dicen: explican <em>por qué</em>, no qué. <em>"Se borra primero: si el destino es un
+      binario en uso, escribirle encima da Text file busy"</em>. Cada uno de esos es un bug
+      que ya se pagó una vez.
+    </p>
+
+    <h3>3. Cada módulo tiene un trabajo que se dice en una frase</h3>
+    <p>
+      Si no se puede decir en una frase, el módulo tiene dos temas adentro. Ese fue el criterio
+      de corte, y por eso las secciones que había en el archivo original sirvieron de pista
+      pero no de tijera: una decía "La pila de bloques" y tenía adentro cuatro funciones de
+      texto que no sabían nada de bloques.
+    </p>
+
+    <div class="warn">
+      <span class="lbl">Si tenés que tocar algo, empezá por acá</span>
+      <p>
+        <strong>¿Una palabra clave nueva?</strong> <code>sintaxis.json</code>, no el C.
+        &nbsp;·&nbsp; <strong>¿Una grafía nueva de la cátedra?</strong> la tabla
+        <code>GRAFIAS</code> en <code>grafias.c</code>.
+        &nbsp;·&nbsp; <strong>¿Un mensaje de error confuso?</strong> el <code>add_error</code>
+        que lo emite, y el catálogo <code>XL-NN</code> en <code>errores.c</code> si hay que
+        clasificarlo.
+        &nbsp;·&nbsp; <strong>¿Algo que no compila y debería?</strong> seguí el camino de la
+        línea de arriba y fijate en cuál de los nueve pasos se cae.
+      </p>
+    </div>
+
+  </main>
+</div>
