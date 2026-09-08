@@ -35,3 +35,6 @@ ejercicios/*.csv
 # `tree-sitter generate`, no se escribe a mano.
 helix/src/
 helix/node_modules/
+
+# Tablero personal de trabajo, no documentacion del proyecto. Queda en disco.
+KANBAN.md
