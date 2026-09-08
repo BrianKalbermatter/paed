@@ -30,3 +30,18 @@ ejercicios/*.csv
 
 # Registro de skills generado por herramientas externas: no es del proyecto.
 .atl/
+
+# ── OCaml ───────────────────────────────────────────────────────────────────
+# Todo lo que produce el compilador de OCaml y dune. Mismo criterio que el
+# build/ de arriba: si lo genera una herramienta, no va al repo.
+#   .cmi  interfaz compilada      .cmo  bytecode
+#   .cmx  nativo                  .cmt  info para el editor (Merlin/LSP)
+_build/
+*.cmi
+*.cmo
+*.cmx
+*.cmt
+*.cmti
+*.cma
+*.cmxa
+*.annot
